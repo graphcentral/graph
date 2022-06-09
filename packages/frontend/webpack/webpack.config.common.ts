@@ -1,6 +1,22 @@
 import path from "path"
-import webpack from "webpack"
+import webpack, { DefinePlugin } from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
+import dotenv from 'dotenv'
+
+import fs from 'fs'
+
+// @ts-ignore
+const srcPath = (subdir) => path.join(__dirname, 'src', subdir)
+// @ts-ignore
+const getFilesAndDirectories = (source) =>
+fs.readdirSync(source, { withFileTypes: true }).map((dirent) => dirent.name)
+let absoluteImports = {}
+getFilesAndDirectories('src').forEach((fileName) => {
+  const fileNameWithoutExtension = path.parse(fileName).name
+  // @ts-ignore
+    absoluteImports[`${fileNameWithoutExtension}`] = srcPath(fileName)
+})
+
 
 export const commonConfig: webpack.Configuration = {
   entry: `./src/index.tsx`,
@@ -54,5 +70,8 @@ export const commonConfig: webpack.Configuration = {
     new HtmlWebpackPlugin({
       template: path.join(__dirname, `..`, `public`, `index.html`),
     }),
+    new DefinePlugin({
+      'process.env': JSON.stringify(dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env' )}).parsed)
+    })
   ],
 }

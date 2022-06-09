@@ -1,8 +1,8 @@
 {
-  "name": "@myprojectname/root",
+  "name": "@notion-knowledge-graph/frontend",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://github.com/9oelM/myprojectname.git",
+  "repository": "https://github.com/9oelM/notion-knowledge-graph.git",
   "author": "9oelM <hj923@hotmail.com>",
   "license": "MIT",
   "private": false,
@@ -28,6 +28,7 @@
     "@types/html-webpack-plugin": "^3.2.6",
     "@types/jest": "27.4.0",
     "@types/lodash.flow": "3.5.6",
+    "@types/node": "^17.0.41",
     "@types/react": "17.0.38",
     "@types/react-dom": "17.0.11",
     "@types/webpack-dev-server": "4.7.1",
@@ -51,6 +52,7 @@
     "webpack-dev-server": "4.7.2"
   },
   "dependencies": {
+    "@notionhq/client": "^1.0.4",
     "axios": "^0.24.0",
     "lodash.flow": "^3.5.0",
     "react": "^17.0.2",

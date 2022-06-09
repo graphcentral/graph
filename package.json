@@ -1,8 +1,8 @@
 {
-  "name": "myprojectname",
+  "name": "notion-knowledge-graph",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://github.com/9oelM/myprojectname.git",
+  "repository": "https://github.com/9oelM/notion-knowledge-graph.git",
   "author": "9oelM <hj923@hotmail.com>",
   "license": "MIT",
   "private": false,
@@ -14,7 +14,8 @@
   "scripts": {
     "lint": "eslint .",
     "lint:debug": "eslint . --debug",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "dev": "npm run dev -w packages/frontend"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "5.9.1",

@@ -1,8 +1,19 @@
 import axios, { AxiosError, AxiosResponse } from "axios"
 import React, { useEffect, useState } from "react"
 import { FC } from "react"
-import { enhance, tcAsync } from "src/utilities/essentials"
+import { enhance, tcAsync } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
+import { Client } from "@notionhq/client"
+
+// Initializing a client
+const notion = new Client({
+  auth: process.env.NOTION_TOKEN,
+})
+;(async () => {
+  const listUsersResponse = await notion.users.list({})
+  console.log(listUsersResponse)
+})()
+console.log(process.env)
 
 enum NetworkRequestStatus {
   LOADING = `LOADING`,
