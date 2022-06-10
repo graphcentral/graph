@@ -1,5 +1,5 @@
 {
-  "name": "notion-knowledge-graph",
+  "name": "@notion-knowledge-graph/root",
   "version": "1.0.0",
   "main": "index.js",
   "repository": "https://github.com/9oelM/notion-knowledge-graph.git",

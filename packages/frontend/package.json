@@ -52,7 +52,6 @@
     "webpack-dev-server": "4.7.2"
   },
   "dependencies": {
-    "@notionhq/client": "^1.0.4",
     "axios": "^0.24.0",
     "lodash.flow": "^3.5.0",
     "react": "^17.0.2",
