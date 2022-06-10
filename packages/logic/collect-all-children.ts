@@ -49,10 +49,6 @@ export async function collectAllChildren(
         }))
         if (blockChildrenListResult) {
           blockChildren = blockChildrenListResult
-          if (title === `kg#20 super super super nested calendar item`) {
-            console.log(id)
-            console.log(blockChildren)
-          }
         }
         if (err) console.log(err)
       }
