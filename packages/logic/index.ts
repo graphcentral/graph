@@ -33,13 +33,13 @@ const notion = new Client({
   //   // },
   // });
   // const r2 = await notion.blocks.retrieve({
-  //   block_id: separate_page_id_by_dash(`aa362e29a8c24d6ba084ceca5a717db6`)
+  //   block_id: separateIdWithDash(`aa362e29a8c24d6ba084ceca5a717db6`)
   //             // `1429989f-e8ac-4eff-bc8f-57f56486db54`
   //           // 16d8004e-5f6a-42a6-9811-51c22ddada12
   // })
   // try{
   //   const r3 = await notion.pages.retrieve({
-  //     page_id: separate_page_id_by_dash(`aa362e29a8c24d6ba084ceca5a717db6`),
+  //     page_id: separateIdWithDash(`aa362e29a8c24d6ba084ceca5a717db6`),
 
   //               // `1429989f-e8ac-4eff-bc8f-57f56486db54`
   //             // 16d8004e-5f6a-42a6-9811-51c22ddada12
@@ -53,7 +53,7 @@ const notion = new Client({
   // console.log(r1)
   // console.log(r2)
   // const r4 = await notion.blocks.children.list({
-  //   block_id: separate_page_id_by_dash(`aa362e29a8c24d6ba084ceca5a717db6`)
+  //   block_id: separateIdWithDash(`aa362e29a8c24d6ba084ceca5a717db6`)
   // });
   // fs.writeFileSync('./blockchildrenlist.json', JSON.stringify(r4, undefined, 2))
   // r4.results.forEach((r) => {
@@ -62,6 +62,7 @@ const notion = new Client({
   // })
   const blocks = await retrieveBlocks(`aa362e29a8c24d6ba084ceca5a717db6`)
   console.log(`DONE`)
+  console.log(blocks)
 })();
 
 interface BlockInfo {
@@ -72,33 +73,60 @@ interface BlockInfo {
 async function retrieveBlocks(rootPageId: string): Promise<BlockInfo[]> {
   const blocks: BlockInfo[] = [{
     title: `Root`,
-    id: separate_page_id_by_dash(rootPageId),
+    id: separateIdWithDash(rootPageId),
   }]
   const requestQueue = new RequestQueue({ maxConcurrentRequest: 3 })
-  
-  async function retrieveBlocksRecurisvely(blockId: string) {
-    const blockChildren = await notion.blocks.children.list({
-      block_id: separate_page_id_by_dash(blockId)
-    });
-    for (const child of blockChildren.results) {
-      console.log(child)
-      // @ts-ignore
-      if (child.type === `child_database` || child.type === `child_page`) {
-        blocks.push({
-          // @ts-ignore
-          title: child.child_page.title ?? child.child_database.title,
-          id: child.id,
+  let a = 0
+
+  async function retrieveBlocksRecurisvely(id: string, childType?: `child_database` | `child_page`) {
+    let blockChildren: Awaited<ReturnType<typeof notion['blocks']['children']['list']>> | null = null
+    let databaseChildren: Awaited<ReturnType<typeof notion['databases']['retrieve']>> | null = null
+    switch (childType) {
+      case `child_database`: {
+        databaseChildren = await notion.databases.retrieve({
+          database_id: separateIdWithDash(id)
         })
+        break
       }
-      // @ts-ignore
-      if (child.has_children) {
-        requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id))
+      case `child_page`: {
+        blockChildren = await notion.blocks.children.list({
+          block_id: separateIdWithDash(id),
+          page_size: 50,
+        });
       }
+    }
+
+    console.log(blockChildren)
+    if (blockChildren) {
+      for (const child of blockChildren.results) {
+        // console.log(child)
+        // @ts-ignore
+        if (child.type === `child_database` || child.type === `child_page`) {
+          blocks.push({
+            // @ts-ignore
+            title: child.child_page.title ?? child.child_database.title,
+            id: child.id,
+          })
+        }
+        // @ts-ignore
+        switch (child.type) {
+          case `child_page`: {
+            requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_page`))
+            break;
+          }
+          case `child_database`: {
+            requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_database`))
+            break;
+          }
+        }
+      }
+    } else if (databaseChildren) {
+      console.log(databaseChildren)
     }
   }
 
   const [err] = await to(Promise.allSettled([
-    retrieveBlocksRecurisvely(rootPageId),
+    retrieveBlocksRecurisvely(rootPageId, `child_page`),
     new Promise((resolve) => {
       requestQueue.onComplete(resolve)
     })
@@ -133,12 +161,22 @@ function identify_object_title(obj: any): string {
 
 /**
  * 
- * @param without_dash 1429989fe8ac4effbc8f57f56486db54
+ * @param maybe_without_dash 1429989fe8ac4effbc8f57f56486db54
  * @returns 1429989f-e8ac-4eff-bc8f-57f56486db54
  */
-function separate_page_id_by_dash(without_dash: string): string {
-  if (without_dash.length != 32) {
-    throw new Error(`Incorrect length of page id: ${without_dash.length}`)
+function separateIdWithDash(maybe_without_dash: string): string {
+  if (isIdAlreadySeparateByDash(maybe_without_dash)) {
+    return maybe_without_dash
   }
-  return `${without_dash.substring(0, 8)}-${without_dash.substring(8, 12)}-${without_dash.substring(12, 16)}-${without_dash.substring(16, 20)}-${without_dash.substring(20, 32)}`
+  if (maybe_without_dash.length != 32) {
+    throw new Error(`Incorrect length of page id: ${maybe_without_dash.length}`)
+  }
+  return `${maybe_without_dash.substring(0, 8)}-${maybe_without_dash.substring(8, 12)}-${maybe_without_dash.substring(12, 16)}-${maybe_without_dash.substring(16, 20)}-${maybe_without_dash.substring(20, 32)}`
+}
+
+function isIdAlreadySeparateByDash(maybe_separate_with_dash: string): boolean {
+  if (maybe_separate_with_dash.length !== 36) {
+    return false;
+  }
+  return /^[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}$/.test(maybe_separate_with_dash)
 }

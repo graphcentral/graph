@@ -24,18 +24,22 @@ export class RequestQueue<Res, Err> {
   private checkAndSendRequest() {
     let timeoutId: null | NodeJS.Timeout = null
     const run = () => {
-      if (timeoutId !== null) clearTimeout(timeoutId)
+      console.log(`this.currentRequestCount ${this.currentRequestCount} this.queue.length ${this.queue.length}`)
       if (this.currentRequestCount === 0 && this.queue.length === 0) {
+        console.log(`ewafawewe`)
         timeoutId = setTimeout(() => {
+          console.log(`ewafawewe2`)
+          console.log(`complete`)
           this.eventEmitter.emit(`complete`, this.responses)
           if (this.intervalId) clearInterval(this.intervalId)
         }, 1_500)
       }
-
+      
       if (
-        (this.currentRequestCount === 0 && this.queue.length === 0) &&
+        !(this.currentRequestCount === 0 && this.queue.length === 0) &&
         this.currentRequestCount < this.maxConcurrentRequest
-      ) {
+        ) {
+        if (timeoutId !== null) clearTimeout(timeoutId)
         while (this.currentRequestCount < this.maxConcurrentRequest) {
           console.log(`sending request`)
           this.sendRequest()
@@ -43,7 +47,7 @@ export class RequestQueue<Res, Err> {
             this.responses.push(err)
           })
           .then((res) => {
-            console.log(res)
+            // console.log(res)
             if (res) this.responses.push(res)
           })
           .finally(() => {
