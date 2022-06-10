@@ -52,3 +52,11 @@ export function isIdAlreadySeparateByDash(
     maybe_separate_with_dash
   )
 }
+
+export function nameUntitledIfEmpty(title: string): string {
+  if (title === ``) {
+    return 'Untitled'
+  }
+
+  return title
+}

@@ -1,13 +1,8 @@
 import { Client } from "@notionhq/client"
 import to from "await-to-js"
 import { RequestQueue } from "./request-queue"
-import { separateIdWithDashSafe, identifyObjectTitle } from "./util"
-
-interface ChildInfo {
-  title: string
-  id: string
-  type: `database` | `page`
-}
+import { ChildInfo } from './types/child-info';
+import { separateIdWithDashSafe, identifyObjectTitle, nameUntitledIfEmpty } from "./util"
 
 export async function collectAllChildren(
   notion: Client,
@@ -44,7 +39,7 @@ export async function collectAllChildren(
         if (databaseChildrenQueryResult) {
           databaseChildren = databaseChildrenQueryResult
         }
-        console.log(err)
+        if (err) console.log(err)
         break
       }
       case `page`: {
@@ -54,8 +49,12 @@ export async function collectAllChildren(
         }))
         if (blockChildrenListResult) {
           blockChildren = blockChildrenListResult
+          if (title === `kg#20 super super super nested calendar item`) {
+            console.log(id)
+            console.log(blockChildren)
+          }
         }
-        console.log(err)
+        if (err) console.log(err)
       }
     }
     const queryChild = (child: ChildInfo) => {
@@ -82,7 +81,7 @@ export async function collectAllChildren(
           if (child.type === `child_database` || child.type === `child_page`) {
             const newBlock = {
               // @ts-ignore
-              title: child.child_page?.title ?? child.child_database.title,
+              title: nameUntitledIfEmpty(child.child_page?.title ?? child.child_database.title),
               id: child.id,
               // @ts-ignore
               type: child.child_page?.title ? `page` : `database` as ChildInfo['type'], 
@@ -99,7 +98,7 @@ export async function collectAllChildren(
       for (const child of databaseChildren.results) {
         try {
           const newBlock = {
-            title: identifyObjectTitle(child),
+            title: nameUntitledIfEmpty(identifyObjectTitle(child)),
             id: child.id,
             type: child.object
           }
