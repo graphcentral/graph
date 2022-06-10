@@ -3,26 +3,31 @@ import to from "await-to-js"
 import { RequestQueue } from "./request-queue"
 import { separateIdWithDashSafe, identifyObjectTitle } from "./util"
 
-interface ChildrenInfo {
+interface ChildInfo {
   title: string
   id: string
+  type: `database` | `page`
 }
 
 export async function collectAllChildren(
   notion: Client,
   rootPageId: string
-): Promise<ChildrenInfo[]> {
-  const blocks: ChildrenInfo[] = [
+): Promise<ChildInfo[]> {
+  const blocks: ChildInfo[] = [
     {
       title: `Root`,
       id: separateIdWithDashSafe(rootPageId),
+      type: `page`,
     },
   ]
   const requestQueue = new RequestQueue({ maxConcurrentRequest: 3 })
 
   async function retrieveBlocksRecurisvely(
-    id: string,
-    childType?: `child_database` | `child_page`
+    {
+      id,
+      title,
+      type
+    }: ChildInfo
   ) {
     let blockChildren: Awaited<
       ReturnType<typeof notion[`blocks`][`children`][`list`]>
@@ -30,33 +35,41 @@ export async function collectAllChildren(
     let databaseChildren: Awaited<
       ReturnType<typeof notion[`databases`][`query`]>
     > | null = null
-    switch (childType) {
-      case `child_database`: {
-        databaseChildren = await notion.databases.query({
+    switch (type) {
+      case `database`: {
+        const [err, databaseChildrenQueryResult] = await to(notion.databases.query({
           database_id: separateIdWithDashSafe(id),
           page_size: 50,
-        })
+        }))
+        if (databaseChildrenQueryResult) {
+          databaseChildren = databaseChildrenQueryResult
+        }
+        console.log(err)
         break
       }
-      case `child_page`: {
-        blockChildren = await notion.blocks.children.list({
+      case `page`: {
+        const [err, blockChildrenListResult] = await to(notion.blocks.children.list({
           block_id: separateIdWithDashSafe(id),
           page_size: 50,
-        })
+        }))
+        if (blockChildrenListResult) {
+          blockChildren = blockChildrenListResult
+        }
+        console.log(err)
       }
     }
-    const queryChild = (child: any) => {
+    const queryChild = (child: ChildInfo) => {
       // @ts-ignore
       switch (child.type) {
-        case `child_page`: {
+        case `page`: {
           requestQueue.enqueue(() =>
-            retrieveBlocksRecurisvely(child.id, `child_page`)
+            retrieveBlocksRecurisvely(child)
           )
           break
         }
-        case `child_database`: {
+        case `database`: {
           requestQueue.enqueue(() =>
-            retrieveBlocksRecurisvely(child.id, `child_database`)
+            retrieveBlocksRecurisvely(child)
           )
           break
         }
@@ -67,26 +80,31 @@ export async function collectAllChildren(
         try {
           // @ts-ignore
           if (child.type === `child_database` || child.type === `child_page`) {
-            blocks.push({
+            const newBlock = {
               // @ts-ignore
               title: child.child_page?.title ?? child.child_database.title,
               id: child.id,
-            })
+              // @ts-ignore
+              type: child.child_page?.title ? `page` : `database` as ChildInfo['type'], 
+            }
+            blocks.push(newBlock)
+            queryChild(newBlock)
           }
-          queryChild(child)
         } catch (e) {
           console.log(e)
           console.log(`e`)
+        }
       }
-    }
     } else if (databaseChildren) {
       for (const child of databaseChildren.results) {
         try {
-          blocks.push({
+          const newBlock = {
             title: identifyObjectTitle(child),
             id: child.id,
-          })
-          queryChild(child)
+            type: child.object
+          }
+          blocks.push(newBlock)
+          queryChild(newBlock)
         } catch (e) {
           console.log(e)
           console.log(`e`)
@@ -97,7 +115,10 @@ export async function collectAllChildren(
 
   const [err] = await to(
     Promise.allSettled([
-      retrieveBlocksRecurisvely(rootPageId, `child_page`),
+      retrieveBlocksRecurisvely({
+        id: rootPageId, type: `page`, 
+        title: `Root`
+      }),
       new Promise((resolve) => {
         requestQueue.onComplete(resolve)
       }),

@@ -1,6 +1,11 @@
 import to from "await-to-js"
 import EventEmitter from "events"
 
+/**
+ * https://developers.notion.com/reference/request-limits
+ * Notion API has a request limit
+ * So use a simple request queue to control number of concurrent requests
+ */
 export class RequestQueue<Res, Err> {
   private queue: (() => Promise<Res>)[] = []
   private responses: (Res | Err)[] = []
@@ -20,14 +25,12 @@ export class RequestQueue<Res, Err> {
   private checkAndSendRequest() {
     let timeoutId: null | NodeJS.Timeout = null
     const run = () => {
-      console.log(
-        `this.currentRequestCount ${this.currentRequestCount} this.queue.length ${this.queue.length}`
-      )
+      // if things seem to be completed, check again after 1 second,
+      // and if it is empty, that means new request has not been sent anymore
+      // which means every request has been sent and there's no more work to do
       if (this.currentRequestCount === 0 && this.queue.length === 0) {
-        console.log(`ewafawewe`)
         timeoutId = setTimeout(() => {
-          console.log(`ewafawewe2`)
-          console.log(`complete`)
+          // this line is needed! it's not a mistake
           if (this.currentRequestCount === 0 && this.queue.length === 0) {
             this.eventEmitter.emit(`complete`, this.responses)
             if (this.intervalId) clearInterval(this.intervalId)
@@ -41,13 +44,11 @@ export class RequestQueue<Res, Err> {
       ) {
         if (timeoutId !== null) clearTimeout(timeoutId)
         while (this.currentRequestCount < this.maxConcurrentRequest) {
-          console.log(`sending request`)
           this.sendRequest()
             .catch((err: Err) => {
               this.responses.push(err)
             })
             .then((res) => {
-              // console.log(res)
               if (res) this.responses.push(res)
             })
             .finally(() => {
