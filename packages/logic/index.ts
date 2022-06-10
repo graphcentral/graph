@@ -33,13 +33,13 @@ const notion = new Client({
   //   // },
   // });
   // const r2 = await notion.blocks.retrieve({
-  //   block_id: separateIdWithDash(`aa362e29a8c24d6ba084ceca5a717db6`)
+  //   block_id: separateIdWithDashSafe(`aa362e29a8c24d6ba084ceca5a717db6`)
   //             // `1429989f-e8ac-4eff-bc8f-57f56486db54`
   //           // 16d8004e-5f6a-42a6-9811-51c22ddada12
   // })
   // try{
   //   const r3 = await notion.pages.retrieve({
-  //     page_id: separateIdWithDash(`aa362e29a8c24d6ba084ceca5a717db6`),
+  //     page_id: separateIdWithDashSafe(`aa362e29a8c24d6ba084ceca5a717db6`),
 
   //               // `1429989f-e8ac-4eff-bc8f-57f56486db54`
   //             // 16d8004e-5f6a-42a6-9811-51c22ddada12
@@ -53,49 +53,52 @@ const notion = new Client({
   // console.log(r1)
   // console.log(r2)
   // const r4 = await notion.blocks.children.list({
-  //   block_id: separateIdWithDash(`aa362e29a8c24d6ba084ceca5a717db6`)
+  //   block_id: separateIdWithDashSafe(`aa362e29a8c24d6ba084ceca5a717db6`)
   // });
   // fs.writeFileSync('./blockchildrenlist.json', JSON.stringify(r4, undefined, 2))
   // r4.results.forEach((r) => {
-  //   console.log(r)
-  //   // console.log(identify_object_title(r))
-  // })
-  const blocks = await retrieveBlocks(`aa362e29a8c24d6ba084ceca5a717db6`)
-  console.log(`DONE`)
-  console.log(blocks)
-})();
-
-interface BlockInfo {
-  title: string;
-  id: string;
-}
-
-async function retrieveBlocks(rootPageId: string): Promise<BlockInfo[]> {
-  const blocks: BlockInfo[] = [{
-    title: `Root`,
-    id: separateIdWithDash(rootPageId),
-  }]
-  const requestQueue = new RequestQueue({ maxConcurrentRequest: 3 })
-  let a = 0
-
-  async function retrieveBlocksRecurisvely(id: string, childType?: `child_database` | `child_page`) {
-    let blockChildren: Awaited<ReturnType<typeof notion['blocks']['children']['list']>> | null = null
-    let databaseChildren: Awaited<ReturnType<typeof notion['databases']['retrieve']>> | null = null
-    switch (childType) {
-      case `child_database`: {
-        databaseChildren = await notion.databases.retrieve({
-          database_id: separateIdWithDash(id)
-        })
-        break
-      }
-      case `child_page`: {
-        blockChildren = await notion.blocks.children.list({
-          block_id: separateIdWithDash(id),
-          page_size: 50,
-        });
-      }
+    //   console.log(r)
+    //   // console.log(identify_object_title(r))
+    // })
+    const blocks = await retrieveBlocks(`aa362e29a8c24d6ba084ceca5a717db6`)
+    console.log(`DONE`)
+    console.log(blocks)
+  })();
+  
+  interface BlockInfo {
+    title: string;
+    id: string;
+  }
+  
+  async function retrieveBlocks(rootPageId: string): Promise<BlockInfo[]> {
+    const blocks: BlockInfo[] = [{
+      title: `Root`,
+      id: separateIdWithDashSafe(rootPageId),
+    }]
+    const requestQueue = new RequestQueue({ maxConcurrentRequest: 3 })
+    let a = 0
+    
+    async function retrieveBlocksRecurisvely(id: string, childType?: `child_database` | `child_page`) {
+      let blockChildren: Awaited<ReturnType<typeof notion['blocks']['children']['list']>> | null = null
+      let databaseChildren: Awaited<ReturnType<typeof notion['databases']['retrieve']>> | null = null
+      switch (childType) {
+        case `child_database`: {
+          databaseChildren = await notion.databases.retrieve({
+            database_id: separateIdWithDashSafe(id)
+          })
+          break
+        }
+        case `child_page`: {
+          blockChildren = await notion.blocks.children.list({
+            block_id: separateIdWithDashSafe(id),
+            page_size: 50,
+          });
+        }
     }
-
+    if (a == 0) {
+      fs.writeFileSync('./children.json', JSON.stringify(blockChildren, undefined, 2))
+    }
+    
     console.log(blockChildren)
     if (blockChildren) {
       for (const child of blockChildren.results) {
@@ -104,23 +107,30 @@ async function retrieveBlocks(rootPageId: string): Promise<BlockInfo[]> {
         if (child.type === `child_database` || child.type === `child_page`) {
           blocks.push({
             // @ts-ignore
-            title: child.child_page.title ?? child.child_database.title,
+            title: child.child_page?.title ?? child.child_database.title,
             id: child.id,
           })
         }
         // @ts-ignore
         switch (child.type) {
+          // console.log(`enquueud`)
           case `child_page`: {
             requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_page`))
             break;
           }
           case `child_database`: {
-            requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_database`))
+            requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_page`))
             break;
           }
         }
       }
     } else if (databaseChildren) {
+      // blocks.push({
+      //   // @ts-ignore
+      //   title: child.child_page.title ?? child.child_database.title,
+      //   id: child.id,
+      // })
+      // identify_object_title()
       console.log(databaseChildren)
     }
   }
@@ -142,13 +152,10 @@ async function retrieveBlocks(rootPageId: string): Promise<BlockInfo[]> {
 function identify_object_title(obj: any): string {
   if (obj.object === `database`) {
     // @ts-ignore
-    console.log(`db`)
     return (
       obj.title?.[0].plain_text
       )
     } else if (obj.object === `page`) {
-    console.log(`pg`)
-    // console.log(r)
     // @ts-ignore
     return (
       obj.properties?.Name?.title?.[0].plain_text ??
@@ -164,13 +171,19 @@ function identify_object_title(obj: any): string {
  * @param maybe_without_dash 1429989fe8ac4effbc8f57f56486db54
  * @returns 1429989f-e8ac-4eff-bc8f-57f56486db54
  */
-function separateIdWithDash(maybe_without_dash: string): string {
+function separateIdWithDashSafe(maybe_without_dash: string): string {
   if (isIdAlreadySeparateByDash(maybe_without_dash)) {
     return maybe_without_dash
   }
+
   if (maybe_without_dash.length != 32) {
-    throw new Error(`Incorrect length of page id: ${maybe_without_dash.length}`)
+    throw new Error(`Incorrect length of id: ${maybe_without_dash.length}`)
   }
+  
+  if (!/^[a-zA-Z0-9]{32}$/.test(maybe_without_dash)) {
+    throw new Error(`Incorrect format of id: ${maybe_without_dash}. It must be /^[a-zA-Z0-9]{32}$/`)
+  }
+
   return `${maybe_without_dash.substring(0, 8)}-${maybe_without_dash.substring(8, 12)}-${maybe_without_dash.substring(12, 16)}-${maybe_without_dash.substring(16, 20)}-${maybe_without_dash.substring(20, 32)}`
 }
 
