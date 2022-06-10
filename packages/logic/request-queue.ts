@@ -28,9 +28,11 @@ export class RequestQueue<Res, Err> {
         timeoutId = setTimeout(() => {
           console.log(`ewafawewe2`)
           console.log(`complete`)
-          this.eventEmitter.emit(`complete`, this.responses)
-          if (this.intervalId) clearInterval(this.intervalId)
-        }, 1_500)
+          if (this.currentRequestCount === 0 && this.queue.length === 0) {
+            this.eventEmitter.emit(`complete`, this.responses)
+            if (this.intervalId) clearInterval(this.intervalId)
+          }
+        }, 1_000)
       }
 
       if (
@@ -56,7 +58,7 @@ export class RequestQueue<Res, Err> {
       }
     }
     run()
-    this.intervalId = setInterval(run, 1_000)
+    this.intervalId = setInterval(run, 300)
   }
 
   public enqueue(retriveBlockRequestFn: () => Promise<Res>) {

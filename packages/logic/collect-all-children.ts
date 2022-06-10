@@ -64,16 +64,21 @@ export async function collectAllChildren(
     }
     if (blockChildren) {
       for (const child of blockChildren.results) {
-        // @ts-ignore
-        if (child.type === `child_database` || child.type === `child_page`) {
-          blocks.push({
-            // @ts-ignore
-            title: child.child_page?.title ?? child.child_database.title,
-            id: child.id,
-          })
-        }
-        queryChild(child)
+        try {
+          // @ts-ignore
+          if (child.type === `child_database` || child.type === `child_page`) {
+            blocks.push({
+              // @ts-ignore
+              title: child.child_page?.title ?? child.child_database.title,
+              id: child.id,
+            })
+          }
+          queryChild(child)
+        } catch (e) {
+          console.log(e)
+          console.log(`e`)
       }
+    }
     } else if (databaseChildren) {
       for (const child of databaseChildren.results) {
         try {
