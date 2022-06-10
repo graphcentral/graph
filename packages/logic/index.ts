@@ -60,6 +60,27 @@ const notion = new Client({
     //   console.log(r)
     //   // console.log(identify_object_title(r))
     // })
+    // const q = await to(notion.databases.query({
+    //   database_id: `025ecc41-9e1e-4525-ace8-94586cd20493`,
+    //   page_size: 50,
+    // }))
+    // const q2 = await to(notion.databases.retrieve({
+    //   database_id: `025ecc41-9e1e-4525-ace8-94586cd20493`,
+    // }))
+    // const q3 = await to(notion.blocks.retrieve({
+    //   block_id: `025ecc41-9e1e-4525-ace8-94586cd20493`,
+    // }))
+    // const q4 = await to(notion.pages.retrieve({
+    //   page_id: `025ecc41-9e1e-4525-ace8-94586cd20493`,
+    // }))
+    // console.log(q)
+    // const [err, result] = q;
+    // if (result) {
+    //   console.log(JSON.stringify(result.results, undefined, 2))
+    // }
+    // console.log(q2)
+    // console.log(q3)
+    // console.log(q4)
     const blocks = await retrieveBlocks(`aa362e29a8c24d6ba084ceca5a717db6`)
     console.log(`DONE`)
     console.log(blocks)
@@ -80,12 +101,15 @@ const notion = new Client({
     
     async function retrieveBlocksRecurisvely(id: string, childType?: `child_database` | `child_page`) {
       let blockChildren: Awaited<ReturnType<typeof notion['blocks']['children']['list']>> | null = null
-      let databaseChildren: Awaited<ReturnType<typeof notion['databases']['retrieve']>> | null = null
+      let databaseChildren: Awaited<ReturnType<typeof notion['databases']['query']>> | null = null
       switch (childType) {
         case `child_database`: {
-          databaseChildren = await notion.databases.retrieve({
-            database_id: separateIdWithDashSafe(id)
+          databaseChildren = await notion.databases.query({
+            database_id: separateIdWithDashSafe(id),
+            page_size: 50,
           })
+          console.log(`databaseChildren`)
+          console.log(databaseChildren)
           break
         }
         case `child_page`: {
@@ -98,11 +122,21 @@ const notion = new Client({
     if (a == 0) {
       fs.writeFileSync('./children.json', JSON.stringify(blockChildren, undefined, 2))
     }
-    
-    console.log(blockChildren)
+    const queryChild = (child: any) => {
+      // @ts-ignore
+      switch (child.type) {
+        case `child_page`: {
+          requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_page`))
+          break;
+        }
+        case `child_database`: {
+          requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_database`))
+          break;
+        }
+      }
+    }
     if (blockChildren) {
       for (const child of blockChildren.results) {
-        // console.log(child)
         // @ts-ignore
         if (child.type === `child_database` || child.type === `child_page`) {
           blocks.push({
@@ -111,27 +145,17 @@ const notion = new Client({
             id: child.id,
           })
         }
-        // @ts-ignore
-        switch (child.type) {
-          // console.log(`enquueud`)
-          case `child_page`: {
-            requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_page`))
-            break;
-          }
-          case `child_database`: {
-            requestQueue.enqueue(() => retrieveBlocksRecurisvely(child.id, `child_page`))
-            break;
-          }
-        }
+        queryChild(child)
       }
     } else if (databaseChildren) {
-      // blocks.push({
-      //   // @ts-ignore
-      //   title: child.child_page.title ?? child.child_database.title,
-      //   id: child.id,
-      // })
-      // identify_object_title()
-      console.log(databaseChildren)
+      for (const child of databaseChildren.results) {
+        blocks.push({
+          // @ts-ignore
+          title: identify_object_title(child),
+          id: child.id,
+        })
+        queryChild(child)
+      }
     }
   }
 
