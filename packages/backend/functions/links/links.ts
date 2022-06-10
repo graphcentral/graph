@@ -1,9 +1,9 @@
-import { Client } from "@notionhq/client" 
-import { Handler } from "@netlify/functions";
-import dotenv from 'dotenv'
-import path from 'path'
+import { Client } from "@notionhq/client"
+import { Handler } from "@netlify/functions"
+import dotenv from "dotenv"
+import path from "path"
 
-dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env' )})
+dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `..`, `.env`) })
 
 const handler: Handler = async (event, context) => {
   console.log(process.env)
@@ -16,8 +16,8 @@ const handler: Handler = async (event, context) => {
   })()
   return {
     statusCode: 200,
-    body: JSON.stringify({ message: "Hello World" }),
-  };
-};
+    body: JSON.stringify({ message: `Hello World` }),
+  }
+}
 
-export { handler };
+export { handler }

@@ -1,9 +1,9 @@
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      NODE_ENV: 'development' | 'production';
-      PORT?: string;
-      NOTION_TOKEN: string;
+      NODE_ENV: `development` | `production`
+      PORT?: string
+      NOTION_TOKEN: string
     }
   }
 }
