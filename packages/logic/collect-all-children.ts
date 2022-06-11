@@ -2,7 +2,7 @@
 import { Client } from "@notionhq/client"
 import to from "await-to-js"
 import { RequestQueue } from "./request-queue"
-import { NodesGraph } from "./types/nodes-graph"
+import { UndirectedNodesGraph } from "./types/nodes-graph"
 import { NotionContentNode } from "./types/notion-content-node"
 import { separateIdWithDashSafe, identifyObjectTitle } from "./util"
 
@@ -49,8 +49,6 @@ async function retrieveRootNode(
   }
 }
 
-// function processNewBlock(nodesGraph: NodesGraph,) {}
-
 /**
  * Notion API currently does not support getting all children of a page at once
  * so the only way is to recursively extract all pages and databases from the root block (page or database)
@@ -63,16 +61,19 @@ async function retrieveRootNode(
 export async function collectAllChildren(
   notion: Client,
   rootBlockId: string
-): Promise<NotionContentNode[]> {
+): Promise<{
+  nodes: NotionContentNode[]
+  links: ReturnType<
+    UndirectedNodesGraph<NotionContentNode>[`getD3JsEdgeFormat`]
+  >
+}> {
   const rootNode = await retrieveRootNode(notion, rootBlockId)
 
   if (!rootNode) {
     throw new Error(`Error while retrieving rootNode`)
   }
   const nodes: NotionContentNode[] = [rootNode]
-  const nodesGraph: NodesGraph = {
-    [rootNode.id]: {},
-  }
+  const nodesGraph = new UndirectedNodesGraph<NotionContentNode>()
   const requestQueue = new RequestQueue({ maxConcurrentRequest: 3 })
 
   async function retrieveNodesRecursively(parentNode: NotionContentNode) {
@@ -109,9 +110,16 @@ export async function collectAllChildren(
         if (err) console.log(err)
       }
     }
+
     const queryChild = (child: NotionContentNode) => {
       requestQueue.enqueue(() => retrieveNodesRecursively(child))
     }
+    const processNewBlock = (newBlock: NotionContentNode) => {
+      nodesGraph.addEdge(parentNode, newBlock)
+      nodes.push(newBlock)
+      queryChild(newBlock)
+    }
+
     if (blockChildren) {
       for (const child of blockChildren.results) {
         try {
@@ -125,11 +133,8 @@ export async function collectAllChildren(
                 // @ts-ignore: sdk doesn't support good typing
                 child.type
               ),
-              parent: parentNode,
             }
-
-            nodes.push(newBlock)
-            queryChild(newBlock)
+            processNewBlock(newBlock)
           }
         } catch (e) {
           console.log(e)
@@ -143,10 +148,8 @@ export async function collectAllChildren(
             title: identifyObjectTitle(child),
             id: child.id,
             type: child.object,
-            parent: parentNode,
           }
-          nodes.push(newBlock)
-          queryChild(newBlock)
+          processNewBlock(newBlock)
         } catch (e) {
           console.log(e)
           console.log(`e`)
@@ -168,5 +171,8 @@ export async function collectAllChildren(
     throw err
   }
 
-  return nodes
+  return {
+    nodes,
+    links: nodesGraph.getD3JsEdgeFormat(),
+  }
 }

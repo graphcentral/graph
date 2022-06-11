@@ -26,10 +26,10 @@ const notion = new Client({
   //   block_id: separateIdWithDashSafe(`aa362e29a8c24d6ba084ceca5a717db6`),
   // })
   // console.log(a)
-  const children = await collectAllChildren(
+  const graph = await collectAllChildren(
     notion,
     // `c38aaee124254ce19832e89570141b75`
     `aa362e29a8c24d6ba084ceca5a717db6`
   )
-  console.log(children)
+  console.log(graph)
 })()

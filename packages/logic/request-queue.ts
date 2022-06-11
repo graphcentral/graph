@@ -32,6 +32,9 @@ export class RequestQueue<Res, Err> {
   private checkAndSendRequest() {
     let timeoutId: null | NodeJS.Timeout = null
     const run = () => {
+      console.log(
+        `# current requests: ${this.currentRequestCount} / # items in the queue: ${this.queue.length}`
+      )
       // if things seem to be completed, check again after 1 second,
       // and if it is empty, that means new request has not been sent anymore
       // which means every request has been sent and there's no more work to do
