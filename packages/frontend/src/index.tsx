@@ -1,8 +1,5 @@
 import React from "react"
 import ReactDOM from "react-dom"
-import { ExampleImpure } from "./components/Example"
+import { MainPagePure } from "src/pages/Main"
 
-ReactDOM.render(
-  <ExampleImpure color="#345345" />,
-  document.getElementById(`root`)
-)
+ReactDOM.render(<MainPagePure />, document.getElementById(`root`))

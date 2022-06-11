@@ -58,6 +58,10 @@ export const commonConfig: webpack.Configuration = {
   },
   resolve: {
     extensions: [`.tsx`, `.ts`, `.js`],
+    alias: {
+      root: __dirname,
+      src: path.resolve(__dirname, `..`, `src`),
+    },
   },
   output: {
     filename: `[chunkhash].[name].js`,
