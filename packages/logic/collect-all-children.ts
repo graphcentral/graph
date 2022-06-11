@@ -53,7 +53,7 @@ async function retrieveRootNode(
 
 /**
  * Notion API currently does not support getting all children of a page at once
- * so the only way is to recursively extract all pages and databases from a page
+ * so the only way is to recursively extract all pages and databases from the root block (page or database)
  * @param notion Notion client
  * @param rootBlockId the id of the root page or database.
  * Either format of 1429989fe8ac4effbc8f57f56486db54 or
