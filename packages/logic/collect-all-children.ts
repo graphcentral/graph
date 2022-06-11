@@ -2,7 +2,8 @@
 import { Client } from "@notionhq/client"
 import to from "await-to-js"
 import { RequestQueue } from "./request-queue"
-import { NotionContentNode } from "./types/child-info"
+import { NodesGraph } from "./types/nodes-graph"
+import { NotionContentNode } from "./types/notion-content-node"
 import { separateIdWithDashSafe, identifyObjectTitle } from "./util"
 
 function blockTypeToNotionContentNodeType(
@@ -48,6 +49,8 @@ async function retrieveRootNode(
   }
 }
 
+// function processNewBlock(nodesGraph: NodesGraph,) {}
+
 /**
  * Notion API currently does not support getting all children of a page at once
  * so the only way is to recursively extract all pages and databases from a page
@@ -67,10 +70,9 @@ export async function collectAllChildren(
     throw new Error(`Error while retrieving rootNode`)
   }
   const nodes: NotionContentNode[] = [rootNode]
-  const nodesGraph: Record<
-    NotionContentNode[`id`],
-    Record<NotionContentNode[`id`], boolean>
-  > = {}
+  const nodesGraph: NodesGraph = {
+    [rootNode.id]: {},
+  }
   const requestQueue = new RequestQueue({ maxConcurrentRequest: 3 })
 
   async function retrieveNodesRecursively(parentNode: NotionContentNode) {
