@@ -21,7 +21,6 @@ const notion = new Client({
   // })
   // console.log(res)
   // console.log(res2)
-  // @ts-ignore
   // console.log(res.results.map(({ type }) => type))
   // const a = await notion.blocks.retrieve({
   //   block_id: separateIdWithDashSafe(`aa362e29a8c24d6ba084ceca5a717db6`),
@@ -29,8 +28,8 @@ const notion = new Client({
   // console.log(a)
   const children = await collectAllChildren(
     notion,
-    `c38aaee124254ce19832e89570141b75`
-    // `aa362e29a8c24d6ba084ceca5a717db6`
+    // `c38aaee124254ce19832e89570141b75`
+    `aa362e29a8c24d6ba084ceca5a717db6`
   )
   console.log(children)
 })()

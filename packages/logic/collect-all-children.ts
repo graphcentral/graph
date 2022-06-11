@@ -3,11 +3,7 @@ import { Client } from "@notionhq/client"
 import to from "await-to-js"
 import { RequestQueue } from "./request-queue"
 import { NotionContentNode } from "./types/child-info"
-import {
-  separateIdWithDashSafe,
-  identifyObjectTitle,
-  nameUntitledIfEmpty,
-} from "./util"
+import { separateIdWithDashSafe, identifyObjectTitle } from "./util"
 
 function blockTypeToNotionContentNodeType(
   blockType: `child_page` | `child_database`
@@ -71,6 +67,10 @@ export async function collectAllChildren(
     throw new Error(`Error while retrieving rootNode`)
   }
   const nodes: NotionContentNode[] = [rootNode]
+  const nodesGraph: Record<
+    NotionContentNode[`id`],
+    Record<NotionContentNode[`id`], boolean>
+  > = {}
   const requestQueue = new RequestQueue({ maxConcurrentRequest: 3 })
 
   async function retrieveNodesRecursively(parentNode: NotionContentNode) {
