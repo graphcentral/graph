@@ -160,7 +160,7 @@ export async function getGraphFromRootBlock(
   }
   const nodes: NotionContentNode[] = [rootNode]
   const nodesGraph = new UndirectedNodesGraph<NotionContentNode>()
-  const requestQueue = new RequestQueue({ maxConcurrentRequest: 5 })
+  const requestQueue = new RequestQueue({ maxConcurrentRequest: 50 })
 
   async function retrieveNodesRecursively(parentNode: NotionContentNode) {
     const queryChild = (child: NotionContentNode) => {

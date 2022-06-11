@@ -31,10 +31,12 @@ export class RequestQueue<Res, Err> {
    */
   private checkAndSendRequest() {
     let timeoutId: null | NodeJS.Timeout = null
+    let totalRequestCount = 0
     const run = () => {
       console.log(
         `# current requests: ${this.currentRequestCount} / # items in the queue: ${this.queue.length}`
       )
+      console.log(`# total requests sent: ${totalRequestCount}`)
       // if things seem to be completed, check again after 1 second,
       // and if it is empty, that means new request has not been sent anymore
       // which means every request has been sent and there's no more work to do
@@ -54,6 +56,7 @@ export class RequestQueue<Res, Err> {
       ) {
         if (timeoutId !== null) clearTimeout(timeoutId)
         while (this.currentRequestCount < this.maxConcurrentRequest) {
+          ++totalRequestCount
           this.sendRequest()
             .catch((err: Err) => {
               this.responses.push(err)

@@ -5,18 +5,6 @@ import dotenv from "dotenv"
 
 import fs from "fs"
 
-// @ts-ignore
-const srcPath = (subdir) => path.join(__dirname, `src`, subdir)
-// @ts-ignore
-const getFilesAndDirectories = (source) =>
-  fs.readdirSync(source, { withFileTypes: true }).map((dirent) => dirent.name)
-const absoluteImports = {}
-getFilesAndDirectories(`src`).forEach((fileName) => {
-  const fileNameWithoutExtension = path.parse(fileName).name
-  // @ts-ignore
-  absoluteImports[`${fileNameWithoutExtension}`] = srcPath(fileName)
-})
-
 export const commonConfig: webpack.Configuration = {
   entry: `./src/index.tsx`,
   // https://webpack.js.org/plugins/split-chunks-plugin/
@@ -58,6 +46,7 @@ export const commonConfig: webpack.Configuration = {
   },
   resolve: {
     extensions: [`.tsx`, `.ts`, `.js`],
+    // for absolute path resolution: https://stackoverflow.com/questions/55180192/webpack-does-not-see-the-absolute-path
     alias: {
       root: __dirname,
       src: path.resolve(__dirname, `..`, `src`),
