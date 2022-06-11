@@ -1,16 +1,30 @@
-export function identifyObjectTitle(obj: any): string {
-  if (obj.object === `database`) {
-    // @ts-ignore
-    return obj.title?.[0].plain_text
-  } else if (obj.object === `page`) {
-    // @ts-ignore
-    return (
-      obj.properties?.Name?.title?.[0].plain_text ??
-      obj.properties?.title?.title?.[0].plain_text
-    )
+export function identifyObjectTitle<
+  Obj extends { object: `database` | `page` | `block` }
+>(obj: Obj): string {
+  const identify = () => {
+    if (obj.object === `database`) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore: sdk bad typing
+      return obj.title?.[0].plain_text
+    } else if (obj.object === `page`) {
+      return (
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore: sdk bad typing
+        obj.properties?.Name?.title?.[0].plain_text ??
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore: sdk bad typing
+        obj.properties?.title?.title?.[0].plain_text
+      )
+    } else if (obj.object === `block`) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore: sdk bad typing
+      return obj.child_page?.title ?? obj.child_database.title
+    }
+
+    throw new Error(`should never get here`)
   }
 
-  throw new Error(`should never get here`)
+  return nameUntitledIfEmpty(identify())
 }
 
 /**
@@ -55,7 +69,7 @@ export function isIdAlreadySeparateByDash(
 
 export function nameUntitledIfEmpty(title: string): string {
   if (title === ``) {
-    return 'Untitled'
+    return `Untitled`
   }
 
   return title

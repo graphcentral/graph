@@ -1,5 +1,6 @@
-export interface ChildInfo {
+export interface NotionContentNode {
   title: string
   id: string
-  type: `database` | `page`
+  type: `database` | `page` | `error`
+  parent?: NotionContentNode
 }

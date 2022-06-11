@@ -22,6 +22,13 @@ export class RequestQueue<Res, Err> {
     this.checkAndSendRequest()
   }
 
+  /**
+   * This function is used to periodically check the number of concurrent
+   * requests at a time and send the request if the number of concurrent requests
+   * is less than `maxConcurrentRequest`.
+   *
+   * If there are no more requests to send, it will emit `complete` event and terminate.
+   */
   private checkAndSendRequest() {
     let timeoutId: null | NodeJS.Timeout = null
     const run = () => {
@@ -62,25 +69,35 @@ export class RequestQueue<Res, Err> {
     this.intervalId = setInterval(run, 300)
   }
 
-  public enqueue(retriveBlockRequestFn: () => Promise<Res>) {
-    this.queue.push(retriveBlockRequestFn)
-  }
-
-  public async sendRequest(): Promise<null | Res> {
+  private async sendRequest(): Promise<null | Res | Err> {
     const req = this.queue.shift()
 
     if (req === undefined) {
       return null
     }
-    const [err, res] = await to(req())
+    const [err, res] = await to<Res, Err>(req())
 
     if (res === undefined || err !== null) {
-      return null
+      return err
     }
 
     return res
   }
 
+  /**
+   * User only has to enqueue his request here and RequestQueue will take
+   * care of the rest.
+   * @param retriveBlockRequestFn
+   * any function that returns a promise (i.e. sends an async request)
+   */
+  public enqueue(retriveBlockRequestFn: () => Promise<Res>) {
+    this.queue.push(retriveBlockRequestFn)
+  }
+
+  /**
+   * @param listener any callback to be called when RequestQueue finishes its work
+   * and meaning that the queue is empty
+   */
   public onComplete<Fn extends (...args: any[]) => void>(listener: Fn) {
     this.eventEmitter.on(`complete`, listener)
   }
