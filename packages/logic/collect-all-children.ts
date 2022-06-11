@@ -108,16 +108,7 @@ export async function collectAllChildren(
       }
     }
     const queryChild = (child: NotionContentNode) => {
-      switch (child.type) {
-        case `page`: {
-          requestQueue.enqueue(() => retrieveNodesRecursively(child))
-          break
-        }
-        case `database`: {
-          requestQueue.enqueue(() => retrieveNodesRecursively(child))
-          break
-        }
-      }
+      requestQueue.enqueue(() => retrieveNodesRecursively(child))
     }
     if (blockChildren) {
       for (const child of blockChildren.results) {
@@ -134,6 +125,7 @@ export async function collectAllChildren(
               ),
               parent: parentNode,
             }
+
             nodes.push(newBlock)
             queryChild(newBlock)
           }
