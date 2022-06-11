@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Client } from "@notionhq/client"
+import {
+  ListBlockChildrenResponse,
+  QueryDatabaseResponse,
+} from "@notionhq/client/build/src/api-endpoints"
 import to from "await-to-js"
 import { RequestQueue } from "./request-queue"
 import { UndirectedNodesGraph } from "./types/nodes-graph"
@@ -50,6 +54,88 @@ async function retrieveRootNode(
 }
 
 /**
+ *
+ * @param notion
+ * @param parentNode
+ * @returns `null` on error, otherwise databaseChildren OR pageChildren
+ */
+async function retrieveDatabaseOrPageChildren(
+  notion: Client,
+  parentNode: NotionContentNode
+): Promise<{
+  databaseChildren: QueryDatabaseResponse | null
+  pageChildren: ListBlockChildrenResponse | null
+} | null> {
+  let pageChildren: Awaited<
+    ReturnType<typeof notion[`blocks`][`children`][`list`]>
+  > | null = null
+  let databaseChildren: Awaited<
+    ReturnType<typeof notion[`databases`][`query`]>
+  > | null = null
+  switch (parentNode.type) {
+    case `database`: {
+      const [err, databaseChildrenQueryResult] = await to(
+        notion.databases.query({
+          database_id: separateIdWithDashSafe(parentNode.id),
+          page_size: 50,
+        })
+      )
+      if (databaseChildrenQueryResult) {
+        databaseChildren = databaseChildrenQueryResult
+      }
+      if (err) console.log(err)
+      break
+    }
+    case `page`: {
+      const [err, pageChildrenListResult] = await to(
+        notion.blocks.children.list({
+          block_id: separateIdWithDashSafe(parentNode.id),
+          page_size: 50,
+        })
+      )
+      if (pageChildrenListResult) {
+        pageChildren = pageChildrenListResult
+      }
+      if (err) console.log(err)
+    }
+  }
+
+  // something went wrong
+  if (!databaseChildren && !pageChildren) {
+    return null
+  }
+
+  return {
+    databaseChildren,
+    pageChildren,
+  }
+}
+
+function createNotionContentNodeFromPageChild(
+  pageChild: ListBlockChildrenResponse[`results`][0]
+): NotionContentNode {
+  return {
+    title: identifyObjectTitle(pageChild),
+    id: pageChild.id,
+    // @ts-ignore: sdk doesn't support good typing
+    type: blockTypeToNotionContentNodeType(
+      // @ts-ignore: sdk doesn't support good typing
+      pageChild.type
+    ),
+  }
+}
+
+function createNotionContentNodeFromDatabaseChild(
+  databaseChild: QueryDatabaseResponse[`results`][0]
+): NotionContentNode {
+  return {
+    title: identifyObjectTitle(databaseChild),
+    id: databaseChild.id,
+    type: databaseChild.object,
+  }
+}
+
+/**
  * Notion API currently does not support getting all children of a page at once
  * so the only way is to recursively extract all pages and databases from the root block (page or database)
  * @param notion Notion client
@@ -58,7 +144,7 @@ async function retrieveRootNode(
  * 1429989f-e8ac-4eff-bc8f-57f56486db54 are all fine.
  * @returns all recurisvely discovered children of the root page
  */
-export async function collectAllChildren(
+export async function getGraphFromRootBlock(
   notion: Client,
   rootBlockId: string
 ): Promise<{
@@ -77,40 +163,6 @@ export async function collectAllChildren(
   const requestQueue = new RequestQueue({ maxConcurrentRequest: 3 })
 
   async function retrieveNodesRecursively(parentNode: NotionContentNode) {
-    let blockChildren: Awaited<
-      ReturnType<typeof notion[`blocks`][`children`][`list`]>
-    > | null = null
-    let databaseChildren: Awaited<
-      ReturnType<typeof notion[`databases`][`query`]>
-    > | null = null
-    switch (parentNode.type) {
-      case `database`: {
-        const [err, databaseChildrenQueryResult] = await to(
-          notion.databases.query({
-            database_id: separateIdWithDashSafe(parentNode.id),
-            page_size: 50,
-          })
-        )
-        if (databaseChildrenQueryResult) {
-          databaseChildren = databaseChildrenQueryResult
-        }
-        if (err) console.log(err)
-        break
-      }
-      case `page`: {
-        const [err, blockChildrenListResult] = await to(
-          notion.blocks.children.list({
-            block_id: separateIdWithDashSafe(parentNode.id),
-            page_size: 50,
-          })
-        )
-        if (blockChildrenListResult) {
-          blockChildren = blockChildrenListResult
-        }
-        if (err) console.log(err)
-      }
-    }
-
     const queryChild = (child: NotionContentNode) => {
       requestQueue.enqueue(() => retrieveNodesRecursively(child))
     }
@@ -120,20 +172,23 @@ export async function collectAllChildren(
       queryChild(newBlock)
     }
 
-    if (blockChildren) {
-      for (const child of blockChildren.results) {
+    const databaseOrPageChildren = await retrieveDatabaseOrPageChildren(
+      notion,
+      parentNode
+    )
+
+    if (!databaseOrPageChildren) {
+      return
+    }
+
+    const { pageChildren, databaseChildren } = databaseOrPageChildren
+
+    if (pageChildren) {
+      for (const child of pageChildren.results) {
         try {
           // @ts-ignore: sdk doesn't support good typing
           if (child.type === `child_database` || child.type === `child_page`) {
-            const newBlock: NotionContentNode = {
-              title: identifyObjectTitle(child),
-              id: child.id,
-              // @ts-ignore: sdk doesn't support good typing
-              type: blockTypeToNotionContentNodeType(
-                // @ts-ignore: sdk doesn't support good typing
-                child.type
-              ),
-            }
+            const newBlock = createNotionContentNodeFromPageChild(child)
             processNewBlock(newBlock)
           }
         } catch (e) {
@@ -144,11 +199,7 @@ export async function collectAllChildren(
     } else if (databaseChildren) {
       for (const child of databaseChildren.results) {
         try {
-          const newBlock: NotionContentNode = {
-            title: identifyObjectTitle(child),
-            id: child.id,
-            type: child.object,
-          }
+          const newBlock = createNotionContentNodeFromDatabaseChild(child)
           processNewBlock(newBlock)
         } catch (e) {
           console.log(e)
