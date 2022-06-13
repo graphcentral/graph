@@ -4,14 +4,24 @@ export interface NotionContentNode {
   type: `database` | `page` | `error`
 }
 
-export interface NotionContentNodeUnofficialAPI {
-  title: string
-  /**
-   * plain id not separated by dash
-   */
-  id: string
-  type: `page` | `collection_view` | `collection_view_page` | `alias`
-}
+export type NotionContentNodeUnofficialAPI =
+  | {
+      title: string
+      id: string
+      type: `page` | `collection_view` | `alias`
+    }
+  | {
+      title: string
+      /**
+       *  collection view page id
+       *  */
+      id: string
+      type: `collection_view_page`
+      /**
+       * collection id
+       * */
+      collection_id: string
+    }
 
 export function isNotionContentNodeType(
   s: string

@@ -81,13 +81,17 @@ export class NotionGraph {
   }
 
   private addCollectionViewTitleInNextRecursiveCall(
-    page: Awaited<ReturnType<NotionAPI[`getPageRaw`]>>,
+    page: Awaited<ReturnType<NotionAPI[`getPage`]>>,
     parentNode: NotionContentNodeUnofficialAPI
   ) {
-    if (parentNode.type !== `collection_view`) return
+    if (
+      parentNode.type !== `collection_view` &&
+      parentNode.type !== `collection_view_page`
+    )
+      return
 
-    const blocks = page.recordMap.block
-    const collection = page.recordMap.collection
+    const blocks = page.block
+    const collection = page.collection
     // this contains the id of the 'collection' (not 'collection_view')
     // 'collection' contains the name of the database, which is what we want
     const collectionViewBlock = blocks[parentNode.id]
@@ -137,20 +141,6 @@ export class NotionGraph {
     }
   }
 
-  private getPagesFromCollectionView(
-    page: Awaited<ReturnType<NotionAPI[`getPageRaw`]>>,
-    parentNode: NotionContentNodeUnofficialAPI
-  ) {
-    if (parentNode.type !== `collection_view`) return
-
-    const blocks = page.recordMap.block
-    // 'collection_view' contains ids of the pages inside it, if any
-    const collection_view = page.recordMap.collection_view
-
-    // collectionView != realCollectionView. They have different ids
-    const collectionViewBlock = blocks[parentNode.id]
-  }
-
   public async getGraphFromRootBlock(rootBlockId: string): Promise<{
     nodes: Record<
       NotionContentNodeUnofficialAPI[`id`],
@@ -191,21 +181,24 @@ export class NotionGraph {
       parentNode: NotionContentNodeUnofficialAPI
     ) => {
       const [err, page] = await toEnhanced(
-        this.unofficialNotionAPI.getPageRaw(parentNode.id)
+        // getPageRaw must NOT be used
+        this.unofficialNotionAPI.getPage(parentNode.id)
       )
       if (err) this.accumulateError(err)
       if (!page) return
 
       // if the parent node was collection_view,
       // the response must contain `collection` and `collection_view` keys
-      if (parentNode.type === `collection_view`) {
+      if (
+        parentNode.type === `collection_view` ||
+        parentNode.type === `collection_view_page`
+      ) {
         this.addCollectionViewTitleInNextRecursiveCall(page, parentNode)
       }
 
-      for (const selfOrChildBlockId of Object.keys(page.recordMap.block)) {
-        const childBlockType =
-          page.recordMap.block[selfOrChildBlockId].value.type
-        const childBlock = page.recordMap.block[selfOrChildBlockId]
+      for (const selfOrChildBlockId of Object.keys(page.block)) {
+        const childBlockType = page.block[selfOrChildBlockId].value.type
+        const childBlock = page.block[selfOrChildBlockId]
         console.log(`${childBlockType}`)
         if (!isNotionContentNodeType(childBlockType)) continue
         if (
@@ -273,6 +266,19 @@ export class NotionGraph {
             break
           }
           case `collection_view_page`: {
+            debugObject(childBlock)
+            const childNode: NotionContentNodeUnofficialAPI = {
+              // title will be known in the next request
+              title: `Unknown database page title`,
+              id: childBlockId,
+              collection_id:
+                // @ts-ignore
+                childBlock.value.collection_id,
+              type: childBlockType,
+            }
+            this.nodes[childNode.id] = childNode
+            this.nodesGraph.addEdge(childNode, parentNode)
+            requestQueue.enqueue(() => recursivelyDiscoverBlocks(childNode))
             break
           }
           case `page`: {
@@ -297,9 +303,11 @@ export class NotionGraph {
       ...rootBlockNode,
       type: rootBlockNodeNarrowedType,
     }
+    // @ts-ignore: todo fix this (the topmost block can be a collection_view_page)
     this.nodes[typeSafeRootBlockNode.id] = typeSafeRootBlockNode
     const result = await toEnhanced(
       Promise.allSettled([
+        // @ts-ignore: todo fix this (the topmost block can be a collection_view_page)
         recursivelyDiscoverBlocks(typeSafeRootBlockNode),
         new Promise((resolve) => requestQueue.onComplete(resolve)),
       ])
