@@ -1,8 +1,6 @@
-import { Client } from "@notionhq/client"
+// import { Client } from "@notionhq/client"
 import * as dotenv from "dotenv"
 import path from "path"
-import { getGraphFromRootBlock } from "./get-graph-from-root-block"
-import { NotionAPI } from "notion-client"
 
 dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
 
@@ -14,10 +12,18 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const { NotionAPI } = await import(`notion-client`)
   const notionUnofficialClient = new NotionAPI()
 
-  const recordMap = await notionUnofficialClient.getPage(
-    `067dd719a912471ea9a3ac10710e7fdf`
+  const recordMap2 = await notionUnofficialClient.getPage(
+    `1f96a097fd1a4c53a3c42a3288f39e9d`
   )
-  console.log(recordMap)
+  const recordMap3 = await notionUnofficialClient.getBlocks([
+    `1f96a097-fd1a-4c53-a3c4-2a3288f39e9d`,
+  ])
+  const recordMap4 = await notionUnofficialClient.getPageRaw(
+    `1f96a097fd1a4c53a3c42a3288f39e9d`
+  )
+  console.log(JSON.stringify(recordMap2, null, 2))
+  console.log(JSON.stringify(recordMap3, null, 2))
+  console.log(JSON.stringify(recordMap4, null, 2))
 
   // const graph = await getGraphFromRootBlock(
   //   notion,

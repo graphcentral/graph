@@ -16,7 +16,8 @@
     "lint:debug": "eslint . --debug",
     "lint:fix": "eslint . --fix",
     "fe:dev": "npm run dev -w packages/frontend",
-    "logic:dev": "npm run dev -w packages/logic"
+    "logic:dev": "npm run dev -w packages/logic",
+    "logic:compile": "npm run compile -w packages/logic"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "5.9.1",
