@@ -200,7 +200,6 @@ export class NotionGraph {
       for (const selfOrChildBlockId of Object.keys(page.block)) {
         const childBlockType = page.block[selfOrChildBlockId].value.type
         const childBlock = page.block[selfOrChildBlockId]
-        console.log(`${childBlockType}`)
         if (!isNotionContentNodeType(childBlockType)) continue
         if (
           selfOrChildBlockId === separateIdWithDashSafe(parentNode.id) ||
@@ -212,7 +211,6 @@ export class NotionGraph {
 
         switch (childBlockType) {
           case `alias`: {
-            debugObject(childBlock)
             const aliasedBlockId = childBlock.value?.format?.alias_pointer?.id
             const aliasedBlockSpaceId =
               childBlock.value?.format?.alias_pointer?.spaceId
@@ -242,7 +240,6 @@ export class NotionGraph {
             break
           }
           case `collection_view_page`: {
-            debugObject(childBlock)
             const childNode: NotionContentNodeUnofficialAPI = {
               // title will be known in the next request
               title: `Unknown database page title`,
@@ -288,10 +285,6 @@ export class NotionGraph {
         new Promise((resolve) => requestQueue.onComplete(resolve)),
       ])
     )
-
-    console.log(JSON.stringify(this.nodes, null, 2))
-    console.log(this.errors)
-    console.log(this.nodesGraph.getD3JsEdgeFormat())
 
     return {
       nodes: this.nodes,

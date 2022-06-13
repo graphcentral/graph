@@ -72,7 +72,7 @@ export class RequestQueue<Res, Err> {
       }
     }
     run()
-    this.intervalId = setInterval(run, 300)
+    this.intervalId = setInterval(run, 50)
   }
 
   private async sendRequest(): Promise<null | Res | Err> {

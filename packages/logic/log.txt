@@ -8,8 +8,8 @@ CLI tsup v6.1.2
 CLI Using tsup config: /Users/jm/Documents/Code/notion-knowledge-graph/packages/logic/tsup.config.ts
 CLI Target: node16
 ESM Build start
-ESM ⚡️ Build success in 20ms
-ESM dist/index.mjs 14.61 KB
+ESM ⚡️ Build success in 18ms
+ESM dist/index.mjs 14.38 KB
 DTS Build start
 # current requests: 0 / # items in the queue: 0
 # total requests sent: 0
@@ -21,354 +21,79 @@ DTS Build start
 # total requests sent: 0
 # current requests: 0 / # items in the queue: 0
 # total requests sent: 0
-page
-alias
-{
-  "role": "reader",
-  "value": {
-    "id": "e76154bd-a14e-401d-b9bf-94884b6f4b50",
-    "version": 2,
-    "type": "alias",
-    "format": {
-      "alias_pointer": {
-        "id": "de2cb37e-994c-449b-8ee7-832805e1ca56",
-        "table": "block",
-        "spaceId": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
-      }
-    },
-    "created_time": 1655135820000,
-    "last_edited_time": 1655135820000,
-    "parent_id": "1f96a097-fd1a-4c53-a3c4-2a3288f39e9d",
-    "parent_table": "block",
-    "alive": true,
-    "created_by_table": "notion_user",
-    "created_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
-    "last_edited_by_table": "notion_user",
-    "last_edited_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
-    "space_id": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
-  }
-}
-page
-page
-collection_view
-page
-page
-page
-page
-text
-page
-collection_view_page
-{
-  "role": "reader",
-  "value": {
-    "id": "60288d0e-94c5-4f7e-b577-541daee1a3f5",
-    "version": 28,
-    "type": "collection_view_page",
-    "view_ids": [
-      "d8d99f38-40d2-4f63-8652-0941bd54d1d6"
-    ],
-    "collection_id": "b185f89e-16e6-4bb5-9f67-3a835a3fcfc4",
-    "format": {
-      "collection_pointer": {
-        "id": "b185f89e-16e6-4bb5-9f67-3a835a3fcfc4",
-        "table": "collection",
-        "spaceId": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
-      }
-    },
-    "created_time": 1655126095305,
-    "last_edited_time": 1655126040000,
-    "parent_id": "f3961580-1bd0-4fdc-a948-f16b450058d4",
-    "parent_table": "block",
-    "alive": true,
-    "created_by_table": "notion_user",
-    "created_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
-    "last_edited_by_table": "notion_user",
-    "last_edited_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
-    "space_id": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
-  }
-}
-text
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 0
 # current requests: 0 / # items in the queue: 9
 # total requests sent: 0
-page
-page
-page
-text
-page
-text
-page
-page
-page
-page
-text
-# current requests: 0 / # items in the queue: 7
+# current requests: 0 / # items in the queue: 6
 # total requests sent: 3
-page
-collection_view
-page
-page
-collection_view
-page
-# current requests: 0 / # items in the queue: 4
+# current requests: 0 / # items in the queue: 3
 # total requests sent: 6
-page
-collection_view
-page
-page
-page
-collection_view
-page
-page
-text
-# current requests: 0 / # items in the queue: 2
+# current requests: 0 / # items in the queue: 0
 # total requests sent: 9
-page
-collection_view
-page
-text
-page
-collection_view_page
-text
-page
-page
-page
-{
-  "role": "reader",
-  "value": {
-    "id": "4a6d660f-4770-453e-8151-7b620f82b3dd",
-    "version": 2,
-    "type": "page",
-    "created_time": 1655126095305,
-    "last_edited_time": 1655126040000,
-    "parent_id": "b185f89e-16e6-4bb5-9f67-3a835a3fcfc4",
-    "parent_table": "collection",
-    "alive": true,
-    "created_by_table": "notion_user",
-    "created_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
-    "last_edited_by_table": "notion_user",
-    "last_edited_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
-    "space_id": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
-  }
-}
-collection_view
-page
-page
-page
-page
-page
-text
-page
-collection_view_page
-text
-collection_view_page
-page
-collection_view
-page
-page
-page
-page
-page
-page
-page
-page
-page
-page
-page
-page
-collection_view
-page
-header
-text
-text
-text
-text
-text
-text
-text
-# current requests: 0 / # items in the queue: 4
-# total requests sent: 12
-page
-collection_view_page
-page
-collection_view
-page
-page
-collection_view_page
-page
-collection_view
-page
-page
-collection_view_page
-page
-collection_view
-page
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 9
 # current requests: 0 / # items in the queue: 1
+# total requests sent: 9
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 12
+# current requests: 0 / # items in the queue: 1
+# total requests sent: 12
+# current requests: 0 / # items in the queue: 0
 # total requests sent: 15
-page
-page
-page
-page
-page
-text
-DTS ⚡️ Build success in 3322ms
-DTS dist/index.d.ts 1.00 B
 # current requests: 0 / # items in the queue: 0
+# total requests sent: 15
+# current requests: 0 / # items in the queue: 4
+# total requests sent: 15
+# current requests: 0 / # items in the queue: 1
 # total requests sent: 18
 # current requests: 0 / # items in the queue: 0
-# total requests sent: 18
+# total requests sent: 21
 # current requests: 0 / # items in the queue: 0
-# total requests sent: 18
+# total requests sent: 21
 # current requests: 0 / # items in the queue: 0
-# total requests sent: 18
+# total requests sent: 21
 # current requests: 0 / # items in the queue: 0
-# total requests sent: 18
+# total requests sent: 21
 # current requests: 0 / # items in the queue: 0
-# total requests sent: 18
+# total requests sent: 21
 # current requests: 0 / # items in the queue: 0
-# total requests sent: 18
+# total requests sent: 21
+# current requests: 0 / # items in the queue: 0
+# total requests sent: 21
 {
-  "1f96a097-fd1a-4c53-a3c4-2a3288f39e9d": {
-    "id": "1f96a097-fd1a-4c53-a3c4-2a3288f39e9d",
-    "title": "Simple testing ground",
-    "type": "page"
-  },
-  "de2cb37e-994c-449b-8ee7-832805e1ca56": {
-    "id": "de2cb37e-994c-449b-8ee7-832805e1ca56",
-    "title": "otherpage-nested",
-    "type": "page"
-  },
-  "cfa04bab-3563-498b-9273-5a38b18f612e": {
-    "id": "cfa04bab-3563-498b-9273-5a38b18f612e",
-    "title": "otherpage",
-    "type": "page"
-  },
-  "da588333-9327-48db-bc4b-084ab6131aad": {
-    "title": "Database-test",
-    "id": "da588333-9327-48db-bc4b-084ab6131aad",
-    "type": "collection_view"
-  },
-  "73c7256e-f1b5-4fab-abc9-77536951ba33": {
-    "id": "73c7256e-f1b5-4fab-abc9-77536951ba33",
-    "title": "db#1",
-    "type": "page"
-  },
-  "f3961580-1bd0-4fdc-a948-f16b450058d4": {
-    "id": "f3961580-1bd0-4fdc-a948-f16b450058d4",
-    "title": "db#2",
-    "type": "page"
-  },
-  "11c93ec1-465d-4e4d-b331-419887cee722": {
-    "id": "11c93ec1-465d-4e4d-b331-419887cee722",
-    "title": "db#3",
-    "type": "page"
-  },
-  "d882fae1-1e71-4464-b29a-452a1eeb8ceb": {
-    "id": "d882fae1-1e71-4464-b29a-452a1eeb8ceb",
-    "title": "000000",
-    "type": "page"
-  },
-  "8e5b8339-f61a-4e4b-8219-e21de716ad51": {
-    "id": "8e5b8339-f61a-4e4b-8219-e21de716ad51",
-    "title": "db#2subsubsub",
-    "type": "page"
-  },
-  "60288d0e-94c5-4f7e-b577-541daee1a3f5": {
-    "title": "FULL page database",
-    "id": "60288d0e-94c5-4f7e-b577-541daee1a3f5",
-    "collection_id": "b185f89e-16e6-4bb5-9f67-3a835a3fcfc4",
-    "type": "collection_view_page"
-  },
-  "c9d98d57-b00f-4c36-88e0-5b6218e1b272": {
-    "id": "c9d98d57-b00f-4c36-88e0-5b6218e1b272",
-    "title": "also-nested",
-    "type": "page"
-  },
-  "6ef7c1a4-6d2f-49a5-8890-8b3ca8b4f23c": {
-    "id": "6ef7c1a4-6d2f-49a5-8890-8b3ca8b4f23c",
-    "title": "NIV Romans",
-    "type": "page"
-  },
-  "ac2b162a-a7e6-42eb-8e5d-bdfbe96b24d0": {
-    "id": "ac2b162a-a7e6-42eb-8e5d-bdfbe96b24d0",
-    "title": "fullpagedatabase1",
-    "type": "page"
-  },
-  "97167bbd-a51e-4c08-8f49-cbcf3f41c9f3": {
-    "id": "97167bbd-a51e-4c08-8f49-cbcf3f41c9f3",
-    "title": "fullpagedatabase2",
-    "type": "page"
-  },
-  "4a6d660f-4770-453e-8151-7b620f82b3dd": {
-    "id": "4a6d660f-4770-453e-8151-7b620f82b3dd",
-    "title": "Untitled",
-    "type": "page"
-  },
-  "990011fa-fb80-4f57-8efe-c72d0c605ec0": {
-    "id": "990011fa-fb80-4f57-8efe-c72d0c605ec0",
-    "title": "also also nested nested",
-    "type": "page"
-  }
+  "nodeslength": 16,
+  "linkslength": 15
 }
-[]
-[
-  D3JsEdge {
-    source: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d',
-    target: 'de2cb37e-994c-449b-8ee7-832805e1ca56'
-  },
-  D3JsEdge {
-    source: 'cfa04bab-3563-498b-9273-5a38b18f612e',
-    target: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d'
-  },
-  D3JsEdge {
-    source: 'da588333-9327-48db-bc4b-084ab6131aad',
-    target: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d'
-  },
-  D3JsEdge {
-    source: '73c7256e-f1b5-4fab-abc9-77536951ba33',
-    target: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d'
-  },
-  D3JsEdge {
-    source: 'f3961580-1bd0-4fdc-a948-f16b450058d4',
-    target: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d'
-  },
-  D3JsEdge {
-    source: '11c93ec1-465d-4e4d-b331-419887cee722',
-    target: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d'
-  },
-  D3JsEdge {
-    source: 'd882fae1-1e71-4464-b29a-452a1eeb8ceb',
-    target: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d'
-  },
-  D3JsEdge {
-    source: '8e5b8339-f61a-4e4b-8219-e21de716ad51',
-    target: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d'
-  },
-  D3JsEdge {
-    source: '60288d0e-94c5-4f7e-b577-541daee1a3f5',
-    target: '1f96a097-fd1a-4c53-a3c4-2a3288f39e9d'
-  },
-  D3JsEdge {
-    source: 'c9d98d57-b00f-4c36-88e0-5b6218e1b272',
-    target: 'cfa04bab-3563-498b-9273-5a38b18f612e'
-  },
-  D3JsEdge {
-    source: '6ef7c1a4-6d2f-49a5-8890-8b3ca8b4f23c',
-    target: '8e5b8339-f61a-4e4b-8219-e21de716ad51'
-  },
-  D3JsEdge {
-    source: 'ac2b162a-a7e6-42eb-8e5d-bdfbe96b24d0',
-    target: 'f3961580-1bd0-4fdc-a948-f16b450058d4'
-  },
-  D3JsEdge {
-    source: '97167bbd-a51e-4c08-8f49-cbcf3f41c9f3',
-    target: 'f3961580-1bd0-4fdc-a948-f16b450058d4'
-  },
-  D3JsEdge {
-    source: '4a6d660f-4770-453e-8151-7b620f82b3dd',
-    target: 'f3961580-1bd0-4fdc-a948-f16b450058d4'
-  },
-  D3JsEdge {
-    source: '990011fa-fb80-4f57-8efe-c72d0c605ec0',
-    target: 'c9d98d57-b00f-4c36-88e0-5b6218e1b272'
-  }
-]
+DTS ⚡️ Build success in 3193ms
+DTS dist/index.d.ts 1.00 B
