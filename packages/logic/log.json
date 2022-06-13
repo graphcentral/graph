@@ -1,0 +1,160 @@
+
+{
+  "cursor": {
+    "stack": []
+  },
+  "recordMap": {
+    "block": {
+      "da588333-9327-48db-bc4b-084ab6131aad": {
+        "role": "reader",
+        "value": {
+          "id": "da588333-9327-48db-bc4b-084ab6131aad",
+          "version": 17,
+          "type": "collection_view",
+          "view_ids": [
+            "056b92f8-6fbc-4565-a0d2-597f03666fd8"
+          ],
+          "collection_id": "58e7440f-fad4-4a30-9de3-2dc5f5673b62",
+          "format": {
+            "collection_pointer": {
+              "id": "58e7440f-fad4-4a30-9de3-2dc5f5673b62",
+              "table": "collection",
+              "spaceId": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
+            }
+          },
+          "created_time": 1655113911514,
+          "last_edited_time": 1655115540000,
+          "parent_id": "1f96a097-fd1a-4c53-a3c4-2a3288f39e9d",
+          "parent_table": "block",
+          "alive": true,
+          "created_by_table": "notion_user",
+          "created_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
+          "last_edited_by_table": "notion_user",
+          "last_edited_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
+          "space_id": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
+        }
+      },
+      "1f96a097-fd1a-4c53-a3c4-2a3288f39e9d": {
+        "role": "reader",
+        "value": {
+          "id": "1f96a097-fd1a-4c53-a3c4-2a3288f39e9d",
+          "version": 158,
+          "type": "page",
+          "properties": {
+            "title": [
+              [
+                "Simple testing ground"
+              ]
+            ]
+          },
+          "content": [
+            "cfa04bab-3563-498b-9273-5a38b18f612e",
+            "da588333-9327-48db-bc4b-084ab6131aad"
+          ],
+          "format": {
+            "page_icon": "🌥️"
+          },
+          "permissions": [
+            {
+              "role": "editor",
+              "type": "user_permission",
+              "user_id": "a5b8452a-14a3-4719-a224-ea678b37f50c"
+            },
+            {
+              "role": "reader",
+              "type": "public_permission",
+              "added_timestamp": 1655094244633
+            }
+          ],
+          "created_time": 1655094180000,
+          "last_edited_time": 1655113860000,
+          "parent_id": "6af4dea3-6d07-4986-9c7e-c2b8bc430408",
+          "parent_table": "space",
+          "alive": true,
+          "created_by_table": "notion_user",
+          "created_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
+          "last_edited_by_table": "notion_user",
+          "last_edited_by_id": "a5b8452a-14a3-4719-a224-ea678b37f50c",
+          "space_id": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
+        }
+      }
+    },
+    "collection_view": {
+      "056b92f8-6fbc-4565-a0d2-597f03666fd8": {
+        "role": "reader",
+        "value": {
+          "id": "056b92f8-6fbc-4565-a0d2-597f03666fd8",
+          "version": 2,
+          "type": "table",
+          "format": {
+            "table_wrap": true,
+            "table_properties": [
+              {
+                "width": 276,
+                "visible": true,
+                "property": "title"
+              },
+              {
+                "visible": true,
+                "property": "CT[O"
+              }
+            ],
+            "collection_pointer": {
+              "id": "58e7440f-fad4-4a30-9de3-2dc5f5673b62",
+              "table": "collection",
+              "spaceId": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
+            }
+          },
+          "parent_id": "da588333-9327-48db-bc4b-084ab6131aad",
+          "parent_table": "block",
+          "alive": true,
+          "page_sort": [
+            "73c7256e-f1b5-4fab-abc9-77536951ba33",
+            "f3961580-1bd0-4fdc-a948-f16b450058d4",
+            "11c93ec1-465d-4e4d-b331-419887cee722",
+            "d882fae1-1e71-4464-b29a-452a1eeb8ceb"
+          ],
+          "space_id": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
+        }
+      }
+    },
+    "collection": {
+      "58e7440f-fad4-4a30-9de3-2dc5f5673b62": {
+        "role": "reader",
+        "value": {
+          "id": "58e7440f-fad4-4a30-9de3-2dc5f5673b62",
+          "version": 14,
+          "name": [
+            [
+              "Database-test"
+            ]
+          ],
+          "schema": {
+            "CT[O": {
+              "name": "Tags",
+              "type": "multi_select"
+            },
+            "title": {
+              "name": "Name",
+              "type": "title"
+            }
+          },
+          "format": {
+            "collection_page_properties": [
+              {
+                "visible": true,
+                "property": "CT[O"
+              }
+            ]
+          },
+          "parent_id": "da588333-9327-48db-bc4b-084ab6131aad",
+          "parent_table": "block",
+          "alive": true,
+          "migrated": true,
+          "space_id": "6af4dea3-6d07-4986-9c7e-c2b8bc430408"
+        }
+      }
+    },
+    "space": {}
+  }
+}

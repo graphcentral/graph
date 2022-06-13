@@ -14,3 +14,7 @@ export async function toEnhanced<Result, Err = Error>(
 
   return [serializeError(err), result]
 }
+
+export function debugObject<T>(obj: T) {
+  console.log(JSON.stringify(obj, null, 2))
+}

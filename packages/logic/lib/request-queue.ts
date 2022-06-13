@@ -47,7 +47,7 @@ export class RequestQueue<Res, Err> {
             this.eventEmitter.emit(`complete`, this.responses)
             if (this.intervalId) clearInterval(this.intervalId)
           }
-        }, 1_000)
+        }, 2_000)
       }
 
       if (

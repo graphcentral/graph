@@ -32,6 +32,7 @@ module.exports = {
     "linebreak-style": [`error`, `unix`],
     "arrow-body-style": `off`,
     "prefer-arrow-callback": `off`,
+    "@typescript-eslint/ban-ts-comment": `off`,
     quotes: [`error`, `backtick`],
   },
 }
