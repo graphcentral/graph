@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "tsup index.ts --onSuccess \"node dist/index.js\"",
+    "dev": "tsup index.ts --onSuccess \"node --loader=ts-node/esm dist/index.mjs\"",
     "compile": "tsup index.ts",
-    "run-compiled": "node dist/index.js"
+    "run-compiled": "node --loader=ts-node/esm dist/index.mjs"
   },
   "keywords": [],
   "author": "",

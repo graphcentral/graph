@@ -2,7 +2,7 @@
 import * as dotenv from "dotenv"
 import path from "path"
 import { separateIdWithDashSafe } from "./official/notion-util"
-// import { NotionGraph } from "./unofficial/get-graph-from-root-block"
+import { NotionGraph } from "./unofficial/get-graph-from-root-block"
 import { NotionAPI } from "notion-client"
 import { dirname } from "path"
 import { fileURLToPath } from "url"
@@ -21,8 +21,9 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const recordMap2 = await notionUnofficialClient.getPage(
     `1f96a097fd1a4c53a3c42a3288f39e9d`
   )
-  // const notionGraph = new NotionGraph(notionUnofficialClient)
-  // notionGraph.getGraphFromRootBlock(`1f96a097fd1a4c53a3c42a3288f39e9d`)
+  separateIdWithDashSafe(`1f96a097fd1a4c53a3c42a3288f39e9d`)
+  const notionGraph = new NotionGraph(notionUnofficialClient)
+  notionGraph.getGraphFromRootBlock(`1f96a097fd1a4c53a3c42a3288f39e9d`)
   // this only returns the ids of contents inside the block, which is not what we want
   // const recordMap3 = await notionUnofficialClient.getBlocks([
   //   separateIdWithDashSafe(`1f96a097fd1a4c53a3c42a3288f39e9d`),
@@ -31,7 +32,7 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   // const recordMap4 = await notionUnofficialClient.getPageRaw(
   //   `1f96a097fd1a4c53a3c42a3288f39e9d`
   // )
-  console.log(JSON.stringify(recordMap2, null, 2))
+  // console.log(JSON.stringify(recordMap2, null, 2))
   // console.log(JSON.stringify(recordMap2, null, 2))
   // console.log(JSON.stringify(recordMap4, null, 2))
 
