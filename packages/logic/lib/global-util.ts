@@ -1,7 +1,6 @@
 import { to } from "await-to-js"
 import { serializeError } from "serialize-error"
 
-console.log(to)
 /**
  * await-to-js wrapper to enable serializing the error to
  * a normal javascript object

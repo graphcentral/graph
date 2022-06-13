@@ -2,9 +2,14 @@ import to from "await-to-js"
 import type { NotionAPI } from "notion-client"
 import { ErrorObject } from "serialize-error"
 import { toEnhanced } from "../lib/global-util"
+import { RequestQueue } from "../lib/request-queue"
 import { separateIdWithDashSafe } from "../official/notion-util"
 import { UndirectedNodesGraph } from "../types/nodes-graph"
-import { NotionContentNodeUnofficialAPI } from "../types/notion-content-node"
+import {
+  isNotionContentNodeType,
+  NotionContentNode,
+  NotionContentNodeUnofficialAPI,
+} from "../types/notion-content-node"
 import { UnofficialNotionAPIUtil } from "./util"
 
 /**
@@ -23,9 +28,6 @@ export class NotionGraph {
   private unofficialNotionAPI: NotionAPI
   private errors: (ErrorObject | Error)[] = []
   private nodes: NotionContentNodeUnofficialAPI[] = []
-  private links: ReturnType<
-    UndirectedNodesGraph<NotionContentNodeUnofficialAPI>[`getD3JsEdgeFormat`]
-  > = []
   private nodesGraph =
     new UndirectedNodesGraph<NotionContentNodeUnofficialAPI>()
 
@@ -33,53 +35,11 @@ export class NotionGraph {
     this.unofficialNotionAPI = unofficialNotionAPI
   }
 
-  private async recursivelyDiscoverBlocks(blockId: string) {
-    const [err, page] = await toEnhanced(
-      this.unofficialNotionAPI.getPage(blockId)
-    )
-    if (err) this.accumulateError(err)
-    if (!page) return
-
-    for (const selfOrChildBlockId of Object.keys(page.block)) {
-      const childBlockType = page.block[selfOrChildBlockId].value.type
-      if (
-        childBlockType !== `page` &&
-        childBlockType !== `collection_view` &&
-        childBlockType !== `collection_view_page` &&
-        childBlockType !== `alias`
-      )
-        continue
-
-      // the block itself
-      if (selfOrChildBlockId === blockId) {
-        this.nodes.push({
-          id: blockId,
-          type: childBlockType,
-          title: UnofficialNotionAPIUtil.getTitleFromPageBlock(
-            page.block[selfOrChildBlockId]
-          ),
-        })
-
-        continue
-      }
-
-      switch (childBlockType) {
-        case `alias`: {
-          // this.nodesGraph.addEdge()
-          break
-        }
-        case `collection_view`: {
-          break
-        }
-        case `collection_view_page`: {
-          break
-        }
-        case `page`: {
-          break
-        }
-      }
-    }
-  }
+  /**
+   *
+   * @param blockId plain block id not separated by dash
+   * @returns
+   */
 
   private accumulateError(err: ErrorObject | Error) {
     this.errors.push(err)
@@ -92,24 +52,101 @@ export class NotionGraph {
     >
     errors: (ErrorObject | Error)[]
   }> {
+    const requestQueue = new RequestQueue<any, Error>({
+      maxConcurrentRequest: 3,
+    })
     // check the root block
     // and if it is inaccessible, just return right away
     const [err, page] = await toEnhanced(
       this.unofficialNotionAPI.getBlocks([separateIdWithDashSafe(rootBlockId)])
     )
-    console.log(JSON.stringify(page, null, 2))
     if (err) this.accumulateError(err)
     if (!page) {
       return {
         nodes: this.nodes,
-        links: this.links,
+        links: [],
         errors: this.errors,
       }
     }
 
+    const blockFromResponse =
+      page.recordMap.block[separateIdWithDashSafe(rootBlockId)]
+    const title =
+      UnofficialNotionAPIUtil.getTitleFromPageBlock(blockFromResponse)
+
+    const rootBlockType = blockFromResponse.value.type
+    if (!isNotionContentNodeType(rootBlockType)) {
+      return {
+        nodes: this.nodes,
+        links: [],
+        errors: this.errors,
+      }
+    }
+
+    const rootNode: NotionContentNodeUnofficialAPI = {
+      title,
+      id: rootBlockId,
+      type: rootBlockType,
+    }
+
+    const recursivelyDiscoverBlocks = async (
+      parentNode: NotionContentNodeUnofficialAPI
+    ) => {
+      const [err, page] = await toEnhanced(
+        this.unofficialNotionAPI.getPage(parentNode.id)
+      )
+      if (err) this.accumulateError(err)
+      if (!page) return
+
+      console.log(`@@@@@@@@@@@ parentNode: ${JSON.stringify(parentNode)}`)
+      console.log(JSON.stringify(page.block, null, 2))
+
+      // for (const selfOrChildBlockId of Object.keys(page.block)) {
+      //   const childBlockType = page.block[selfOrChildBlockId].value.type
+      //   const childBlock = page.block[selfOrChildBlockId]
+      //   if (!isNotionContentNodeType(childBlockType)) continue
+
+      //   if (selfOrChildBlockId === separateIdWithDashSafe(parentNode.id)) {
+      //     continue
+      //   }
+      //   const childBlockId = selfOrChildBlockId
+
+      //   switch (childBlockType) {
+      //     case `alias`: {
+      //       // this.nodesGraph.addEdge()
+      //       break
+      //     }
+      //     case `collection_view`: {
+      //       break
+      //     }
+      //     case `collection_view_page`: {
+      //       break
+      //     }
+      //     case `page`: {
+      //       const title =
+      //         UnofficialNotionAPIUtil.getTitleFromPageBlock(childBlock)
+      //       const childNode: NotionContentNodeUnofficialAPI = {
+      //         title,
+      //         id: childBlockId,
+      //         type: `page`,
+      //       }
+      //       this.nodes.push(childNode)
+      //       this.nodesGraph.addEdge(parentNode, childNode)
+      //       requestQueue.enqueue(() => recursivelyDiscoverBlocks(childNode))
+      //       break
+      //     }
+      //   }
+      // }
+    }
+
+    const result = await Promise.allSettled([
+      recursivelyDiscoverBlocks(rootNode),
+      new Promise((resolve) => requestQueue.onComplete(resolve)),
+    ])
+
     return {
       nodes: this.nodes,
-      links: this.links,
+      links: this.nodesGraph.getD3JsEdgeFormat(),
       errors: this.errors,
     }
   }

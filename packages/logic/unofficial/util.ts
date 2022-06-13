@@ -4,6 +4,12 @@ import { nameUntitledIfEmpty } from "../official/notion-util"
 type BlockMap = Awaited<ReturnType<NotionAPI[`getPage`]>>[`block`]
 
 export class UnofficialNotionAPIUtil {
+  /**
+   * Be as conservative as possible because
+   * Notion API may change any time
+   * @param page
+   * @returns
+   */
   public static getTitleFromPageBlock(page: BlockMap[keyof BlockMap]): string {
     const { properties } = page.value
 
