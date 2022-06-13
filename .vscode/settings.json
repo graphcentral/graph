@@ -12,4 +12,5 @@
     "*.jsx": "javascriptreact",
     "*.tsx": "typescriptreact"
   },
+  "deno.path": "/Users/jm/.deno/bin/deno"
 }
