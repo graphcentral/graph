@@ -72,21 +72,31 @@ export class UndirectedNodesGraph<
   /**
    * Adds an edge between two nodes, but avoids making duplicates
    * if the edge already exists
+   *
+   * Existence of an edge at a time cannot guarantee the existence
+   * of a vertex stored in another data structure (it depends on your implementation)
    */
-  public addEdge(node0: Node, node1: Node) {
+  public addEdgeByIds(node0id: string, node1id: string) {
     // node0 may already have node1, but we just update it anyway
-    let node0Edges = this.graph[node0.id]
-    const node1Edges = this.graph[node1.id]
+    let node0Edges = this.graph[node0id]
+    const node1Edges = this.graph[node1id]
     // check if edge already exists in node1Edges
-    if (node1Edges && node1Edges[node0.id]) {
+    if (node1Edges && node1Edges[node0id]) {
       // if edge already exists, return
       return
     }
     // otherwise, add a new edge to node0
     if (!node0Edges) node0Edges = {}
-    node0Edges[node1.id] = true
+    node0Edges[node1id] = true
 
-    this.graph[node0.id] = node0Edges
+    this.graph[node0id] = node0Edges
+  }
+  /**
+   * Adds an edge between two nodes, but avoids making duplicates
+   * if the edge already exists
+   */
+  public addEdge(node0: Node, node1: Node): void {
+    this.addEdgeByIds(node0.id, node1.id)
   }
 
   public getGraph(): DeepReadonly<RawUndirectedNodesGraph> {

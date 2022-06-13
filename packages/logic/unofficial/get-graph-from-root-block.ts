@@ -170,6 +170,7 @@ export class NotionGraph {
       UnofficialNotionAPIUtil.extractTypeUnsafeNotionContentNodeFromBlock(
         topMostBlock
       )
+    const rootBlockSpaceId = topMostBlock.value.space_id
     if (!isNotionContentNodeType(rootBlockNode.type)) {
       this.errors.push(new Error(Errors.NKG_0001(topMostBlock)))
       return defaultReturn
@@ -211,49 +212,24 @@ export class NotionGraph {
 
         switch (childBlockType) {
           case `alias`: {
-            // this.nodesGraph.addEdge()
+            debugObject(childBlock)
+            const aliasedBlockId = childBlock.value?.format?.alias_pointer?.id
+            const aliasedBlockSpaceId =
+              childBlock.value?.format?.alias_pointer?.spaceId
+            if (aliasedBlockId) {
+              this.nodesGraph.addEdgeByIds(parentNode.id, aliasedBlockId)
+              // if aliased block id is in another space,
+              // need to request that block separately
+              // because it is not going to be discovered
+              if (aliasedBlockSpaceId !== rootBlockSpaceId) {
+                // @todo
+              }
+            } else {
+              this.errors.push(new Error(Errors.NKG_0005(childBlock)))
+            }
             break
           }
           case `collection_view`: {
-            // console.log(JSON.stringify(childBlock, null, 2))
-            // // be extra careful on unsafe type operations
-            // const collectionId: string | undefined =
-            //   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //   // @ts-ignore
-            //   childBlock.value.collection_id
-            // const collectionViewId: string | undefined =
-            //   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //   // @ts-ignore
-            //   childBlock.value.view_ids?.[0]
-
-            // if (!collectionId || !collectionViewId) {
-            //   this.accumulateError(new Error(Errors.NKG_0002(childBlock)))
-            //   break
-            // }
-            // console.log(JSON.stringify(childBlock, null, 2))
-            // const requestCollectionData = async () => {
-            //   const [err, collectionData] = await toEnhanced(
-            //     this.unofficialNotionAPI.getCollectionData(
-            //       collectionId,
-            //       collectionViewId,
-            //       childBlock
-            //     )
-            //   )
-            //   const [err2, collectionData2] = await toEnhanced(
-            //     this.unofficialNotionAPI.getPage(childBlock.value.id)
-            //   )
-            //   if (err || !collectionData) {
-            //     if (err) this.accumulateError(err)
-            //     return null
-            //   }
-            //   if (!collectionData) return null
-            //   console.log(`@@@@@@@@@@@@@@@@@collectionData`)
-            //   console.log(collectionData)
-            //   console.log(`@@@@@@@@@@@@@@@@@collectionData`)
-            //   console.log(`@@@@@@@@@@@@@@@@@collectionData222`)
-            //   console.log(JSON.stringify(collectionData2, null, 2))
-            //   console.log(`@@@@@@@@@@@@@@@@@collectionData222`)
-            // }
             const childNode: NotionContentNodeUnofficialAPI = {
               // title will be known in the next request
               title: `Unknown database title`,
@@ -315,6 +291,7 @@ export class NotionGraph {
 
     console.log(JSON.stringify(this.nodes, null, 2))
     console.log(this.errors)
+    console.log(this.nodesGraph.getD3JsEdgeFormat())
 
     return {
       nodes: this.nodes,

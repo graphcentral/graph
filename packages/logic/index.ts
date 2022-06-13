@@ -14,7 +14,7 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
 ;(async () => {
   const notionUnofficialClient = new NotionAPI()
   const notionGraph = new NotionGraph(notionUnofficialClient)
-  let result
+  // let result
   // try {
   //   result = await Promise.all([
   //     notionUnofficialClient.getPage(`1f96a097fd1a4c53a3c42a3288f39e9d`),
@@ -31,7 +31,7 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   //     // notionUnofficialClient.getBlocks(
   //     //   [`da588333932748dbbc4b084ab6131aad`].map(separateIdWithDashSafe)
   //     // ),
-  //     notionUnofficialClient.getPage(`da588333932748dbbc4b084ab6131aad`),
+  //     notionUnofficialClient.getPage(`c9d98d57b00f4c3688e05b6218e1b272`),
   //   ])
   // } catch (e) {
   //   console.log(e)

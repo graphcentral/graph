@@ -1,4 +1,5 @@
 import type { NotionAPI } from "notion-client"
+import { debugObject } from "../lib/global-util"
 import { nameUntitledIfEmpty } from "../official/notion-util"
 import { Block, BlockMap } from "../types/block-map"
 import { NotionContentNodeUnofficialAPI } from "../types/notion-content-node"
@@ -13,14 +14,15 @@ export class UnofficialNotionAPIUtil {
   public static getTitleFromPageBlock(page: BlockMap[keyof BlockMap]): string {
     const { properties } = page.value
 
+    // if a page is untitled, properties does not exist at all
     if (!properties) {
-      return `Unknown title`
+      return `Untitled`
     }
 
     const title = properties?.title?.[0]?.[0]
 
-    if (!title) {
-      return `Unknown title`
+    if (title === undefined || title === null) {
+      return `Untitled`
     }
 
     return nameUntitledIfEmpty(title)
@@ -32,7 +34,7 @@ export class UnofficialNotionAPIUtil {
       // @ts-ignore
       collectionBlock.value?.name?.[0]?.[0]
 
-    if (!name) {
+    if (name === undefined || name === null) {
       return `Unknown database title`
     }
 

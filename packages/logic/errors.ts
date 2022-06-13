@@ -1,4 +1,4 @@
-import { BlockMap } from "./types/block-map"
+import { Block, BlockMap } from "./types/block-map"
 
 export class Errors {
   public static NKG_0000(blockId: string): string {
@@ -19,5 +19,9 @@ ${JSON.stringify(block, null, 2)}`
   }
   public static NKG_0004(collectionId: string): string {
     return `Failed to process collection_view. collectionId: ${collectionId} is not a key in collection.`
+  }
+  public static NKG_0005(block: Block): string {
+    return `Block does not have value?.format?.alias_pointer?.id.
+${JSON.stringify(block, null, 2)}`
   }
 }
