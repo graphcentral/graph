@@ -12,13 +12,24 @@ export class RequestQueue<Res, Err> {
   private currentRequestCount = 0
   private maxConcurrentRequest = -1
   private eventEmitter = new EventEmitter()
+  private lastRequestTimeoutSecs: number
   private intervalId: NodeJS.Timer | null = null
 
-  constructor({ maxConcurrentRequest }: { maxConcurrentRequest: number }) {
+  constructor({
+    maxConcurrentRequest,
+    lastRequestTimeoutSecs = 15_000,
+  }: {
+    maxConcurrentRequest: number
+    /**
+     * default: 15 secs
+     */
+    lastRequestTimeoutSecs?: number
+  }) {
     if (maxConcurrentRequest <= 0) {
       throw new Error(`maxConcurrentRequest must be bigger than 0`)
     }
     this.maxConcurrentRequest = maxConcurrentRequest
+    this.lastRequestTimeoutSecs = lastRequestTimeoutSecs
     this.checkAndSendRequest()
   }
 
@@ -37,18 +48,6 @@ export class RequestQueue<Res, Err> {
         `# current requests: ${this.currentRequestCount} / # items in the queue: ${this.queue.length}`
       )
       console.log(`# total requests sent: ${totalRequestCount}`)
-      // if things seem to be completed, check again after 1 second,
-      // and if it is empty, that means new request has not been sent anymore
-      // which means every request has been sent and there's no more work to do
-      // if (this.currentRequestCount === 0 && this.queue.length === 0) {
-      //   timeoutId = setTimeout(() => {
-      //     // this line is needed! it's not a mistake
-      //     if (this.currentRequestCount === 0 && this.queue.length === 0) {
-      //       this.eventEmitter.emit(`complete`, this.responses)
-      //       if (this.intervalId) clearInterval(this.intervalId)
-      //     }
-      //   }, 2_000)
-      // }
 
       if (
         !(this.currentRequestCount === 0 && this.queue.length === 0) &&
@@ -68,12 +67,16 @@ export class RequestQueue<Res, Err> {
             .finally(() => {
               --this.currentRequestCount
               timeoutId = setTimeout(() => {
+                // if things seem to be completed, check again after 1 second,
+                // and if it is empty, that means new request has not been sent anymore
+                // which means every request has been sent and there's no more work to do
+
                 // this line is needed! it's not a mistake
                 if (this.currentRequestCount === 0 && this.queue.length === 0) {
                   this.eventEmitter.emit(`complete`, this.responses)
                   if (this.intervalId) clearInterval(this.intervalId)
                 }
-              }, 10_000)
+              }, this.lastRequestTimeoutSecs)
             })
           ++this.currentRequestCount
         }

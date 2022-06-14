@@ -54,4 +54,6 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
     `1f96a097fd1a4c53a3c42a3288f39e9d`
   )
   debugObject(t.nodes)
+  debugObject(t.errors)
+  debugObject(t.links)
 })()

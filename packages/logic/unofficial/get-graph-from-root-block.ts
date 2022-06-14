@@ -188,10 +188,6 @@ export class NotionGraph {
       if (err) this.accumulateError(err)
       if (!page) return
 
-      if (parentNode.id === `aa362e29-a8c2-4d6b-a084-ceca5a717db6`) {
-        // debugObject(page)
-      }
-
       // if the parent node was collection_view,
       // the response must contain `collection` and `collection_view` keys
       if (
@@ -291,9 +287,12 @@ export class NotionGraph {
       Promise.allSettled([
         // @ts-ignore: todo fix this (the topmost block can be a collection_view_page)
         recursivelyDiscoverBlocks(typeSafeRootBlockNode),
-        new Promise(requestQueue.onComplete),
+        new Promise((resolve) => requestQueue.onComplete(resolve)),
       ])
     )
+    debugObject(result)
+
+    console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@DONE`)
 
     return {
       nodes: this.nodes,
