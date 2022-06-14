@@ -188,6 +188,10 @@ export class NotionGraph {
       if (err) this.accumulateError(err)
       if (!page) return
 
+      if (parentNode.id === `aa362e29-a8c2-4d6b-a084-ceca5a717db6`) {
+        // debugObject(page)
+      }
+
       // if the parent node was collection_view,
       // the response must contain `collection` and `collection_view` keys
       if (
@@ -198,8 +202,14 @@ export class NotionGraph {
       }
 
       for (const selfOrChildBlockId of Object.keys(page.block)) {
-        const childBlockType = page.block[selfOrChildBlockId].value.type
         const childBlock = page.block[selfOrChildBlockId]
+
+        // somtimes .value is undefined for some reason
+        if (!childBlock || !childBlock.value) {
+          continue
+        }
+
+        const childBlockType = page.block[selfOrChildBlockId].value.type
         if (!isNotionContentNodeType(childBlockType)) continue
         if (
           selfOrChildBlockId === separateIdWithDashSafe(parentNode.id) ||
@@ -208,7 +218,6 @@ export class NotionGraph {
           continue
         }
         const childBlockId = selfOrChildBlockId
-
         switch (childBlockType) {
           case `alias`: {
             const aliasedBlockId = childBlock.value?.format?.alias_pointer?.id
@@ -282,7 +291,7 @@ export class NotionGraph {
       Promise.allSettled([
         // @ts-ignore: todo fix this (the topmost block can be a collection_view_page)
         recursivelyDiscoverBlocks(typeSafeRootBlockNode),
-        new Promise((resolve) => requestQueue.onComplete(resolve)),
+        new Promise(requestQueue.onComplete),
       ])
     )
 

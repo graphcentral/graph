@@ -40,23 +40,24 @@ export class RequestQueue<Res, Err> {
       // if things seem to be completed, check again after 1 second,
       // and if it is empty, that means new request has not been sent anymore
       // which means every request has been sent and there's no more work to do
-      if (this.currentRequestCount === 0 && this.queue.length === 0) {
-        timeoutId = setTimeout(() => {
-          // this line is needed! it's not a mistake
-          if (this.currentRequestCount === 0 && this.queue.length === 0) {
-            this.eventEmitter.emit(`complete`, this.responses)
-            if (this.intervalId) clearInterval(this.intervalId)
-          }
-        }, 2_000)
-      }
+      // if (this.currentRequestCount === 0 && this.queue.length === 0) {
+      //   timeoutId = setTimeout(() => {
+      //     // this line is needed! it's not a mistake
+      //     if (this.currentRequestCount === 0 && this.queue.length === 0) {
+      //       this.eventEmitter.emit(`complete`, this.responses)
+      //       if (this.intervalId) clearInterval(this.intervalId)
+      //     }
+      //   }, 2_000)
+      // }
 
       if (
         !(this.currentRequestCount === 0 && this.queue.length === 0) &&
         this.currentRequestCount < this.maxConcurrentRequest
       ) {
-        if (timeoutId !== null) clearTimeout(timeoutId)
         while (this.currentRequestCount < this.maxConcurrentRequest) {
           ++totalRequestCount
+
+          if (timeoutId) clearTimeout(timeoutId)
           this.sendRequest()
             .catch((err: Err) => {
               this.responses.push(err)
@@ -66,6 +67,13 @@ export class RequestQueue<Res, Err> {
             })
             .finally(() => {
               --this.currentRequestCount
+              timeoutId = setTimeout(() => {
+                // this line is needed! it's not a mistake
+                if (this.currentRequestCount === 0 && this.queue.length === 0) {
+                  this.eventEmitter.emit(`complete`, this.responses)
+                  if (this.intervalId) clearInterval(this.intervalId)
+                }
+              }, 10_000)
             })
           ++this.currentRequestCount
         }

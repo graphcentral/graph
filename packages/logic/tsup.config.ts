@@ -11,5 +11,7 @@ export default defineConfig({
   dts: true,
   target: `node16`,
   platform: `node`,
+  // always true, for debugging purpose
+  sourcemap: true,
   format: [`esm`],
 })

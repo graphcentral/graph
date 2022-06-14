@@ -53,8 +53,5 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const t = await notionGraph.getGraphFromRootBlock(
     `1f96a097fd1a4c53a3c42a3288f39e9d`
   )
-  debugObject({
-    nodeslength: Object.keys(t.nodes).length,
-    linkslength: t.links.length,
-  })
+  debugObject(t.nodes)
 })()
