@@ -144,7 +144,7 @@ function createNotionContentNodeFromDatabaseChild(
  * 1429989f-e8ac-4eff-bc8f-57f56486db54 are all fine.
  * @returns all recurisvely discovered children of the root page
  */
-export async function getGraphFromRootBlock(
+export async function buildGraphFromRootNode(
   notion: Client,
   rootBlockId: string
 ): Promise<{

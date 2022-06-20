@@ -1,11 +1,9 @@
-// import { Client } from "@notionhq/client"
 import * as dotenv from "dotenv"
 import path from "path"
 import { NotionGraph } from "./unofficial/get-graph-from-root-block"
 import { NotionAPI } from "notion-client"
 import { dirname } from "path"
 import { fileURLToPath } from "url"
-import { separateIdWithDashSafe } from "./official/notion-util"
 import { debugObject } from "./lib/global-util"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -13,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
 ;(async () => {
   const notionUnofficialClient = new NotionAPI()
-  const notionGraph = new NotionGraph(notionUnofficialClient)
+  const notionGraph = new NotionGraph(notionUnofficialClient, 100)
   // let result
   // try {
   //   result = await Promise.all([
@@ -50,7 +48,8 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   // e['recordM']
 
   // console.log(ff)
-  const t = await notionGraph.getGraphFromRootBlock(
+  //7oel.notion.site/Get-Started-
+  const t = await notionGraph.buildGraphFromRootNode(
     `1f96a097fd1a4c53a3c42a3288f39e9d`
   )
   debugObject(t.nodes)

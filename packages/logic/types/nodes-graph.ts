@@ -68,6 +68,7 @@ export class UndirectedNodesGraph<
   Node extends { id: NotionContentNode[`id`] }
 > {
   private graph: RawUndirectedNodesGraph = {}
+  private nodesLength = 0
 
   /**
    * Adds an edge between two nodes, but avoids making duplicates
@@ -90,6 +91,7 @@ export class UndirectedNodesGraph<
     node0Edges[node1id] = true
 
     this.graph[node0id] = node0Edges
+    this.nodesLength += 1
   }
   /**
    * Adds an edge between two nodes, but avoids making duplicates
@@ -123,5 +125,9 @@ export class UndirectedNodesGraph<
     })
 
     return d3JsEdges
+  }
+
+  public get length(): number {
+    return this.length
   }
 }

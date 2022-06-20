@@ -117,5 +117,8 @@ export class RequestQueue<Res, Err> {
    */
   public onComplete<Fn extends (...args: any[]) => void>(listener: Fn) {
     this.eventEmitter.on(`complete`, listener)
+
+    this.queue = []
+    this.responses = []
   }
 }
