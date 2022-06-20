@@ -5,10 +5,13 @@ import {
   QueryDatabaseResponse,
 } from "@notionhq/client/build/src/api-endpoints"
 import to from "await-to-js"
-import { RequestQueue } from "../lib/request-queue"
-import { UndirectedNodesGraph } from "../types/nodes-graph"
-import { NotionContentNode } from "../types/notion-content-node"
-import { separateIdWithDashSafe, identifyObjectTitle } from "./notion-util"
+import { RequestQueue } from "../../lib/request-queue"
+import { UndirectedNodesGraph } from "../../types/nodes-graph"
+import { NotionContentNode } from "../../types/notion-content-node"
+import {
+  separateIdWithDashSafe,
+  identifyObjectTitle,
+} from "../../lib/notion-util"
 
 function blockTypeToNotionContentNodeType(
   blockType: `child_page` | `child_database`
