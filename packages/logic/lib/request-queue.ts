@@ -4,6 +4,8 @@ import EventEmitter from "events"
 /**
  * https://developers.notion.com/reference/request-limits
  * Notion API has a request limit
+ * also, although we are using unofficial API,
+ * it's a good idea not to overload the server too much anyway
  * So use a simple request queue to control number of concurrent requests
  */
 export class RequestQueue<Res, Err> {
@@ -12,25 +14,33 @@ export class RequestQueue<Res, Err> {
   private currentRequestCount = 0
   private maxConcurrentRequest = -1
   private eventEmitter = new EventEmitter()
-  private lastRequestTimeoutSecs: number
+  private lastRequestTimeoutMs: number
   private intervalId: NodeJS.Timer | null = null
+  private hasNoMoreRequestEnqueued = false
 
   constructor({
     maxConcurrentRequest,
-    lastRequestTimeoutSecs = 15_000,
+    lastRequestTimeoutMs = 15_000,
   }: {
     maxConcurrentRequest: number
     /**
-     * default: 15 secs
+     * default: 15000 ms
      */
-    lastRequestTimeoutSecs?: number
+    lastRequestTimeoutMs?: number
   }) {
     if (maxConcurrentRequest <= 0) {
       throw new Error(`maxConcurrentRequest must be bigger than 0`)
     }
     this.maxConcurrentRequest = maxConcurrentRequest
-    this.lastRequestTimeoutSecs = lastRequestTimeoutSecs
+    this.lastRequestTimeoutMs = lastRequestTimeoutMs
     this.checkAndSendRequest()
+  }
+
+  private terminateIfPossible() {
+    if (this.currentRequestCount === 0 && this.queue.length === 0) {
+      this.eventEmitter.emit(`complete`, this.responses)
+      if (this.intervalId) clearInterval(this.intervalId)
+    }
   }
 
   /**
@@ -66,17 +76,18 @@ export class RequestQueue<Res, Err> {
             })
             .finally(() => {
               --this.currentRequestCount
+              // if it is clear that no more requests will be enqueued,
+              // check if the function can end right away
+              if (this.hasNoMoreRequestEnqueued) {
+                this.terminateIfPossible()
+              }
               timeoutId = setTimeout(() => {
                 // if things seem to be completed, check again after 1 second,
                 // and if it is empty, that means new request has not been sent anymore
                 // which means every request has been sent and there's no more work to do
 
-                // this line is needed! it's not a mistake
-                if (this.currentRequestCount === 0 && this.queue.length === 0) {
-                  this.eventEmitter.emit(`complete`, this.responses)
-                  if (this.intervalId) clearInterval(this.intervalId)
-                }
-              }, this.lastRequestTimeoutSecs)
+                this.terminateIfPossible()
+              }, this.lastRequestTimeoutMs)
             })
           ++this.currentRequestCount
         }
@@ -99,6 +110,18 @@ export class RequestQueue<Res, Err> {
     }
 
     return res
+  }
+
+  /**
+   * Let RequestQueue know that there is going to be no more
+   * request input from the user.
+   *
+   * This is important because RequestQueue will be able to quit
+   * immediately after the last request completes knowing that
+   * no more requests will be enqueued.
+   */
+  public setNoMoreRequestEnqueued() {
+    this.hasNoMoreRequestEnqueued = true
   }
 
   /**

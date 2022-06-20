@@ -188,10 +188,19 @@ export class NotionGraph {
     )
   }
 
+  /**
+   * Notion API has a weird structure
+   * where you can't get the database(=collection)'s title at once if it is a child of a page in the response.
+   * You need to request the database as a parent directly again.
+   * This function just uses the second response to update the database's title
+   * @param page
+   * @param parentNode
+   * @returns nothing
+   */
   private addCollectionViewTitleInNextRecursiveCall(
     page: Awaited<ReturnType<NotionAPI[`getPage`]>>,
     parentNode: NotionContentNodeUnofficialAPI
-  ) {
+  ): void {
     if (
       parentNode.type !== `collection_view` &&
       parentNode.type !== `collection_view_page`
@@ -266,6 +275,7 @@ export class NotionGraph {
   }): Promise<void> {
     const [err, page] = await toEnhanced(
       // getPageRaw must NOT be used
+      // as it returns insufficient information
       this.unofficialNotionAPI.getPage(parentNode.id)
     )
     if (err) this.accumulateError(err)
@@ -281,11 +291,13 @@ export class NotionGraph {
     }
 
     for (const selfOrChildBlockId of Object.keys(page.block)) {
-      // if the number of discovered nodes
+      // if the number of discovered nodes is more
+      // than we want
       if (
         this.maxDiscoverableNodes &&
         this.nodesLength > this.maxDiscoverableNodes
       ) {
+        requestQueue.setNoMoreRequestEnqueued()
         return
       }
       const childBlock = page.block[selfOrChildBlockId]
@@ -441,6 +453,7 @@ export class NotionGraph {
     }
     const requestQueue = new RequestQueue<any, Error>({
       maxConcurrentRequest: 3,
+      lastRequestTimeoutMs: 15_000,
     })
 
     const topMostBlock = await this.findTopmostBlock(rootBlockId)
