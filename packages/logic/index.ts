@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv"
 import path from "path"
-import { NotionGraph } from "./unofficial/get-graph-from-root-block"
+import { NotionGraph } from "./lib/get-graph-from-root-block"
 import { NotionAPI } from "notion-client"
 import { dirname } from "path"
 import { fileURLToPath } from "url"

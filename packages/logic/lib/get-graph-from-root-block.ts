@@ -1,16 +1,16 @@
 import type { NotionAPI } from "notion-client"
 import { ErrorObject } from "serialize-error"
 import { Errors } from "../errors"
-import { toEnhanced } from "../lib/global-util"
-import { RequestQueue } from "../lib/request-queue"
-import { separateIdWithDashSafe } from "../lib/notion-util"
+import { toEnhanced } from "./global-util"
+import { RequestQueue } from "./request-queue"
+import { separateIdWithDashSafe } from "./general-notion-util"
 import { Block, BlockMap } from "../types/block-map"
 import { UndirectedNodesGraph } from "../types/nodes-graph"
 import {
   isNotionContentNodeType,
   NotionContentNodeUnofficialAPI,
 } from "../types/notion-content-node"
-import { UnofficialNotionAPIUtil } from "./util"
+import { UnofficialNotionAPIUtil } from "./unofficial-notion-api-util"
 
 /**
  * Graph of notion blocks.

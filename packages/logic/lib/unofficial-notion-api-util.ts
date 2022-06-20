@@ -1,9 +1,10 @@
-import type { NotionAPI } from "notion-client"
-import { debugObject } from "../lib/global-util"
-import { nameUntitledIfEmpty } from "../lib/notion-util"
+import { nameUntitledIfEmpty } from "./general-notion-util"
 import { Block, BlockMap } from "../types/block-map"
 import { NotionContentNodeUnofficialAPI } from "../types/notion-content-node"
 
+/**
+ * Utils specific to unofficial notion api
+ */
 export class UnofficialNotionAPIUtil {
   /**
    * Be as conservative as possible because
