@@ -13,7 +13,7 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const unofficialNotionAPI = new NotionAPI()
   const notionGraph = new NotionGraph({
     unofficialNotionAPI,
-    maxDiscoverableNodes: 500,
+    maxDiscoverableNodes: 5000,
     maxDiscoverableNodesInOtherSpaces: 100,
   })
   // let result
@@ -54,8 +54,9 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   // console.log(ff)
   //7oel.notion.site/Get-Started-
   // https://7oel.notion.site/Get-Started-
+  // https://7oel.notion.site/Simple-testing-ground-
   const t = await notionGraph.buildGraphFromRootNode(
-    `390d9c8c22c7403497906f107852a7c7`
+    `1f96a097fd1a4c53a3c42a3288f39e9d`
   )
   debugObject(t.nodes)
   debugObject(t.errors)

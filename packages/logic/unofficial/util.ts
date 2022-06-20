@@ -61,11 +61,13 @@ export class UnofficialNotionAPIUtil {
   ): Omit<NotionContentNodeUnofficialAPI, `type`> & { type: string } {
     const title = UnofficialNotionAPIUtil.getTitleFromPageBlock(block)
     const type = block.value.type
+    const spaceId = block.value.space_id ?? `Unknown space id`
 
     return {
       id: block.value.id,
       title,
       type,
+      spaceId,
     }
   }
 }
