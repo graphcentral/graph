@@ -10,8 +10,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
 ;(async () => {
-  const notionUnofficialClient = new NotionAPI()
-  const notionGraph = new NotionGraph(notionUnofficialClient, 100)
+  const unofficialNotionAPI = new NotionAPI()
+  const notionGraph = new NotionGraph({
+    unofficialNotionAPI,
+    maxDiscoverableNodes: 500,
+    maxDiscoverableNodesInOtherSpaces: 100,
+  })
   // let result
   // try {
   //   result = await Promise.all([
@@ -49,8 +53,9 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
 
   // console.log(ff)
   //7oel.notion.site/Get-Started-
+  // https://7oel.notion.site/Get-Started-
   const t = await notionGraph.buildGraphFromRootNode(
-    `1f96a097fd1a4c53a3c42a3288f39e9d`
+    `390d9c8c22c7403497906f107852a7c7`
   )
   debugObject(t.nodes)
   debugObject(t.errors)

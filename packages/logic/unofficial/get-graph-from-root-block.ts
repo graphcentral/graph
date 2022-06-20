@@ -1,8 +1,7 @@
-import to from "await-to-js"
 import type { NotionAPI } from "notion-client"
 import { ErrorObject } from "serialize-error"
 import { Errors } from "../errors"
-import { debugObject, toEnhanced } from "../lib/global-util"
+import { toEnhanced } from "../lib/global-util"
 import { RequestQueue } from "../lib/request-queue"
 import { separateIdWithDashSafe } from "../official/notion-util"
 import { Block, BlockMap } from "../types/block-map"
@@ -22,8 +21,8 @@ import { UnofficialNotionAPIUtil } from "./util"
  * The key to handling the error is how we approach the UX in the frontend
  * regarding the error. What will we do for the user when we encounter an error?
  *
- * Case 1: Some of the blocks are missing, but it's still viewable by the user. Then still include the errors and error messages from the server, but show the contents
- * Case 2: All blocks are missing (ex. internet not working for some reason from the server). Then send a complete error, possibly with a helpful if message if any
+ * - Case 1: Some of the blocks are missing, but it's still viewable by the user. Then still include the errors and error messages from the server, but show the contents
+ * - Case 2: All blocks are missing (ex. internet not working for some reason from the server). Then send a complete error, possibly with a helpful if message if any
  */
 export class NotionGraph {
   private unofficialNotionAPI: NotionAPI
@@ -37,23 +36,89 @@ export class NotionGraph {
    */
   private nodesLength = 0
   /**
+   * total number of discovered, unique nodes in other spaces (= Notion workspace).
+   */
+  private otherSpacesNodesLength = 0
+  /**
    * represents a graph of nodes.
    * contains info about how nodes are connected by edges
    */
   private nodesGraph =
     new UndirectedNodesGraph<NotionContentNodeUnofficialAPI>()
   /**
-   * user-defined value of maximum discoverable number of unique nodes.
-   * must stop discovery once the program finds nodes over
-   * the discoverable number of unique nodes set by the user
-   *
-   * default is null. null means infinity.
+   * @see NotionGraph['constructor']
    */
-  private maxDiscoverableNodes: null | number = null
+  private maxDiscoverableNodes: null | number
+  /**
+   * @see NotionGraph['constructor']
+   */
+  private maxDiscoverableNodesInOtherSpaces: number
 
-  constructor(unofficialNotionAPI: NotionAPI, maxDiscoverableNodes?: number) {
+  constructor({
+    unofficialNotionAPI,
+    maxDiscoverableNodes = 500,
+    maxDiscoverableNodesInOtherSpaces = 250,
+  }: {
+    /**
+     * Just plug in the unofficial notion api client
+     * ```ts
+     * import { NotionAPI } from "notion-client"
+     *
+     * const notionUnofficialClient = new NotionAPI()
+     * const ng = new NotionGraph({ unofficialNotionAPI: notionUnofficialClient, ... })
+     * ```
+     */
+    unofficialNotionAPI: NotionAPI
+    /**
+     * user-defined value of maximum discoverable number of unique nodes.
+     * must stop discovery once the program finds nodes over
+     * the discoverable number of unique nodes set by the user.
+     *
+     * this is useful when your notion workspace
+     * (or 'space' as it is from the actual notion API)
+     * has lots of pages and you want to stop before the amount of pages you accumulate
+     * becomes too many.
+     *
+     * setting it to null means infinity, but it's never
+     * recommended because you can't guarantee how long it will take to discover
+     * all nodes. Make sure you know what you are doing if you set it to `null`.
+     *
+     * @throws when this is smaller than maxDiscoverableNodes, which is impossible to happen
+     * @default 500 nodes.
+     */
+    maxDiscoverableNodes?: number | null
+    /**
+     * This parameter is only needed due to the existence of backlinks
+     * (= 'link to page' function on Notion).
+     *
+     * If your page happens to have lots of backlinks to OTHER `space`s (= workspaces) out of your
+     * current space, then you would need to decide if you will try to discover
+     * the nodes from those spaces as well.
+     *
+     * Otherwise, in the worst case, the program may not halt because
+     * a chain of Notion nodes that include many backlinks to other workspaces
+     * will probably take hours or days to crawl all of the nodes.
+     *
+     * if you don't need pages or databases outside your workspace,
+     * simply set this to 0.
+     *
+     * @throws when this is bigger than maxDiscoverableNodes, which is impossible to happen
+     * @default 250 nodes
+     */
+    maxDiscoverableNodesInOtherSpaces?: number
+  }) {
+    if (
+      maxDiscoverableNodes !== null &&
+      maxDiscoverableNodes < maxDiscoverableNodesInOtherSpaces
+    ) {
+      throw new Error(
+        Errors.NKG_0006(maxDiscoverableNodes, maxDiscoverableNodesInOtherSpaces)
+      )
+    }
+
     this.unofficialNotionAPI = unofficialNotionAPI
-    this.maxDiscoverableNodes = maxDiscoverableNodes ?? null
+    this.maxDiscoverableNodes = maxDiscoverableNodes
+    this.maxDiscoverableNodesInOtherSpaces = maxDiscoverableNodesInOtherSpaces
   }
 
   private accumulateError(err: ErrorObject | Error) {
@@ -231,15 +296,48 @@ export class NotionGraph {
       }
 
       const childBlockType = page.block[selfOrChildBlockId].value.type
+      const spaceId = page.block[selfOrChildBlockId].value.space_id
+      /**
+       * Ignore unwanted content type
+       */
       if (!isNotionContentNodeType(childBlockType)) continue
+      /**
+       * Ignore the block itself returned inside the response
+       * or the block that has already been discovered
+       */
       if (
         selfOrChildBlockId === separateIdWithDashSafe(parentNode.id) ||
         selfOrChildBlockId in this.nodes
       ) {
         continue
       }
+      /**
+       * If spaceId is undefined, we can't proceed anyway
+       * not sure if this typing from the sdk is correct
+       * it seems that spaceId is always defined for
+       * the node types we use though (`NotionContentNodeUnofficialAPI['type']`)
+       */
+      if (!spaceId) {
+        continue
+      }
+
+      if (childBlockType !== `alias` && spaceId !== rootBlockSpaceId) {
+        /**
+         * If there are too many nodes (except 'alias' because it's not technically a page) discovered from
+         * other spaces, ignore them
+         */
+        if (
+          this.otherSpacesNodesLength > this.maxDiscoverableNodesInOtherSpaces
+        ) {
+          continue
+        }
+        this.otherSpacesNodesLength += 1
+      }
+
       const childBlockId = selfOrChildBlockId
       switch (childBlockType) {
+        // for alias, don't add another block
+        // just add edges between the pages
         case `alias`: {
           const aliasedBlockId = childBlock.value?.format?.alias_pointer?.id
           const aliasedBlockSpaceId =
@@ -262,6 +360,7 @@ export class NotionGraph {
             // title will be known in the next request
             title: `Unknown database title`,
             id: childBlockId,
+            spaceId,
             type: childBlockType,
           }
           this.addDiscoveredNode({
@@ -270,15 +369,6 @@ export class NotionGraph {
             requestQueue,
             rootBlockSpaceId,
           })
-          // this.nodes[childNode.id] = childNode
-          // this.nodesGraph.addEdge(childNode, parentNode)
-          // requestQueue.enqueue(() =>
-          //   this.recursivelyDiscoverBlocks({
-          //     rootBlockSpaceId,
-          //     requestQueue,
-          //     parentNode: childNode,
-          //   })
-          // )
           break
         }
         case `collection_view_page`: {
@@ -289,6 +379,7 @@ export class NotionGraph {
             collection_id:
               // @ts-ignore
               childBlock.value.collection_id,
+            spaceId,
             type: childBlockType,
           }
           this.addDiscoveredNode({
@@ -304,6 +395,7 @@ export class NotionGraph {
             ...UnofficialNotionAPIUtil.extractTypeUnsafeNotionContentNodeFromBlock(
               childBlock
             ),
+            spaceId,
             type: childBlockType,
           }
           this.addDiscoveredNode({
@@ -318,6 +410,20 @@ export class NotionGraph {
     }
   }
 
+  /**
+   * Builds a graph from a node (also called a page or block in Notion)
+   *
+   * You can easily find the page's block id from the URL.
+   * The sequence of last 32 characters in the URL is the block id.
+   * For example:
+   *
+   * https://my.notion.site/My-Page-Title-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   *
+   * `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` is the block id.
+   * @param rootBlockId the block id of the page, favorably the root page in your workspace
+   * so that as many pages as possible will be discovered.
+   * @returns graph information relevant to frontend's graph visualization
+   */
   public async buildGraphFromRootNode(rootBlockId: string): Promise<{
     nodes: Record<
       NotionContentNodeUnofficialAPI[`id`],

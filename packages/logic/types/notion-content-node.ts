@@ -4,10 +4,18 @@ export interface NotionContentNode {
   type: `database` | `page` | `error`
 }
 
+/**
+ * A type used to represent a single Notion 'block'
+ * or 'node' as we'd like to call it in this graph-related project
+ */
 export type NotionContentNodeUnofficialAPI =
   | {
       title: string
       id: string
+      /**
+       * Notion workspace id
+       */
+      spaceId: string
       type: `page` | `collection_view` | `alias`
     }
   | {
@@ -16,6 +24,10 @@ export type NotionContentNodeUnofficialAPI =
        *  collection view page id
        *  */
       id: string
+      /**
+       * Notion workspace id
+       */
+      spaceId: string
       type: `collection_view_page`
       /**
        * collection id

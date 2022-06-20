@@ -24,4 +24,10 @@ ${JSON.stringify(block, null, 2)}`
     return `Block does not have value?.format?.alias_pointer?.id.
 ${JSON.stringify(block, null, 2)}`
   }
+  public static NKG_0006(
+    maxDiscoverableNodes: number,
+    maxDiscoverableNodesInOtherSpaces: number
+  ): string {
+    return `Expected maxDiscoverableNodes (${maxDiscoverableNodes}) to be bigger than or equal to maxDiscoverableNodesInOtherSpaces (${maxDiscoverableNodesInOtherSpaces}). This combination of numbers is impossible because at least one node must be from your workspace.`
+  }
 }
