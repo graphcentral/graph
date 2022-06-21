@@ -452,7 +452,7 @@ export class NotionGraph {
       errors: this.errors,
     }
     const requestQueue = new RequestQueue<any, Error>({
-      maxConcurrentRequest: 3,
+      maxConcurrentRequest: 20,
       lastRequestTimeoutMs: 15_000,
     })
 

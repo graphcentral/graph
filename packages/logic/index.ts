@@ -4,7 +4,8 @@ import { NotionGraph } from "./lib/get-graph-from-root-block"
 import { NotionAPI } from "notion-client"
 import { dirname } from "path"
 import { fileURLToPath } from "url"
-import { debugObject } from "./lib/global-util"
+import { debugObject, toEnhanced } from "./lib/global-util"
+import fs from "fs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -13,8 +14,8 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const unofficialNotionAPI = new NotionAPI()
   const notionGraph = new NotionGraph({
     unofficialNotionAPI,
-    maxDiscoverableNodes: 1000,
-    maxDiscoverableNodesInOtherSpaces: 1000,
+    maxDiscoverableNodes: 5000,
+    maxDiscoverableNodesInOtherSpaces: 5000,
   })
   // let result
   // try {
@@ -55,11 +56,44 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   //7oel.notion.site/Get-Started-
   // https://7oel.notion.site/Get-Started-
   // https://7oel.notion.site/Simple-testing-ground-
+  const startTime = Date.now()
   const t = await notionGraph.buildGraphFromRootNode(
     `390d9c8c22c7403497906f107852a7c7`
   )
-  debugObject(t.nodes)
-  debugObject(t.errors)
-  debugObject(t.links)
-  process.exit(0)
+  const endTime = Date.now()
+
+  console.log(`Took ${(endTime - startTime) / 1000} secs`)
+  const writeFilePromises = [
+    {
+      filename: `nodes.json`,
+      data: t.nodes,
+    },
+    {
+      filename: `links.json`,
+      data: t.links,
+    },
+    {
+      filename: `errors.json`,
+      data: t.errors,
+    },
+  ].map(
+    ({ filename, data }) =>
+      new Promise((resolve, reject) => {
+        fs.writeFile(filename, JSON.stringify(data), (err) => {
+          if (err) reject(err)
+          else resolve(``)
+        })
+      })
+  )
+
+  const [err, writeAllFilesResult] = await toEnhanced(
+    Promise.allSettled(writeFilePromises)
+  )
+
+  if (err) {
+    console.error(err)
+    process.exit(1)
+  } else {
+    process.exit(0)
+  }
 })()
