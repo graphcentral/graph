@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react"
 import { FC } from "react"
 import { NotionKnowledgeGraphFallback } from "src/components/NotionKnowledgeGraph/fallback"
 import { enhance, tcAsync } from "../../utilities/essentials"
-import testData from "../../../../test-data/test1.json"
+import testData from "../../../../test-data/test3.json"
 import SpriteText from "three-spritetext"
 import a from "@notion-knowledge-graph/logic"
 
@@ -39,11 +39,10 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
 
         nkGraph(rootElem.current)
           .graphData(testData)
-          .nodeAutoColorBy(
-            (node) =>
-              // @ts-ignore
-              node.parentId
-          )
+          .nodeAutoColorBy((node: any) => {
+            // @ts-ignore
+            return node.parentId
+          })
           .nodeLabel(
             (node) =>
               // @ts-ignore
@@ -53,7 +52,7 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
             // Aim at node from outside it
             const distance = 40
             // @ts-ignore
-            const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z)
+            const distRatio = 1 + distance / Math.hypot(node.z, node.x, node.y)
 
             const newPos =
               // @ts-ignore
@@ -79,22 +78,29 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
             const sprite = new SpriteText(node.title)
             // sprite.material.depthWrite = false // make sprite background transparent
             sprite.color = node.color
-            sprite.textHeight = 3
+            sprite.textHeight =
+              node.cc !== undefined ? Math.max(1.5, Math.min(node.cc, 20)) : 1.5
             return sprite
           })
           .enableNodeDrag(false)
-          .dagMode(`lr`)
+          // 'td' | 'bu' | 'lr' | 'rl' | 'zout' | 'zin' | 'radialout' | 'radialin';
+          .dagMode(`bu`)
           .dagLevelDistance(30)
           .linkCurvature(0.07)
           .onDagError(() => false)
           .d3AlphaDecay(0.02)
           .d3VelocityDecay(0.3)
+          .linkAutoColorBy(
+            // @ts-ignore
+            (link) => link.target
+          )
+          .linkWidth(`2px`)
         // .d3Force(`collide`, d3.forceCollide(13))
 
         nkGraph
           ?.d3Force(`link`)
           // @ts-ignore
-          ?.distance(() => 100)
+          ?.distance(() => 50)
       }
 
       loadModule()

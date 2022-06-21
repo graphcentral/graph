@@ -149,8 +149,12 @@ export class NotionGraph {
       return null
     }
 
-    const topmostBlock = Object.values(page.block).find((b) =>
-      UnofficialNotionAPIUtil.isBlockToplevelPageOrCollectionViewPage(b)
+    console.log(page.block)
+
+    const topmostBlock = Object.values(page.block).find(
+      (b) =>
+        b.value.id === separateIdWithDashSafe(blockIdWithoutDash) ||
+        UnofficialNotionAPIUtil.isBlockToplevelPageOrCollectionViewPage(b)
     )
 
     if (!topmostBlock) {
@@ -408,13 +412,15 @@ export class NotionGraph {
           break
         }
         case `page`: {
+          const title =
+            UnofficialNotionAPIUtil.getTitleFromPageBlock(childBlock)
+          const spaceId = childBlock.value.space_id ?? `Unknown space id`
           const typeSafeChildNode = {
-            ...UnofficialNotionAPIUtil.extractTypeUnsafeNotionContentNodeFromBlock(
-              childBlock
-            ),
+            id: childBlockId,
             parentId: parentNode.id,
             spaceId,
             type: childBlockType,
+            title,
           }
           this.addDiscoveredNode({
             childNode: typeSafeChildNode,
@@ -465,23 +471,19 @@ export class NotionGraph {
       return defaultReturn
     }
 
-    const rootBlockNode =
+    const typeSafeRootBlockNode =
       UnofficialNotionAPIUtil.extractTypeUnsafeNotionContentNodeFromBlock(
         topMostBlock
       )
+
+    console.log(typeSafeRootBlockNode)
     const rootBlockSpaceId = topMostBlock.value.space_id
-    if (!isNotionContentNodeType(rootBlockNode.type)) {
+    console.log(typeSafeRootBlockNode)
+    if (!typeSafeRootBlockNode) {
       this.errors.push(new Error(Errors.NKG_0001(topMostBlock)))
       return defaultReturn
     }
 
-    const rootBlockNodeNarrowedType = rootBlockNode.type
-
-    const typeSafeRootBlockNode = {
-      ...rootBlockNode,
-      type: rootBlockNodeNarrowedType,
-    }
-    // @ts-ignore: todo fix this (the topmost block can be a collection_view_page)
     this.nodes[typeSafeRootBlockNode.id] = typeSafeRootBlockNode
     await toEnhanced(
       Promise.allSettled([

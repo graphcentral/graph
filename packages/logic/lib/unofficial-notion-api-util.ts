@@ -1,6 +1,9 @@
 import { nameUntitledIfEmpty } from "./isomorphic-notion-util"
 import { Block, BlockMap } from "../types/block-map"
-import { NotionContentNodeUnofficialAPI } from "../types/notion-content-node"
+import {
+  isNotionContentNodeType,
+  NotionContentNodeUnofficialAPI,
+} from "../types/notion-content-node"
 
 /**
  * Utils specific to unofficial notion api
@@ -50,7 +53,8 @@ export class UnofficialNotionAPIUtil {
   public static isBlockToplevelPageOrCollectionViewPage(
     block: BlockMap[keyof BlockMap]
   ): boolean {
-    return block.value.parent_table === `space`
+    // parent_table can be undefined
+    return block.value?.parent_table === `space`
   }
 
   /**
@@ -60,10 +64,25 @@ export class UnofficialNotionAPIUtil {
    */
   public static extractTypeUnsafeNotionContentNodeFromBlock(
     block: BlockMap[keyof BlockMap]
-  ): Omit<NotionContentNodeUnofficialAPI, `type`> & { type: string } {
+  ): null | NotionContentNodeUnofficialAPI {
     const title = UnofficialNotionAPIUtil.getTitleFromPageBlock(block)
     const type = block.value.type
     const spaceId = block.value.space_id ?? `Unknown space id`
+
+    if (!isNotionContentNodeType(type)) return null
+
+    if (type === `collection_view_page`) {
+      if (!block.value.collection_id) return null
+
+      return {
+        id: block.value.id,
+        title,
+        type,
+        spaceId,
+        parentId: `none`,
+        collection_id: block.value.collection_id,
+      }
+    }
 
     return {
       id: block.value.id,
