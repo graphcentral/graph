@@ -178,6 +178,9 @@ export class NotionGraph {
 
     this.nodes[childNode.id] = childNode
     this.nodesGraph.addEdge(childNode, parentNode)
+    if (parentNode.cc) parentNode.cc += 1
+    else parentNode.cc = 1
+
     requestQueue.enqueue(() =>
       this.recursivelyDiscoverBlocks({
         rootBlockSpaceId,

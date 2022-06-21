@@ -20,6 +20,10 @@ export type NotionContentNodeUnofficialAPI =
        * parent node's id
        */
       parentId: NotionContentNodeUnofficialAPI[`id`]
+      /**
+       * children count
+       */
+      cc?: number
       type: `page` | `collection_view` | `alias`
     }
   | {
@@ -32,6 +36,10 @@ export type NotionContentNodeUnofficialAPI =
        * Notion workspace id
        */
       spaceId: string
+      /**
+       * children count
+       */
+      cc?: number
       parentId: NotionContentNodeUnofficialAPI[`id`]
       type: `collection_view_page`
       /**

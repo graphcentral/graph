@@ -83,20 +83,18 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
             return sprite
           })
           .enableNodeDrag(false)
+          .dagMode(`lr`)
+          .dagLevelDistance(30)
+          .linkCurvature(0.07)
+          .onDagError(() => false)
+          .d3AlphaDecay(0.02)
+          .d3VelocityDecay(0.3)
+        // .d3Force(`collide`, d3.forceCollide(13))
 
         nkGraph
           ?.d3Force(`link`)
           // @ts-ignore
           ?.distance(() => 100)
-
-        // .dagMode(`lr`)
-        // .dagLevelDistance(180)
-        // .linkCurvature(0.07)
-        // .onDagError(() => false)
-        // .d3AlphaDecay(0.02)
-        // .d3VelocityDecay(0.3)
-        // .enableNodeDrag(false)
-        // .d3Force(`collide`, d3.forceCollide(13))
       }
 
       loadModule()
