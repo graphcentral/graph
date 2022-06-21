@@ -373,6 +373,7 @@ export class NotionGraph {
             title: `Unknown database title`,
             id: childBlockId,
             spaceId,
+            parentId: parentNode.id,
             type: childBlockType,
           }
           this.addDiscoveredNode({
@@ -391,6 +392,7 @@ export class NotionGraph {
             collection_id:
               // @ts-ignore
               childBlock.value.collection_id,
+            parentId: parentNode.id,
             spaceId,
             type: childBlockType,
           }
@@ -407,6 +409,7 @@ export class NotionGraph {
             ...UnofficialNotionAPIUtil.extractTypeUnsafeNotionContentNodeFromBlock(
               childBlock
             ),
+            parentId: parentNode.id,
             spaceId,
             type: childBlockType,
           }
@@ -437,10 +440,7 @@ export class NotionGraph {
    * @returns graph information relevant to frontend's graph visualization
    */
   public async buildGraphFromRootNode(rootBlockId: string): Promise<{
-    nodes: Record<
-      NotionContentNodeUnofficialAPI[`id`],
-      NotionContentNodeUnofficialAPI
-    >
+    nodes: NotionContentNodeUnofficialAPI[]
     links: ReturnType<
       UndirectedNodesGraph<NotionContentNodeUnofficialAPI>[`getD3JsEdgeFormat`]
     >
@@ -448,7 +448,7 @@ export class NotionGraph {
   }> {
     const defaultReturn = {
       links: [],
-      nodes: this.nodes,
+      nodes: Object.values(this.nodes),
       errors: this.errors,
     }
     const requestQueue = new RequestQueue<any, Error>({
@@ -492,9 +492,17 @@ export class NotionGraph {
       ])
     )
 
+    // edges may contain undiscovered nodes
+    // so remove them
+    const links = this.nodesGraph
+      .getD3JsEdgeFormat()
+      .filter(
+        ({ source, target }) => source in this.nodes && target in this.nodes
+      )
+
     return {
-      nodes: this.nodes,
-      links: this.nodesGraph.getD3JsEdgeFormat(),
+      nodes: Object.values(this.nodes),
+      links,
       errors: this.errors,
     }
   }

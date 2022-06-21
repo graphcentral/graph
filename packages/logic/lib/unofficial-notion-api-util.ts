@@ -56,6 +56,7 @@ export class UnofficialNotionAPIUtil {
   /**
    * Gets a notion content node from a block.
    * But the type could be anything. It's not one of the four block types we want yet.
+   * @deprecated don't use this except for finding the root block
    */
   public static extractTypeUnsafeNotionContentNodeFromBlock(
     block: BlockMap[keyof BlockMap]
@@ -69,6 +70,7 @@ export class UnofficialNotionAPIUtil {
       title,
       type,
       spaceId,
+      parentId: `none`,
     }
   }
 }

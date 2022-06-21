@@ -1,9 +1,7 @@
 import path from "path"
-import webpack, { DefinePlugin } from "webpack"
+import webpack from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 import dotenv from "dotenv"
-
-import fs from "fs"
 
 export const commonConfig: webpack.Configuration = {
   entry: `./src/index.tsx`,
@@ -62,7 +60,7 @@ export const commonConfig: webpack.Configuration = {
     new HtmlWebpackPlugin({
       template: path.join(__dirname, `..`, `public`, `index.html`),
     }),
-    new DefinePlugin({
+    new webpack.DefinePlugin({
       "process.env": JSON.stringify(
         dotenv.config({
           path: path.resolve(__dirname, `..`, `..`, `..`, `.env`),

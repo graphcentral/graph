@@ -45,20 +45,9 @@ export type RawUndirectedNodesGraph = Record<
  * d3.js uses `source: ... target: ...` format to abstract
  * the concept of an edge.
  */
-class D3JsEdge {
-  private source: NotionContentNode[`id`]
-  private target: NotionContentNode[`id`]
-
-  constructor({
-    source,
-    target,
-  }: {
-    source: NotionContentNode[`id`]
-    target: NotionContentNode[`id`]
-  }) {
-    this.source = source
-    this.target = target
-  }
+interface D3JsEdge {
+  source: NotionContentNode[`id`]
+  target: NotionContentNode[`id`]
 }
 
 /**
@@ -115,12 +104,10 @@ export class UndirectedNodesGraph<
       const edges = this.graph[nodeId]
       if (!edges) return
       for (const edge of Object.keys(edges)) {
-        d3JsEdges.push(
-          new D3JsEdge({
-            source: nodeId,
-            target: edge,
-          })
-        )
+        d3JsEdges.push({
+          source: nodeId,
+          target: edge,
+        })
       }
     })
 

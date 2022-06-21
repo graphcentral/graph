@@ -16,6 +16,10 @@ export type NotionContentNodeUnofficialAPI =
        * Notion workspace id
        */
       spaceId: string
+      /**
+       * parent node's id
+       */
+      parentId: NotionContentNodeUnofficialAPI[`id`]
       type: `page` | `collection_view` | `alias`
     }
   | {
@@ -28,6 +32,7 @@ export type NotionContentNodeUnofficialAPI =
        * Notion workspace id
        */
       spaceId: string
+      parentId: NotionContentNodeUnofficialAPI[`id`]
       type: `collection_view_page`
       /**
        * collection id

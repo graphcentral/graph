@@ -63,31 +63,13 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const endTime = Date.now()
 
   console.log(`Took ${(endTime - startTime) / 1000} secs`)
-  const writeFilePromises = [
-    {
-      filename: `nodes.json`,
-      data: t.nodes,
-    },
-    {
-      filename: `links.json`,
-      data: t.links,
-    },
-    {
-      filename: `errors.json`,
-      data: t.errors,
-    },
-  ].map(
-    ({ filename, data }) =>
-      new Promise((resolve, reject) => {
-        fs.writeFile(filename, JSON.stringify(data), (err) => {
-          if (err) reject(err)
-          else resolve(``)
-        })
+  const [err, _writeFileResult] = await toEnhanced(
+    new Promise((resolve, reject) => {
+      fs.writeFile(`test0.json`, JSON.stringify(t), (err) => {
+        if (err) reject(err)
+        else resolve(``)
       })
-  )
-
-  const [err, writeAllFilesResult] = await toEnhanced(
-    Promise.allSettled(writeFilePromises)
+    })
   )
 
   if (err) {

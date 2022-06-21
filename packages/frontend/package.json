@@ -54,10 +54,12 @@
     "webpack-dev-server": "4.7.2"
   },
   "dependencies": {
+    "3d-force-graph": "^1.70.10",
     "axios": "^0.24.0",
     "d3": "^7.4.4",
     "lodash.flow": "^3.5.0",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "three-spritetext": "^1.6.5"
   }
 }
