@@ -11,7 +11,7 @@ import { NotionContentNode } from "../../types/notion-content-node"
 import {
   separateIdWithDashSafe,
   identifyObjectTitle,
-} from "../../lib/general-notion-util"
+} from "../../lib/isomorphic-notion-util"
 
 function blockTypeToNotionContentNodeType(
   blockType: `child_page` | `child_database`

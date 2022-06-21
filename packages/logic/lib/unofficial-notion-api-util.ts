@@ -1,4 +1,4 @@
-import { nameUntitledIfEmpty } from "./general-notion-util"
+import { nameUntitledIfEmpty } from "./isomorphic-notion-util"
 import { Block, BlockMap } from "../types/block-map"
 import { NotionContentNodeUnofficialAPI } from "../types/notion-content-node"
 

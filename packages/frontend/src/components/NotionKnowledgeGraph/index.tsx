@@ -4,6 +4,9 @@ import { NotionKnowledgeGraphFallback } from "src/components/NotionKnowledgeGrap
 import { enhance, tcAsync } from "../../utilities/essentials"
 import testData from "../../../../test-data/test1.json"
 import SpriteText from "three-spritetext"
+import a from "@notion-knowledge-graph/logic"
+
+console.log(a)
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type NotionKnowledgeGraphImpureProps = {}
 
@@ -79,19 +82,20 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
             sprite.textHeight = 3
             return sprite
           })
+          .enableNodeDrag(false)
 
         nkGraph
           ?.d3Force(`link`)
           // @ts-ignore
           ?.distance(() => 100)
 
-          // .dagMode(`lr`)
-          // .dagLevelDistance(180)
-          // .linkCurvature(0.07)
-          // .onDagError(() => false)
-          // .d3AlphaDecay(0.02)
-          // .d3VelocityDecay(0.3)
-          .enableNodeDrag(false)
+        // .dagMode(`lr`)
+        // .dagLevelDistance(180)
+        // .linkCurvature(0.07)
+        // .onDagError(() => false)
+        // .d3AlphaDecay(0.02)
+        // .d3VelocityDecay(0.3)
+        // .enableNodeDrag(false)
         // .d3Force(`collide`, d3.forceCollide(13))
       }
 

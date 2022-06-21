@@ -3,7 +3,7 @@ import { ErrorObject } from "serialize-error"
 import { Errors } from "../errors"
 import { toEnhanced } from "./global-util"
 import { RequestQueue } from "./request-queue"
-import { separateIdWithDashSafe } from "./general-notion-util"
+import { separateIdWithDashSafe } from "./isomorphic-notion-util"
 import { Block, BlockMap } from "../types/block-map"
 import { UndirectedNodesGraph } from "../types/nodes-graph"
 import {
