@@ -153,6 +153,7 @@ export class NotionGraph {
 
     const topmostBlock = Object.values(page.block).find(
       (b) =>
+        // the block itself or the block that has parent as a 'space'
         b.value.id === separateIdWithDashSafe(blockIdWithoutDash) ||
         UnofficialNotionAPIUtil.isBlockToplevelPageOrCollectionViewPage(b)
     )

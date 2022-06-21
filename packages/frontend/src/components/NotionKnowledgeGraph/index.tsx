@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react"
 import { FC } from "react"
 import { NotionKnowledgeGraphFallback } from "src/components/NotionKnowledgeGraph/fallback"
 import { enhance, tcAsync } from "../../utilities/essentials"
-import testData from "../../../../test-data/test3.json"
+import testData from "../../../../test-data/test2.json"
 import SpriteText from "three-spritetext"
 import a from "@notion-knowledge-graph/logic"
 
@@ -94,7 +94,9 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
             // @ts-ignore
             (link) => link.target
           )
-          .linkWidth(`2px`)
+          .linkWidth(0.2)
+          .linkOpacity(0.4)
+          .backgroundColor(`#181818`)
         // .d3Force(`collide`, d3.forceCollide(13))
 
         nkGraph
