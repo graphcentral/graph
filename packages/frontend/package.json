@@ -32,6 +32,7 @@
     "@types/node": "^17.0.41",
     "@types/react": "17.0.38",
     "@types/react-dom": "17.0.11",
+    "@types/three": "^0.141.0",
     "@types/webpack": "^5.28.0",
     "@types/webpack-dev-server": "4.7.1",
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.6",
@@ -54,9 +55,11 @@
     "webpack-dev-server": "4.7.2"
   },
   "dependencies": {
+    "@observablehq/stdlib": "^3.19.4",
     "3d-force-graph": "^1.70.10",
     "axios": "^0.24.0",
     "d3": "^7.4.4",
+    "d3-force": "^3.0.0",
     "lodash.flow": "^3.5.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

@@ -1,17 +1,17 @@
 import React, { useEffect, useRef } from "react"
 import { FC } from "react"
-import { NotionKnowledgeGraphFallback } from "src/components/NotionKnowledgeGraph/fallback"
+import { NotionKnowledgeGraphFallback } from "src/components/NotionKnowledge3DGraph/fallback"
 import { enhance, tcAsync } from "../../utilities/essentials"
-import testData from "../../../../test-data/test2.json"
+import testData from "../../../../test-data/test4.json"
 import SpriteText from "three-spritetext"
 import a from "@notion-knowledge-graph/logic"
 
 console.log(a)
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type NotionKnowledgeGraphImpureProps = {}
+export type NotionKnowledgeGraph3DImpureProps = {}
 
-export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
-  enhance<NotionKnowledgeGraphImpureProps>(() => {
+export const NotionKnowledge3DGraphImpure: FC<NotionKnowledgeGraph3DImpureProps> =
+  enhance<NotionKnowledgeGraph3DImpureProps>(() => {
     const rootElem = useRef<HTMLDivElement | null>(null)
     const threeDForceGraphRef = useRef<
       | Awaited<
@@ -33,7 +33,7 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
 
         if (!rootElem.current) return
 
-        const nkGraph = threeDForceGraphRef.current()
+        const nkGraph = threeDForceGraphRef.current({ controlType: `orbit` })
 
         if (!nkGraph) return
 
@@ -51,8 +51,10 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
           .onNodeClick((node) => {
             // Aim at node from outside it
             const distance = 40
-            // @ts-ignore
-            const distRatio = 1 + distance / Math.hypot(node.z, node.x, node.y)
+            const distRatio =
+              1 +
+              // @ts-ignore
+              distance / Math.hypot(node.z, node.x, node.y)
 
             const newPos =
               // @ts-ignore
@@ -67,19 +69,31 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
                   }
                 : { x: 0, y: 0, z: distance } // special case if node is in (0,0,0)
 
-            nkGraph.cameraPosition(
-              newPos, // new position
-              // @ts-ignore
-              node, // lookAt ({ x, y, z })
-              3000 // ms transition duration
+            console.log(
+              nkGraph.camera().position.set(
+                // @ts-ignore
+                node.x * distRatio,
+                // @ts-ignore
+                node.y * distRatio,
+                // @ts-ignore
+                node.z * distRatio
+              )
             )
+            console.log(nkGraph.camera())
+            console.log(nkGraph.controls())
+            // nkGraph.cameraPosition(
+            //   newPos, // new position
+            //   // @ts-ignore
+            //   node, // lookAt ({ x, y, z })
+            //   3000 // ms transition duration
+            // )
           })
           .nodeThreeObject((node: any) => {
             const sprite = new SpriteText(node.title)
             // sprite.material.depthWrite = false // make sprite background transparent
             sprite.color = node.color
             sprite.textHeight =
-              node.cc !== undefined ? Math.max(1.5, Math.min(node.cc, 20)) : 1.5
+              node.cc !== undefined ? Math.max(4, Math.min(node.cc, 20)) : 4
             return sprite
           })
           .enableNodeDrag(false)
@@ -109,17 +123,19 @@ export const NotionKnowledgeGraphImpure: FC<NotionKnowledgeGraphImpureProps> =
     }, [])
 
     return (
-      <NotionKnowledgeGraphPure rootElem={rootElem}>2</NotionKnowledgeGraphPure>
+      <NotionKnowledgeGraph3DPure rootElem={rootElem}>
+        2
+      </NotionKnowledgeGraph3DPure>
     )
   })(NotionKnowledgeGraphFallback)
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type NotionKnowledgeGraphPureProps = {
+export type NotionKnowledgeGraphPureP3Drops = {
   rootElem: React.MutableRefObject<HTMLDivElement | null>
 }
 
-export const NotionKnowledgeGraphPure: FC<NotionKnowledgeGraphPureProps> =
-  enhance<NotionKnowledgeGraphPureProps>(({ rootElem, children }) => (
+export const NotionKnowledgeGraph3DPure: FC<NotionKnowledgeGraphPureP3Drops> =
+  enhance<NotionKnowledgeGraphPureP3Drops>(({ rootElem, children }) => (
     <div ref={rootElem}>
       <p>{children}</p>
     </div>
