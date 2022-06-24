@@ -3,6 +3,8 @@ import { FC } from "react"
 import { NotionKnowledge2DGraphFallback } from "./fallback"
 import { enhance, tcAsync } from "../../utilities/essentials"
 import testData from "../../../../test-data/test4.json"
+import debounce from "lodash.debounce"
+import { EventObject } from "cytoscape"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type NotionKnowledgeGrap2DImpureProps = {}
@@ -10,20 +12,37 @@ export type NotionKnowledgeGrap2DImpureProps = {}
 export const NotionKnowledg2DGraphImpure: FC<NotionKnowledgeGrap2DImpureProps> =
   enhance<NotionKnowledgeGrap2DImpureProps>(() => {
     const rootElem = useRef<HTMLDivElement | null>(null)
-    const cyRef = useRef<Awaited<
-      // eslint-disable-next-line quotes
-      typeof import("cytoscape")
-    > | null>(null)
+    const cyRef = useRef<{
+      default: typeof cytoscape
+      use(module: cytoscape.Ext): void
+      warnings(condition: boolean): void
+    } | null>(null)
 
     useEffect(() => {
       async function loadModule() {
-        const [err, cy] = await tcAsync(import(`cytoscape`))
+        const [err, allImports] = await tcAsync(
+          Promise.all([
+            import(`cytoscape`),
+            import(`cytoscape-popper`),
+            // @ts-ignore
+            import(`cytoscape-fcose`),
+            // @ts-ignore
+            import(`cytoscape-elk`),
+          ])
+        )
 
-        if (err || !cy || !rootElem.current) return
+        if (err || !allImports || !rootElem.current) return
 
-        cyRef.current = cy.default
+        const [cytoscapeCoreImports, { default: cyPopperDefault }, fcose, elk] =
+          allImports
 
-        cyRef.current({
+        cytoscapeCoreImports.use(fcose.default)
+        cytoscapeCoreImports.use(elk.default)
+
+        cyRef.current = cytoscapeCoreImports
+        // cytoscapeCoreImports.use(cise.default)
+
+        const cy = cytoscapeCoreImports.default({
           container: rootElem.current,
 
           elements: {
@@ -55,16 +74,66 @@ export const NotionKnowledg2DGraphImpure: FC<NotionKnowledgeGrap2DImpureProps> =
                 "curve-style": `bezier`,
               },
             },
+            {
+              selector: `node.highlight`,
+              style: {
+                "border-color": `#FFF`,
+                "border-width": `2px`,
+              },
+            },
+            {
+              selector: `node.semitransp`,
+              // @ts-ignore
+              style: { opacity: `0.1` },
+            },
+            {
+              selector: `edge.highlight`,
+              style: { "mid-target-arrow-color": `#FFF` },
+            },
+            {
+              selector: `edge.semitransp`,
+              // @ts-ignore
+              style: { opacity: `0.1` },
+            },
 
             // {
             //   selector: `la`
             // }
           ],
 
-          // layout: {
-          //   name: `grid`,
-          //   rows: 1,
-          // },
+          layout: {
+            // @ts-ignore
+            name: `elk`,
+            // nodeSeparation: 1000000,
+            // @ts-ignore
+            // nodeRepulsion: () => 10_000,
+            // nodeSeparation: 10000,
+            // clusters: (node) => node.id,
+            // nodeOverlap: 5,
+            // condensed: false,
+          },
+        })
+
+        cy.on(`mouseover`, `node`, function (e: EventObject) {
+          const sel = e.target
+          cy.elements()
+            .difference(sel.outgoers().union(sel.incomers()))
+            .not(sel)
+            .addClass(`semitransp`)
+          sel
+            .addClass(`highlight`)
+            .outgoers()
+            .union(sel.incomers())
+            .addClass(`highlight`)
+        })
+        cy.on(`mouseout`, `node`, function (e) {
+          const sel = e.target
+          cy.elements().removeClass(`semitransp`)
+          sel
+            .removeClass(`highlight`)
+            .outgoers()
+            .union(sel.incomers())
+            .removeClass(`highlight`)
         })
       }
       loadModule()
