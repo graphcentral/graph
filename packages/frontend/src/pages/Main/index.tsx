@@ -8,7 +8,12 @@ export type MainPagePureProps = {}
 
 export const MainPagePure: FC<MainPagePureProps> = enhance<MainPagePureProps>(
   () => (
-    <div>
+    <div
+      style={{
+        width: `100%`,
+        height: `101%`,
+      }}
+    >
       <NotionKnowledg2DGraphImpure />
     </div>
   )
