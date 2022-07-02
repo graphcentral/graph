@@ -2,9 +2,7 @@ import React, { useEffect, useRef } from "react"
 import { FC } from "react"
 import { NotionKnowledge2DGraphFallback } from "./fallback"
 import { enhance, tcAsync } from "../../utilities/essentials"
-import testData from "../../../../test-data/test4.json"
-import debounce from "lodash.debounce"
-import { EventObject } from "cytoscape"
+import testData from "../../../../test-data/test2.json"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type NotionKnowledgeGrap2DImpureProps = {}
@@ -12,131 +10,119 @@ export type NotionKnowledgeGrap2DImpureProps = {}
 export const NotionKnowledg2DGraphImpure: FC<NotionKnowledgeGrap2DImpureProps> =
   enhance<NotionKnowledgeGrap2DImpureProps>(() => {
     const rootElem = useRef<HTMLDivElement | null>(null)
-    const cyRef = useRef<{
-      default: typeof cytoscape
-      use(module: cytoscape.Ext): void
-      warnings(condition: boolean): void
-    } | null>(null)
+    const ecRef = useRef<echarts.ECharts | null>(null)
+    const resizeCanvasFn = useRef<VoidFunction | null>(null)
 
     useEffect(() => {
       async function loadModule() {
         const [err, allImports] = await tcAsync(
-          Promise.all([
-            import(`cytoscape`),
-            import(`cytoscape-popper`),
-            // @ts-ignore
-            import(`cytoscape-fcose`),
-            // @ts-ignore
-            import(`cytoscape-elk`),
-          ])
+          Promise.all([import(`echarts`), import(`color-hash`)])
         )
 
+        // todo handle error
         if (err || !allImports || !rootElem.current) return
 
-        const [cytoscapeCoreImports, { default: cyPopperDefault }, fcose, elk] =
-          allImports
+        const [echarts, { default: ColorHash }] = allImports
+        const colorHash = new ColorHash()
+        ecRef.current = echarts.init(rootElem.current)
 
-        cytoscapeCoreImports.use(fcose.default)
-        cytoscapeCoreImports.use(elk.default)
+        const colorCache: Record<string, string> = {
+          undefined: `#aaaaaa`,
+        }
 
-        cyRef.current = cytoscapeCoreImports
-        // cytoscapeCoreImports.use(cise.default)
-
-        const cy = cytoscapeCoreImports.default({
-          container: rootElem.current,
-
-          elements: {
-            nodes: testData.nodes.map((n) => ({
-              data: n,
-            })),
-            edges: testData.links.map((l) => ({
-              data: l,
-            })),
+        ecRef.current.setOption(
+          {
+            title: {
+              text: `Notion Knowledge Graph`,
+            },
+            backgroundColor: `#131313`,
+            series: [
+              {
+                type: `graph`,
+                layout: `force`,
+                // progressiveThreshold: 700,
+                data: testData.nodes.map((node) => {
+                  return {
+                    id: node.id,
+                    name: node.title,
+                    parentId: node.parentId,
+                    symbolSize: node.cc
+                      ? Math.min(Math.max(10, node.cc), 20)
+                      : 10,
+                  }
+                }),
+                edges: testData.links,
+                emphasis: {
+                  focus: `adjacency`,
+                  label: {
+                    position: `right`,
+                    show: true,
+                  },
+                  lineStyle: {
+                    width: 3,
+                  },
+                },
+                roam: true,
+                lineStyle: {
+                  width: 0.5,
+                  curveness: 0.3,
+                  opacity: 0.7,
+                },
+                itemStyle: {
+                  color: (a: any) => {
+                    if (!a.data.parentId) return colorCache[`undefined`]
+                    if (!(a.data.parentId in colorCache)) {
+                      colorCache[a.data.parentId] = colorHash.hex(
+                        a.data.parentId
+                      )
+                    }
+                    return colorCache[a.data.parentId]
+                  },
+                },
+                force: {
+                  edgeLength: 15,
+                  friction: 0.1,
+                  repulsion: 100,
+                  gravity: 0,
+                  draggable: true,
+                },
+              },
+            ],
           },
+          true
+        )
 
-          style: [
-            // the stylesheet for the graph
-            {
-              selector: `node`,
-              style: {
-                "background-color": `#666`,
-                label: `data(title)`,
-              },
-            },
-
-            {
-              selector: `edge`,
-              style: {
-                width: 3,
-                "line-color": `#ccc`,
-                "target-arrow-color": `#ccc`,
-                "target-arrow-shape": `triangle`,
-                "curve-style": `bezier`,
-              },
-            },
-            {
-              selector: `node.highlight`,
-              style: {
-                "border-color": `#FFF`,
-                "border-width": `2px`,
-              },
-            },
-            {
-              selector: `node.semitransp`,
-              // @ts-ignore
-              style: { opacity: `0.1` },
-            },
-            {
-              selector: `edge.highlight`,
-              style: { "mid-target-arrow-color": `#FFF` },
-            },
-            {
-              selector: `edge.semitransp`,
-              // @ts-ignore
-              style: { opacity: `0.1` },
-            },
-
-            // {
-            //   selector: `la`
-            // }
-          ],
-
-          layout: {
-            // @ts-ignore
-            name: `elk`,
-            // nodeSeparation: 1000000,
-            // @ts-ignore
-            // nodeRepulsion: () => 10_000,
-            // nodeSeparation: 10000,
-            // clusters: (node) => node.id,
-            // nodeOverlap: 5,
-            // condensed: false,
-          },
+        ecRef.current.on(`click`, (params) => {
+          console.log(params)
         })
 
-        cy.on(`mouseover`, `node`, function (e: EventObject) {
-          const sel = e.target
-          cy.elements()
-            .difference(sel.outgoers().union(sel.incomers()))
-            .not(sel)
-            .addClass(`semitransp`)
-          sel
-            .addClass(`highlight`)
-            .outgoers()
-            .union(sel.incomers())
-            .addClass(`highlight`)
-        })
-        cy.on(`mouseout`, `node`, function (e) {
-          const sel = e.target
-          cy.elements().removeClass(`semitransp`)
-          sel
-            .removeClass(`highlight`)
-            .outgoers()
-            .union(sel.incomers())
-            .removeClass(`highlight`)
-        })
+        // ecRef.current.dispatchAction({})
+
+        return ecRef.current
       }
-      loadModule()
+      function resizeCanvasOnWindowResize(
+        echartsInstance: Awaited<ReturnType<typeof loadModule>>
+      ) {
+        if (!echartsInstance || !rootElem.current) return null
+
+        const resizeCanvas = () => {
+          if (!echartsInstance) return
+          echartsInstance.resize()
+        }
+        window.addEventListener(`resize`, resizeCanvas)
+
+        return resizeCanvas
+      }
+      async function run() {
+        const echartsInstance = await loadModule()
+        resizeCanvasFn.current = resizeCanvasOnWindowResize(echartsInstance)
+      }
+      run()
+
+      return () => {
+        if (resizeCanvasFn.current)
+          window.removeEventListener(`resize`, resizeCanvasFn.current)
+      }
     }, [])
 
     return (

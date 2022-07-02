@@ -59,7 +59,7 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   // https://coal-magician-b73.notion.site/
   const startTime = Date.now()
   const t = await notionGraph.buildGraphFromRootNode(
-    `f07bcd9489b5449b84efe2ef12df70b4`
+    `1f96a097fd1a4c53a3c42a3288f39e9d`
   )
   const endTime = Date.now()
 
