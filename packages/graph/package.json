@@ -51,17 +51,21 @@
     "wait-for-expect": "3.0.2",
     "webpack": "5.65.0",
     "webpack-cli": "4.9.1",
-    "webpack-dev-server": "4.7.2"
+    "webpack-dev-server": "4.7.2",
+    "worker-loader": "^3.0.8"
   },
   "dependencies": {
     "axios": "^0.24.0",
+    "comlink": "^4.3.1",
     "lodash.flow": "^3.5.0",
     "ngraph.forcelayout": "^3.3.0",
     "ngraph.graph": "^20.0.0",
+    "pixi-viewport": "4.24",
     "pixi.js": "^6.4.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "regl": "^2.1.0"
+    "regl": "^2.1.0",
+    "web-worker-proxy": "^0.5.5"
   },
   "bugs": {
     "url": "https://github.com/9oelM/myprojectname/issues"

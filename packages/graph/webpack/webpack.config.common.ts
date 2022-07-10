@@ -2,6 +2,35 @@ import path from "path"
 import webpack from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 
+export const workerConfig: webpack.Configuration = {
+  entry: `./src/lib/graph.worker.ts`,
+  output: {
+    filename: `[name].worker.js`,
+    path: path.resolve(__dirname, `dist`),
+    publicPath: `dist/`,
+  },
+  target: `webworker`,
+  devtool: `source-map`,
+  mode: `development`,
+  resolve: {
+    modules: [`src`, `node_modules`],
+    extensions: [`.js`, `.ts`, `.tsx`],
+    plugins: [],
+  },
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        loader: `ts-loader`,
+        options: {
+          transpileOnly: true,
+        },
+        // exclude: /node_modules/,
+      },
+    ],
+  },
+}
+
 export const commonConfig: webpack.Configuration = {
   entry: `./src/index.tsx`,
   // https://webpack.js.org/plugins/split-chunks-plugin/
@@ -39,6 +68,17 @@ export const commonConfig: webpack.Configuration = {
         test: /\.css?$/,
         use: [`style-loader`, `css-loader`],
       },
+      // {
+      //   test: /\.worker\.ts$/,
+      //   type: `asset/source`,
+      // },
+      // {
+      //   test: /\.worker\.ts$/,
+      //   loader: `worker-loader`,
+      //   options: {
+      //     inline: !process.env[`production`] ? `fallback` : `no-fallback`,
+      //   },
+      // },
     ],
   },
   resolve: {

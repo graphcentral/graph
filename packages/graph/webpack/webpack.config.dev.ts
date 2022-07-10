@@ -5,7 +5,7 @@ import webpack from "webpack"
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as webpackDevServer from "webpack-dev-server"
-import { commonConfig } from "./webpack.config.common"
+import { commonConfig, workerConfig } from "./webpack.config.common"
 
 const config: webpack.Configuration = {
   mode: `development`,
@@ -19,4 +19,4 @@ const config: webpack.Configuration = {
   ...commonConfig,
 }
 
-export default config
+export default [config, workerConfig]
