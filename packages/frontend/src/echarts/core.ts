@@ -78,7 +78,6 @@ async function initEchartsGraph<HTMLElem extends HTMLElement>(
             friction: 0.1,
             repulsion: 100,
             gravity: 0,
-            draggable: true,
           },
         },
       ],

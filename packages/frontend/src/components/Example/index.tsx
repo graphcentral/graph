@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosResponse } from "axios"
-import React, { useEffect, useState } from "react"
+import React, { PropsWithChildren, useEffect, useState } from "react"
 import { FC } from "react"
 import { enhance, tcAsync } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
@@ -65,9 +65,9 @@ export const ExampleImpure: FC<ExampleImpureProps> =
   })(ExampleFallback)
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type ExamplePureProps = {
+export type ExamplePureProps = PropsWithChildren<{
   color: string
-}
+}>
 
 export const ExamplePure: FC<ExamplePureProps> = enhance<ExamplePureProps>(
   ({ color, children }) => (

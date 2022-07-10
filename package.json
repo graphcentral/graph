@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "lint:debug": "eslint . --debug",
     "lint:fix": "eslint . --fix",
+    "graph:dev": "npm run dev -w packages/graph",
     "fe:dev": "npm run dev -w packages/frontend",
     "logic:dev": "npm run dev -w packages/logic",
     "logic:compile": "npm run compile -w packages/logic"
@@ -27,5 +28,9 @@
     "eslint-plugin-prettier": "4.0.0",
     "eslint-plugin-react": "7.28.0",
     "prettier": "2.5.1"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }

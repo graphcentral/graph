@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react"
+import React, { PropsWithChildren, useEffect, useRef } from "react"
 import { FC } from "react"
 import { NotionKnowledgeGraphFallback } from "src/components/NotionKnowledge3DGraph/fallback"
 import { enhance, tcAsync } from "../../utilities/essentials"
@@ -130,9 +130,9 @@ export const NotionKnowledge3DGraphImpure: FC<NotionKnowledgeGraph3DImpureProps>
   })(NotionKnowledgeGraphFallback)
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type NotionKnowledgeGraphPureP3Drops = {
+export type NotionKnowledgeGraphPureP3Drops = PropsWithChildren<{
   rootElem: React.MutableRefObject<HTMLDivElement | null>
-}
+}>
 
 export const NotionKnowledgeGraph3DPure: FC<NotionKnowledgeGraphPureP3Drops> =
   enhance<NotionKnowledgeGraphPureP3Drops>(({ rootElem, children }) => (
