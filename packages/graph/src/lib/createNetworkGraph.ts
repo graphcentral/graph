@@ -4,7 +4,6 @@ import createGraph from "ngraph.graph"
 import { Viewport } from "pixi-viewport"
 import { create } from "web-worker-proxy"
 import workerify from "./workerify"
-import WorkerCode from "./graph.worker"
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -38,21 +37,17 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
   canvasElement: HTMLCanvasElement
 }) {
   //@ts-ignore
-  console.log(import.meta.url)
-  const worker: Worker & {
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    setupGraph: Function
-  } = create(
-    new Worker(
-      new URL(
-        `./graph.worker.ts`,
-        //@ts-ignore: tsconfig not recognized for some reason
-        import.meta.url
-      )
+  const worker: Worker = new Worker(
+    new URL(
+      `./graph.worker.ts`,
+      //@ts-ignore: tsconfig not recognized for some reason
+      import.meta.url
     )
   )
-  await worker.setupGraph(nodes, links)
-
+  worker.postMessage({ type: `start_process`, nodes, links })
+  // await worker.setupGraph(nodes, links)
+  // const g = await worker.g
+  // console.log(g)
   const app = new PIXI.Application({
     backgroundColor: 0x131313,
     resizeTo: window,
@@ -81,43 +76,23 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
     .endFill()
 
   const texture = app.renderer.generateTexture(circleTemplate)
+  let children: Array<PIXI.Sprite> = []
+  worker.onmessage = (msg) => {
+    switch (msg.data.type) {
+      case `update_process`: {
+        viewport.removeChild(...children)
+        children = []
+        console.log(msg)
+        for (const pos of msg.data.nodePositions) {
+          const circle = new PIXI.Sprite(texture)
+          circle.x = pos.x
+          circle.y = pos.y
+          children.push(circle)
+        }
+        viewport.addChild(...children)
+      }
+    }
+  }
 
-  const children: Array<PIXI.Sprite> = []
-  // graph.forEachNode(function (node) {
-  //   const pos = layout.getNodePosition(node.id)
-  //   // Node position is pair of x,y coordinates:
-  //   const circle = new PIXI.Sprite(texture)
-  //   circle.x = pos.x
-  //   circle.y = pos.y
-  //   children.push(circle)
-  // })
-
-  // graph.forEachLink(function (link) {
-  //   console.log(layout.getLinkPosition(link.id))
-  //   // link position is a pair of two positions:
-  //   // {
-  //   //   from: {x: ..., y: ...},
-  //   //   to: {x: ..., y: ...}
-  //   // }
-  // })
-  // const rect = layout.getGraphRect()
   console.log(app.screen)
-  // const r = new PIXI.Rectangle(
-  //   rect.x1 - 100,
-  //   rect.y1 - 100,
-  //   Math.abs(rect.x1 - rect.x2) + 100,
-  //   Math.abs(rect.y2 - rect.y1) + 100
-  // )
-  // app.screen.enlarge(r)
-  // viewport.fit()
-  // viewport.moveCenter(
-  //   Math.abs(rect.x1 - rect.x2) / 2,
-  //   Math.abs(rect.y2 - rect.y1) / 2
-  // )
-
-  // add a red box
-  // viewport.pausePlugin('drag')
-
-  // viewport.resumePlugin('drag')
-  viewport.addChild(...children)
 }
