@@ -44,22 +44,23 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
       import.meta.url
     )
   )
-  worker.postMessage({ type: `start_process`, nodes, links })
+  // worker.postMessage({ type: `start_process`, nodes, links })
+  worker.postMessage({ type: `d3_start_process`, nodes, links })
   const app = new PIXI.Application({
     backgroundColor: 0x131313,
     resizeTo: window,
     view: canvasElement,
     antialias: true,
   })
+  console.log(`d3_start_processe`)
 
   const viewport = new Viewport({
     screenWidth: window.innerWidth,
     screenHeight: window.innerHeight,
     worldWidth: 1000,
     worldHeight: 1000,
-
     interaction: app.renderer.plugins[`interaction`],
-    passiveWheel: true,
+    // passiveWheel: true,
     // stopPropagation: true,
   })
   app.stage.addChild(viewport)
@@ -68,7 +69,7 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
   const circleTemplate = new PIXI.Graphics()
     .lineStyle(0)
     .beginFill(0xde3249, 1)
-    .drawCircle(0, 0, 2)
+    .drawCircle(0, 0, 10)
     .endFill()
 
   const texture = app.renderer.generateTexture(circleTemplate)
@@ -77,6 +78,29 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
   worker.onmessage = (msg) => {
     switch (msg.data.type) {
       case `update_process`: {
+        console.log(msg)
+        for (const [i, pos] of msg.data.nodePositions.entries()) {
+          if (firstTime) {
+            const circle = new PIXI.Sprite(texture)
+            circle.x = pos.x
+            circle.y = pos.y
+            children.push(circle)
+          } else {
+            const child = children[i]
+            if (child) {
+              child.x = pos.x
+              child.y = pos.y
+            }
+          }
+        }
+        if (firstTime) {
+          viewport.addChild(...children)
+          firstTime = false
+        }
+        break
+      }
+      case `d3_update_process`: {
+        console.log(`ended`)
         console.log(msg)
         for (const [i, pos] of msg.data.nodePositions.entries()) {
           if (firstTime) {

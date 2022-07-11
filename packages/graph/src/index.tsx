@@ -1,7 +1,7 @@
 import React from "react"
 import ReactDOM from "react-dom"
 import { createNetworkGraph } from "./lib/createNetworkGraph"
-import testData from "../../test-data/test6.json"
+import testData from "../../test-data/test7.json"
 import { ExampleImpure } from "./components/Example"
 import "./index.css"
 

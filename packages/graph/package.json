@@ -57,6 +57,7 @@
   "dependencies": {
     "axios": "^0.24.0",
     "comlink": "^4.3.1",
+    "d3-force": "^3.0.0",
     "lodash.flow": "^3.5.0",
     "ngraph.forcelayout": "^3.3.0",
     "ngraph.graph": "^20.0.0",
