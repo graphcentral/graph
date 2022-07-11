@@ -14,8 +14,8 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const unofficialNotionAPI = new NotionAPI()
   const notionGraph = new NotionGraph({
     unofficialNotionAPI,
-    maxDiscoverableNodes: 20000,
-    maxDiscoverableNodesInOtherSpaces: 20000,
+    maxDiscoverableNodes: 30000,
+    maxDiscoverableNodesInOtherSpaces: 30000,
   })
   // let result
   // try {

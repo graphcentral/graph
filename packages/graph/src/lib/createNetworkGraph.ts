@@ -2,8 +2,6 @@ import * as PIXI from "pixi.js"
 import createLayout from "ngraph.forcelayout"
 import createGraph from "ngraph.graph"
 import { Viewport } from "pixi-viewport"
-import { create } from "web-worker-proxy"
-import workerify from "./workerify"
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -60,7 +58,7 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
     worldWidth: 1000,
     worldHeight: 1000,
     interaction: app.renderer.plugins[`interaction`],
-    // passiveWheel: true,
+    passiveWheel: true,
     // stopPropagation: true,
   })
   app.stage.addChild(viewport)
@@ -69,7 +67,7 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
   const circleTemplate = new PIXI.Graphics()
     .lineStyle(0)
     .beginFill(0xde3249, 1)
-    .drawCircle(0, 0, 10)
+    .drawCircle(0, 0, 2)
     .endFill()
 
   const texture = app.renderer.generateTexture(circleTemplate)

@@ -18,16 +18,20 @@ self.onmessage = (msg) => {
       console.log(`simulation started`)
       const t0 = performance.now()
       const simulation = forceSimulation(nodes)
-        .force(`charge`, forceManyBody())
-        .force(`link`, forceLink(links))
+        .force(`charge`, forceManyBody().strength(-5))
+        .force(
+          `link`,
+          forceLink(links)
+            .id(
+              (node) =>
+                // @ts-ignore
+                node.id
+            )
+            .distance(50)
+        )
         .force(`center`, forceCenter())
         .stop()
-      // forceSimulation(nodes)
-      //   .force(`charge`, forceManyBody())
-      //   .force(`center`, forceCenter())
-      //   .force(`dagRadial`, null)
-      //   .force(`link`, forceLink(links))
-      for (let i = 0; i < 1000; ++i) {
+      for (let i = 0; i < 100; ++i) {
         simulation.tick(1)
         if (i !== 0 && i % 2 === 0) {
           self.postMessage({
