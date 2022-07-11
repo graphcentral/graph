@@ -462,8 +462,8 @@ export class NotionGraph {
       errors: this.errors,
     }
     const requestQueue = new RequestQueue<any, Error>({
-      maxConcurrentRequest: 20,
-      lastRequestTimeoutMs: 15_000,
+      maxConcurrentRequest: 4,
+      lastRequestTimeoutMs: 30_000,
     })
 
     const topMostBlock = await this.findTopmostBlock(rootBlockId)

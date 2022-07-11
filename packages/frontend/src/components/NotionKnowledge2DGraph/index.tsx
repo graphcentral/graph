@@ -2,9 +2,9 @@ import React, { useEffect, useRef } from "react"
 import { FC } from "react"
 import { NotionKnowledge2DGraphFallback } from "./fallback"
 import { enhance, tcAsync } from "../../utilities/essentials"
-import testData from "../../../../test-data/test4.json"
-import debounce from "lodash.debounce"
-import { EventObject } from "cytoscape"
+import testData from "../../../../test-data/test6.json"
+import { runEchartsGraph } from "src/echarts/core"
+import { GraphCanvas } from "reagraph"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type NotionKnowledgeGrap2DImpureProps = {}
@@ -12,154 +12,72 @@ export type NotionKnowledgeGrap2DImpureProps = {}
 export const NotionKnowledg2DGraphImpure: FC<NotionKnowledgeGrap2DImpureProps> =
   enhance<NotionKnowledgeGrap2DImpureProps>(() => {
     const rootElem = useRef<HTMLDivElement | null>(null)
-    const cyRef = useRef<{
-      default: typeof cytoscape
-      use(module: cytoscape.Ext): void
-      warnings(condition: boolean): void
-    } | null>(null)
+    const ecRef = useRef<echarts.ECharts | null>(null)
+    const resizeCanvasFnRef = useRef<VoidFunction | null>(null)
 
     useEffect(() => {
-      async function loadModule() {
-        const [err, allImports] = await tcAsync(
-          Promise.all([
-            import(`cytoscape`),
-            import(`cytoscape-popper`),
-            // @ts-ignore
-            import(`cytoscape-fcose`),
-            // @ts-ignore
-            import(`cytoscape-elk`),
-          ])
-        )
+      async function initNKG() {
+        if (!rootElem.current) return
+        const { echartsInstance, resizeCanvasFn } = await runEchartsGraph([
+          rootElem.current,
+          testData,
+        ])
 
-        if (err || !allImports || !rootElem.current) return
-
-        const [cytoscapeCoreImports, { default: cyPopperDefault }, fcose, elk] =
-          allImports
-
-        cytoscapeCoreImports.use(fcose.default)
-        cytoscapeCoreImports.use(elk.default)
-
-        cyRef.current = cytoscapeCoreImports
-        // cytoscapeCoreImports.use(cise.default)
-
-        const cy = cytoscapeCoreImports.default({
-          container: rootElem.current,
-
-          elements: {
-            nodes: testData.nodes.map((n) => ({
-              data: n,
-            })),
-            edges: testData.links.map((l) => ({
-              data: l,
-            })),
-          },
-
-          style: [
-            // the stylesheet for the graph
-            {
-              selector: `node`,
-              style: {
-                "background-color": `#666`,
-                label: `data(title)`,
-              },
-            },
-
-            {
-              selector: `edge`,
-              style: {
-                width: 3,
-                "line-color": `#ccc`,
-                "target-arrow-color": `#ccc`,
-                "target-arrow-shape": `triangle`,
-                "curve-style": `bezier`,
-              },
-            },
-            {
-              selector: `node.highlight`,
-              style: {
-                "border-color": `#FFF`,
-                "border-width": `2px`,
-              },
-            },
-            {
-              selector: `node.semitransp`,
-              // @ts-ignore
-              style: { opacity: `0.1` },
-            },
-            {
-              selector: `edge.highlight`,
-              style: { "mid-target-arrow-color": `#FFF` },
-            },
-            {
-              selector: `edge.semitransp`,
-              // @ts-ignore
-              style: { opacity: `0.1` },
-            },
-
-            // {
-            //   selector: `la`
-            // }
-          ],
-
-          layout: {
-            // @ts-ignore
-            name: `elk`,
-            // nodeSeparation: 1000000,
-            // @ts-ignore
-            // nodeRepulsion: () => 10_000,
-            // nodeSeparation: 10000,
-            // clusters: (node) => node.id,
-            // nodeOverlap: 5,
-            // condensed: false,
-          },
-        })
-
-        cy.on(`mouseover`, `node`, function (e: EventObject) {
-          const sel = e.target
-          cy.elements()
-            .difference(sel.outgoers().union(sel.incomers()))
-            .not(sel)
-            .addClass(`semitransp`)
-          sel
-            .addClass(`highlight`)
-            .outgoers()
-            .union(sel.incomers())
-            .addClass(`highlight`)
-        })
-        cy.on(`mouseout`, `node`, function (e) {
-          const sel = e.target
-          cy.elements().removeClass(`semitransp`)
-          sel
-            .removeClass(`highlight`)
-            .outgoers()
-            .union(sel.incomers())
-            .removeClass(`highlight`)
-        })
+        resizeCanvasFnRef.current = resizeCanvasFn
+        ecRef.current = echartsInstance ?? null
       }
-      loadModule()
+
+      initNKG()
+
+      return () => {
+        if (resizeCanvasFnRef.current)
+          window.removeEventListener(`resize`, resizeCanvasFnRef.current)
+      }
     }, [])
 
     return (
-      <NotionKnowledgeGrap2DPure rootElem={rootElem}>
-        2
-      </NotionKnowledgeGrap2DPure>
+      <GraphCanvas
+        // nodes={[
+        //   {
+        //     id: `1`,
+        //     label: `1`,
+        //   },
+        //   {
+        //     id: `2`,
+        //     label: `2`,
+        //   },
+        // ]}
+        // edges={[
+        //   {
+        //     id: `1->2`,
+        //     source: `n-1`,
+        //     target: `n-2`,
+        //     label: `Edge 1-2`,
+        //   },
+        // ]}
+        nodes={testData.nodes}
+        edges={testData.links.map((all, i) => ({
+          ...all,
+          id: String(i),
+        }))}
+      ></GraphCanvas>
     )
   })(NotionKnowledge2DGraphFallback)
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type NotionKnowledgeGraphPure2Drops = {
-  rootElem: React.MutableRefObject<HTMLDivElement | null>
-}
+// export type NotionKnowledgeGraphPure2Drops = {
+//   rootElem: React.MutableRefObject<HTMLDivElement | null>
+// }
 
-export const NotionKnowledgeGrap2DPure: FC<NotionKnowledgeGraphPure2Drops> =
-  enhance<NotionKnowledgeGraphPure2Drops>(({ rootElem }) => {
-    return (
-      <div
-        style={{
-          width: `100%`,
-          height: `100%`,
-        }}
-        ref={rootElem}
-      ></div>
-    )
-  })(NotionKnowledge2DGraphFallback)
+// export const NotionKnowledgeGrap2DPure: FC<NotionKnowledgeGraphPure2Drops> =
+//   enhance<NotionKnowledgeGraphPure2Drops>(({ rootElem }) => {
+//     return (
+//       <div
+//         style={{
+//           width: `100%`,
+//           height: `100%`,
+//         }}
+//         ref={rootElem}
+//       ></div>
+//     )
+//   })(NotionKnowledge2DGraphFallback)

@@ -14,8 +14,8 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const unofficialNotionAPI = new NotionAPI()
   const notionGraph = new NotionGraph({
     unofficialNotionAPI,
-    maxDiscoverableNodes: 5000,
-    maxDiscoverableNodesInOtherSpaces: 5000,
+    maxDiscoverableNodes: 20000,
+    maxDiscoverableNodesInOtherSpaces: 20000,
   })
   // let result
   // try {
@@ -59,7 +59,7 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   // https://coal-magician-b73.notion.site/
   const startTime = Date.now()
   const t = await notionGraph.buildGraphFromRootNode(
-    `f07bcd9489b5449b84efe2ef12df70b4`
+    `e040febf70a94950b8620e6f00005004`
   )
   const endTime = Date.now()
 

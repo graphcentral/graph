@@ -1,6 +1,7 @@
 import React from "react"
-import ReactDOM from "react-dom"
 import { MainPagePure } from "src/pages/Main"
+import { createRoot } from "react-dom/client"
 import "./index.css"
 
-ReactDOM.render(<MainPagePure />, document.getElementById(`root`))
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+createRoot(document.getElementById(`root`)!).render(<MainPagePure />)

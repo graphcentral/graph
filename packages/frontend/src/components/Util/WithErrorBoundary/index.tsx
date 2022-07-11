@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/ban-types */
-import React, { ComponentType, FC, memo } from "react"
+import React, { ComponentType, FC, memo, PropsWithChildren } from "react"
 import { ErrorInfo, PureComponent, ReactNode } from "react"
 
 export const NullFallback: FC = () => null
 
-export type ErrorBoundaryProps = {
+export type ErrorBoundaryProps = PropsWithChildren<{
   Fallback: ReactNode
-}
+}>
 
 export type ErrorBoundaryState = {
   error?: Error
@@ -39,7 +39,9 @@ export class ErrorBoundary extends PureComponent<
   }
 }
 
-export function withErrorBoundary<Props>(Component: ComponentType<Props>) {
+export function withErrorBoundary<Props extends JSX.IntrinsicAttributes>(
+  Component: ComponentType<Props>
+) {
   return (Fallback = NullFallback) => {
     // eslint-disable-next-line react/display-name
     return memo(({ ...props }: Props) => {
