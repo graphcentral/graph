@@ -1,9 +1,11 @@
 import React from "react"
 import ReactDOM from "react-dom"
 import { createNetworkGraph } from "./lib/createNetworkGraph"
-import testData from "../../test-data/test9.json"
+import { test10 } from "../../test-data/test10"
 import { ExampleImpure } from "./components/Example"
 import "./index.css"
+
+const testData = JSON.parse(test10)
 
 ReactDOM.render(
   // @ts-ignore

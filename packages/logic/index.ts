@@ -14,8 +14,8 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const unofficialNotionAPI = new NotionAPI()
   const notionGraph = new NotionGraph({
     unofficialNotionAPI,
-    maxDiscoverableNodes: 30000,
-    maxDiscoverableNodesInOtherSpaces: 30000,
+    maxDiscoverableNodes: 10000,
+    maxDiscoverableNodesInOtherSpaces: 10000,
   })
   // let result
   // try {
@@ -63,6 +63,10 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   )
   const endTime = Date.now()
 
+  console.log(`t.nodes.length`)
+  console.log(t.nodes.length)
+  console.log(t.links.length)
+  console.log(`t.nodes.length`)
   console.log(`Took ${(endTime - startTime) / 1000} secs`)
   const [err, _writeFileResult] = await toEnhanced(
     new Promise((resolve, reject) => {
