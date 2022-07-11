@@ -31,14 +31,12 @@ self.onmessage = (msg) => {
         )
         .force(`center`, forceCenter())
         .stop()
-      for (let i = 0; i < 100; ++i) {
-        simulation.tick(1)
-        if (i !== 0 && i % 2 === 0) {
-          self.postMessage({
-            nodePositions: simulation.nodes(),
-            type: `d3_update_process`,
-          })
-        }
+      for (let i = 0; i < 33; ++i) {
+        simulation.tick(3)
+        self.postMessage({
+          nodePositions: simulation.nodes(),
+          type: `d3_update_process`,
+        })
       }
       const t1 = performance.now()
       console.log(`simulation ended. took: ${t1 - t0}ms`)

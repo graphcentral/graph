@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js"
 import createLayout from "ngraph.forcelayout"
 import createGraph from "ngraph.graph"
 import { Viewport } from "pixi-viewport"
+import ColorHash from "color-hash"
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -64,53 +65,51 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
   app.stage.addChild(viewport)
   viewport.drag().pinch().wheel().decelerate()
 
-  const circleTemplate = new PIXI.Graphics()
+  const fallbackCircleGraphics = new PIXI.Graphics()
     .lineStyle(0)
-    .beginFill(0xde3249, 1)
+    .beginFill(0xffffff, 1)
     .drawCircle(0, 0, 2)
     .endFill()
+  const circleTextureByParentId: Record<string, PIXI.RenderTexture> = {
+    fallback: app.renderer.generateTexture(fallbackCircleGraphics),
+  }
+  const colorHash = new ColorHash()
 
-  const texture = app.renderer.generateTexture(circleTemplate)
   const children: Array<PIXI.Sprite> = []
   let firstTime = true
   worker.onmessage = (msg) => {
     switch (msg.data.type) {
-      case `update_process`: {
-        console.log(msg)
-        for (const [i, pos] of msg.data.nodePositions.entries()) {
-          if (firstTime) {
-            const circle = new PIXI.Sprite(texture)
-            circle.x = pos.x
-            circle.y = pos.y
-            children.push(circle)
-          } else {
-            const child = children[i]
-            if (child) {
-              child.x = pos.x
-              child.y = pos.y
-            }
-          }
-        }
-        if (firstTime) {
-          viewport.addChild(...children)
-          firstTime = false
-        }
-        break
-      }
       case `d3_update_process`: {
         console.log(`ended`)
         console.log(msg)
-        for (const [i, pos] of msg.data.nodePositions.entries()) {
+        for (const [i, node] of msg.data.nodePositions.entries()) {
           if (firstTime) {
-            const circle = new PIXI.Sprite(texture)
-            circle.x = pos.x
-            circle.y = pos.y
+            const parentId = node.parentId
+            if (parentId && !(parentId in circleTextureByParentId)) {
+              const c = parseInt(colorHash.hex(parentId).replace(/^#/, ``), 16)
+              console.log(c)
+              const circleGraphics = new PIXI.Graphics()
+                .lineStyle(0)
+                .beginFill(c)
+                .drawCircle(0, 0, 2)
+                .endFill()
+              const texture = app.renderer.generateTexture(circleGraphics)
+              circleTextureByParentId[parentId] = texture
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const fallbackCircleTexture = circleTextureByParentId[`default`]!
+            const circle = new PIXI.Sprite(
+              circleTextureByParentId[parentId] ?? fallbackCircleTexture
+            )
+            circle.x = node.x
+            circle.y = node.y
             children.push(circle)
           } else {
             const child = children[i]
             if (child) {
-              child.x = pos.x
-              child.y = pos.y
+              child.x = node.x
+              child.y = node.y
             }
           }
         }
