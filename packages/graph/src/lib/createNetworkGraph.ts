@@ -45,16 +45,12 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
     )
   )
   worker.postMessage({ type: `start_process`, nodes, links })
-  // await worker.setupGraph(nodes, links)
-  // const g = await worker.g
-  // console.log(g)
   const app = new PIXI.Application({
     backgroundColor: 0x131313,
     resizeTo: window,
     view: canvasElement,
+    antialias: true,
   })
-  // app.renderer.plugins[`interaction`].autoPreventDefault = true
-  // app.renderer.view.style.touchAction = `auto`
 
   const viewport = new Viewport({
     screenWidth: window.innerWidth,
@@ -72,24 +68,34 @@ export async function createNetworkGraph<N extends Node, L extends Link>({
   const circleTemplate = new PIXI.Graphics()
     .lineStyle(0)
     .beginFill(0xde3249, 1)
-    .drawCircle(100, 250, 1)
+    .drawCircle(0, 0, 2)
     .endFill()
 
   const texture = app.renderer.generateTexture(circleTemplate)
-  let children: Array<PIXI.Sprite> = []
+  const children: Array<PIXI.Sprite> = []
+  let firstTime = true
   worker.onmessage = (msg) => {
     switch (msg.data.type) {
       case `update_process`: {
-        viewport.removeChild(...children)
-        children = []
         console.log(msg)
-        for (const pos of msg.data.nodePositions) {
-          const circle = new PIXI.Sprite(texture)
-          circle.x = pos.x
-          circle.y = pos.y
-          children.push(circle)
+        for (const [i, pos] of msg.data.nodePositions.entries()) {
+          if (firstTime) {
+            const circle = new PIXI.Sprite(texture)
+            circle.x = pos.x
+            circle.y = pos.y
+            children.push(circle)
+          } else {
+            const child = children[i]
+            if (child) {
+              child.x = pos.x
+              child.y = pos.y
+            }
+          }
         }
-        viewport.addChild(...children)
+        if (firstTime) {
+          viewport.addChild(...children)
+          firstTime = false
+        }
       }
     }
   }

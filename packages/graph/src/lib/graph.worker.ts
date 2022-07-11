@@ -4,8 +4,6 @@ import { Node, Link } from "src/lib/createNetworkGraph"
 
 const graph = createGraph<Node, Link>()
 
-// let g = {}
-
 self.onmessage = (msg) => {
   switch (msg.data.type) {
     case `start_process`: {
@@ -20,14 +18,14 @@ self.onmessage = (msg) => {
       const layout = createLayout(graph, {
         timeStep: 0.5,
         dimensions: 2,
-        gravity: -12,
+        gravity: -30,
         theta: 0.8,
         springLength: 10,
         springCoefficient: 0.8,
-        dragCoefficient: 0.9,
+        dragCoefficient: 0.4,
       })
       for (let i = 0; i < 1000; ++i) {
-        if (i !== 0 && i % 100 === 0) {
+        if (i !== 0 && i % 50 === 0) {
           const nodePositions: Array<
             ReturnType<typeof layout[`getNodePosition`]>
           > = []
@@ -51,21 +49,5 @@ self.onmessage = (msg) => {
     }
   }
 }
-
-// proxy({
-//   g,
-//   layout,
-//   graph,
-//   setupGraph: (nodes: Node[], links: Link[]) => {
-//     g = {
-//       nodes,
-//       links,
-//     }
-
-//   },
-//   setupLayout: () => {
-
-//   },
-// })
 
 export default ``
