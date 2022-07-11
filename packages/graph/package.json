@@ -33,6 +33,7 @@
     "@types/lodash.flow": "3.5.6",
     "@types/react": "17.0.38",
     "@types/react-dom": "17.0.11",
+    "@types/stats.js": "^0.17.0",
     "@types/webpack-dev-server": "4.7.1",
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.6",
     "babel-loader": "8.2.3",
@@ -67,7 +68,9 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "regl": "^2.1.0",
-    "web-worker-proxy": "^0.5.5"
+    "stats.js": "^0.17.0",
+    "web-worker-proxy": "^0.5.5",
+    "@notion-knowledge-graph/d3-wasm-force": "*"
   },
   "bugs": {
     "url": "https://github.com/9oelM/myprojectname/issues"

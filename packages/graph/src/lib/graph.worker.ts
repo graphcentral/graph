@@ -6,7 +6,12 @@ import {
   forceLink,
   forceManyBody,
   forceCenter,
+  forceX,
+  forceY,
+  forceCollide,
 } from "d3-force"
+
+// console.log(d3Wasm)
 
 const graph = createGraph<Node, Link>()
 
@@ -17,21 +22,22 @@ self.onmessage = (msg) => {
       // const simulation =
       console.log(`simulation started`)
       const t0 = performance.now()
-      const simulation = forceSimulation(nodes)
-        .force(`charge`, forceManyBody().strength(-5))
-        .force(
-          `link`,
-          forceLink(links)
-            .id(
-              (node) =>
-                // @ts-ignore
-                node.id
-            )
-            .distance(50)
+      const forceLinks = forceLink(links)
+        .id(
+          (node) =>
+            // @ts-ignore
+            node.id
         )
+        .distance(50)
+      const simulation = forceSimulation(nodes)
+        .force(`charge`, forceCollide().radius(15))
+        .force(`link`, forceLinks)
+        .force(`x`, forceX().strength(-0.05))
+        .force(`y`, forceY().strength(-0.05))
         .force(`center`, forceCenter())
         .stop()
-      for (let i = 0; i < 33; ++i) {
+      console.log(forceLinks)
+      for (let i = 0; i < 15; ++i) {
         simulation.tick(3)
         self.postMessage({
           nodePositions: simulation.nodes(),
