@@ -1,11 +1,55 @@
 import createLayout from "ngraph.forcelayout"
 import createGraph from "ngraph.graph"
 import { Node, Link } from "src/lib/createNetworkGraph"
+import {
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  forceCenter,
+  forceX,
+  forceY,
+  forceCollide,
+} from "d3-force"
+
+// console.log(d3Wasm)
 
 const graph = createGraph<Node, Link>()
 
 self.onmessage = (msg) => {
   switch (msg.data.type) {
+    case `d3_start_process`: {
+      const { nodes, links } = msg.data
+      // const simulation =
+      console.log(`simulation started`)
+      const t0 = performance.now()
+      const forceLinks = forceLink(links)
+        .id(
+          (node) =>
+            // @ts-ignore
+            node.id
+        )
+        .distance(50)
+      const simulation = forceSimulation(nodes)
+        .force(`charge`, forceCollide().radius(15))
+        .force(`link`, forceLinks)
+        .force(`x`, forceX().strength(-0.05))
+        .force(`y`, forceY().strength(-0.05))
+        .force(`center`, forceCenter())
+        .stop()
+      console.log(forceLinks)
+      for (let i = 0; i < 15; ++i) {
+        simulation.tick(3)
+        self.postMessage({
+          nodePositions: simulation.nodes(),
+          type: `d3_update_process`,
+        })
+      }
+      const t1 = performance.now()
+      console.log(`simulation ended. took: ${t1 - t0}ms`)
+      // simulation.nodes
+      console.log(simulation.nodes)
+      break
+    }
     case `start_process`: {
       const { nodes, links } = msg.data
       self.postMessage({ nodes, links })
