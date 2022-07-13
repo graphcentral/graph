@@ -5,6 +5,7 @@ import { Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
 import { setupFpsMonitor } from "./setupFpsMonitor"
 import { Layer } from "@pixi/layers"
+import { WorkerMessageType } from "./graphEnums"
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -52,6 +53,11 @@ export class KnowledgeGraph<
   private graphWorker: Worker = new Worker(
     new URL(`./graph.worker.ts`, import.meta.url)
   )
+  /**
+   * whether drawing graph is finished
+   */
+  private isDrawing = true
+  private eventTarget = new EventTarget()
 
   constructor({
     nodes,
@@ -109,7 +115,7 @@ export class KnowledgeGraph<
       )
         continue
       const lineGraphics = new PIXI.Graphics()
-        .lineStyle(1, 0xffffff, 1, 1, false)
+        .lineStyle(0.2, 0xffffff, 0.7, 1, false)
         .moveTo(sourceX + 6, sourceY + 6)
         // This is the length of the line. For the x-position, that's 600-30 pixels - so your line was 570 pixels long.
         // Multiply that by p, making it longer and longer. Finally, it's offset by the 30 pixels from your moveTo above. So, when p is 0, the line moves to 30 (not drawn at all), and when p is 1, the line moves to 600 (where it was for you). For y, it's the same, but with your y values.
@@ -185,7 +191,7 @@ export class KnowledgeGraph<
 
   public async createNetworkGraph() {
     this.graphWorker.postMessage({
-      type: `start_process`,
+      type: WorkerMessageType.START_GRAPH,
       nodes: this.nodes,
       links: this.links,
     })
@@ -203,7 +209,7 @@ export class KnowledgeGraph<
     let isFirstTimeUpdatingNodes = true
     this.graphWorker.onmessage = (msg) => {
       switch (msg.data.type) {
-        case `update_nodes`: {
+        case WorkerMessageType.UPDATE_NODES: {
           this.updateNodes({
             circleTextureByParentId,
             nodeChildren,
@@ -216,10 +222,12 @@ export class KnowledgeGraph<
           }
           break
         }
-        case `update_links`: {
+        case WorkerMessageType.UPDATE_LINKS: {
           this.updateLinks({
             links: msg.data.links,
           })
+          this.isDrawing = false
+          this.eventTarget.dispatchEvent(new Event(`is_dr`))
           break
         }
       }

@@ -1,6 +1,6 @@
 import createLayout from "ngraph.forcelayout"
 import createGraph from "ngraph.graph"
-import { Node, Link } from "src/lib/createNetworkGraph"
+import { Node, Link } from "./createNetworkGraph"
 import {
   forceSimulation,
   forceLink,
@@ -10,6 +10,7 @@ import {
   forceY,
   forceCollide,
 } from "d3-force"
+import { WorkerMessageType } from "./graphEnums"
 
 // console.log(d3Wasm)
 
@@ -17,7 +18,7 @@ const graph = createGraph<Node, Link>()
 
 self.onmessage = (msg) => {
   switch (msg.data.type) {
-    case `start_process`: {
+    case WorkerMessageType.START_GRAPH: {
       const { nodes, links } = msg.data
       // const simulation =
       console.log(`simulation started`)
@@ -30,24 +31,24 @@ self.onmessage = (msg) => {
         )
         .distance(50)
       const simulation = forceSimulation(nodes)
-        .force(`charge`, forceCollide().radius(15))
+        .force(`charge`, forceCollide().radius(18))
         .force(`link`, forceLinks)
-        .force(`x`, forceX().strength(-0.05))
-        .force(`y`, forceY().strength(-0.05))
+        .force(`x`, forceX().strength(-0.06))
+        .force(`y`, forceY().strength(-0.06))
         .force(`center`, forceCenter())
         .stop()
-      const LAST_ITERATION = 5
+      const LAST_ITERATION = 10
       for (let i = 0; i < LAST_ITERATION; ++i) {
         simulation.tick(3)
         self.postMessage({
           nodes: simulation.nodes(),
-          type: `update_nodes`,
+          type: WorkerMessageType.UPDATE_NODES,
         })
         if (i === LAST_ITERATION - 1) {
           self.postMessage({
             // links are modified by d3-force and will contain x and y coordinates in source and target
             links,
-            type: `update_links`,
+            type: WorkerMessageType.UPDATE_LINKS,
           })
         }
       }
