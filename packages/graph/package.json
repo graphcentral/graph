@@ -56,6 +56,8 @@
     "worker-loader": "^3.0.8"
   },
   "dependencies": {
+    "@notion-knowledge-graph/d3-wasm-force": "*",
+    "@pixi/layers": "^1.0.11",
     "axios": "^0.24.0",
     "color-hash": "^2.0.1",
     "comlink": "^4.3.1",
@@ -69,8 +71,7 @@
     "react-dom": "^17.0.2",
     "regl": "^2.1.0",
     "stats.js": "^0.17.0",
-    "web-worker-proxy": "^0.5.5",
-    "@notion-knowledge-graph/d3-wasm-force": "*"
+    "web-worker-proxy": "^0.5.5"
   },
   "bugs": {
     "url": "https://github.com/9oelM/myprojectname/issues"

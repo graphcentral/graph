@@ -4,6 +4,7 @@ import createGraph from "ngraph.graph"
 import { Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
 import { setupFpsMonitor } from "./setupFpsMonitor"
+import { Layer } from "@pixi/layers"
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -89,6 +90,7 @@ export class KnowledgeGraph<
       passiveWheel: true,
       // stopPropagation: true,
     })
+    this.viewport.sortableChildren = true
     this.viewport.drag().pinch().wheel().decelerate()
     this.app.stage.addChild(this.viewport)
   }
@@ -152,6 +154,8 @@ export class KnowledgeGraph<
           ? circleTextureByParentId[parentId]
           : fallbackCircleTexture
         const circle = new PIXI.Sprite(circleTexture ?? fallbackCircleTexture)
+        circle.zOrder = 100
+        circle.zIndex = 100
         if (node.x) circle.x = node.x
         if (node.y) circle.y = node.y
         circle.interactive = true
