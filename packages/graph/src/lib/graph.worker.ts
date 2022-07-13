@@ -17,7 +17,7 @@ const graph = createGraph<Node, Link>()
 
 self.onmessage = (msg) => {
   switch (msg.data.type) {
-    case `d3_start_process`: {
+    case `start_process`: {
       const { nodes, links } = msg.data
       // const simulation =
       console.log(`simulation started`)
@@ -36,12 +36,11 @@ self.onmessage = (msg) => {
         .force(`y`, forceY().strength(-0.05))
         .force(`center`, forceCenter())
         .stop()
-      console.log(forceLinks)
       for (let i = 0; i < 15; ++i) {
         simulation.tick(3)
         self.postMessage({
-          nodePositions: simulation.nodes(),
-          type: `d3_update_process`,
+          nodes: simulation.nodes(),
+          type: i === 14 ? `finish_graph` : `update_graph`,
         })
       }
       const t1 = performance.now()
@@ -50,7 +49,7 @@ self.onmessage = (msg) => {
       console.log(simulation.nodes)
       break
     }
-    case `start_process`: {
+    case `legacy_start_process`: {
       const { nodes, links } = msg.data
       self.postMessage({ nodes, links })
       for (const node of nodes) {

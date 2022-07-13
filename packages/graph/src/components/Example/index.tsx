@@ -1,6 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef } from "react"
 import { FC } from "react"
-import { createNetworkGraph } from "../../lib/createNetworkGraph"
 import { enhance } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
 
