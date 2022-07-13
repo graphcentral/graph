@@ -36,17 +36,25 @@ self.onmessage = (msg) => {
         .force(`y`, forceY().strength(-0.05))
         .force(`center`, forceCenter())
         .stop()
-      for (let i = 0; i < 15; ++i) {
+      const LAST_ITERATION = 15
+      for (let i = 0; i < LAST_ITERATION; ++i) {
         simulation.tick(3)
         self.postMessage({
           nodes: simulation.nodes(),
-          type: i === 14 ? `finish_graph` : `update_graph`,
+          type: `update_nodes`,
         })
+        if (i === LAST_ITERATION - 1) {
+          self.postMessage({
+            // links are modified by d3-force and will contain x and y coordinates in source and target
+            links,
+            type: `update_links`,
+          })
+        }
       }
       const t1 = performance.now()
       console.log(`simulation ended. took: ${t1 - t0}ms`)
       // simulation.nodes
-      console.log(simulation.nodes)
+      console.log(links)
       break
     }
     case `legacy_start_process`: {

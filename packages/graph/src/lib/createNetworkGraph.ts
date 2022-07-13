@@ -27,17 +27,29 @@ export interface Link {
   target: Node[`id`]
 }
 
-export class KnowledgeGraph<N extends Node, L extends Link> {
+export type Coords = {
+  x: number
+  y: number
+}
+
+export type WithCoords<T> = T & Coords
+export type WithPartialCoords<T> = T & Partial<Coords>
+export type LinkWithPartialCoords = {
+  source: WithPartialCoords<Link[`source`]>
+  target: WithPartialCoords<Link[`target`]>
+}
+
+export class KnowledgeGraph<
+  N extends WithPartialCoords<Node>,
+  L extends LinkWithPartialCoords
+> {
   private nodes: N[]
   private links: L[]
+  private linksMap: Record<L[`source`], L[`target`]>
   private app: PIXI.Application
   private viewport: Viewport
   private graphWorker: Worker = new Worker(
-    new URL(
-      `./graph.worker.ts`,
-      //@ts-ignore: tsconfig not recognized for some reason
-      import.meta.url
-    )
+    new URL(`./graph.worker.ts`, import.meta.url)
   )
 
   constructor({
@@ -54,6 +66,13 @@ export class KnowledgeGraph<N extends Node, L extends Link> {
   }) {
     this.nodes = nodes
     this.links = links
+    this.linksMap = (() => {
+      const linksM: Record<string, string> = {}
+      for (const link of links) {
+        linksM[link.source] = link.target
+      }
+      return linksM
+    })()
     this.app = new PIXI.Application({
       backgroundColor: 0x131313,
       resizeTo: window,
@@ -74,25 +93,46 @@ export class KnowledgeGraph<N extends Node, L extends Link> {
     this.app.stage.addChild(this.viewport)
   }
 
-  private handleUpdateGraph({
+  private updateLinks({ links }: { links: L[] }) {
+    this.links = links
+    const lines: PIXI.Graphics[] = []
+    for (const link of links) {
+      const { x: sourceX, y: sourceY } = link.source
+      const { x: targetX, y: targetY } = link.target
+      if (
+        sourceX === undefined ||
+        sourceY === undefined ||
+        targetX === undefined ||
+        targetY === undefined
+      )
+        continue
+      const lineGraphics = new PIXI.Graphics()
+        .lineStyle(1, 0xffffff, 1, 1, false)
+        .moveTo(sourceX, sourceY)
+        // This is the length of the line. For the x-position, that's 600-30 pixels - so your line was 570 pixels long.
+        // Multiply that by p, making it longer and longer. Finally, it's offset by the 30 pixels from your moveTo above. So, when p is 0, the line moves to 30 (not drawn at all), and when p is 1, the line moves to 600 (where it was for you). For y, it's the same, but with your y values.
+        .lineTo(targetX, targetY)
+        .endFill()
+      lines.push(lineGraphics)
+    }
+    this.viewport.addChild(...lines)
+  }
+
+  private updateNodes({
     circleTextureByParentId,
     nodeChildren,
-    lineChildren,
-    isFirstTime,
+    isFirstTimeUpdatingNodes,
     nodes,
   }: {
     circleTextureByParentId: Record<string, PIXI.RenderTexture>
     nodeChildren: Array<PIXI.Sprite>
-    lineChildren: Array<PIXI.Geometry>
-    isFirstTime: boolean
-    nodes: (Node & {
-      x: number
-      y: number
-    })[]
+    isFirstTimeUpdatingNodes: boolean
+    nodes: WithPartialCoords<N>[]
   }) {
+    this.nodes = nodes
     const colorHash = new ColorHash()
     for (const [i, node] of nodes.entries()) {
-      if (isFirstTime) {
+      if (isFirstTimeUpdatingNodes) {
         const parentId = node.parentId
         if (parentId && !(parentId in circleTextureByParentId)) {
           const c = parseInt(colorHash.hex(parentId).replace(/^#/, ``), 16)
@@ -112,8 +152,8 @@ export class KnowledgeGraph<N extends Node, L extends Link> {
           ? circleTextureByParentId[parentId]
           : fallbackCircleTexture
         const circle = new PIXI.Sprite(circleTexture ?? fallbackCircleTexture)
-        circle.x = node.x
-        circle.y = node.y
+        if (node.x) circle.x = node.x
+        if (node.y) circle.y = node.y
         circle.interactive = true
         circle.on(`mouseover`, () => {
           console.log(node)
@@ -132,8 +172,8 @@ export class KnowledgeGraph<N extends Node, L extends Link> {
         // nodeChildren order is preserved across force directed graph iterations
         const child = nodeChildren[i]
         if (child) {
-          child.x = node.x
-          child.y = node.y
+          if (node.x) child.x = node.x
+          if (node.y) child.y = node.y
         }
       }
     }
@@ -157,22 +197,26 @@ export class KnowledgeGraph<N extends Node, L extends Link> {
       fallback: this.app.renderer.generateTexture(fallbackCircleGraphics),
     }
     const nodeChildren: Array<PIXI.Sprite> = []
-    const lineChildren: Array<PIXI.Geometry> = []
-    let isFirstTime = true
+    let isFirstTimeUpdatingNodes = true
     this.graphWorker.onmessage = (msg) => {
       switch (msg.data.type) {
-        case `update_graph`: {
-          this.handleUpdateGraph({
+        case `update_nodes`: {
+          this.updateNodes({
             circleTextureByParentId,
             nodeChildren,
-            lineChildren,
-            isFirstTime,
+            isFirstTimeUpdatingNodes,
             nodes: msg.data.nodes,
           })
-          if (isFirstTime) {
+          if (isFirstTimeUpdatingNodes) {
             this.viewport.addChild(...nodeChildren)
-            isFirstTime = false
+            isFirstTimeUpdatingNodes = false
           }
+          break
+        }
+        case `update_links`: {
+          this.updateLinks({
+            links: msg.data.links,
+          })
           break
         }
       }
