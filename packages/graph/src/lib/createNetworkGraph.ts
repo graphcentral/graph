@@ -108,10 +108,10 @@ export class KnowledgeGraph<
         continue
       const lineGraphics = new PIXI.Graphics()
         .lineStyle(1, 0xffffff, 1, 1, false)
-        .moveTo(sourceX, sourceY)
+        .moveTo(sourceX + 6, sourceY + 6)
         // This is the length of the line. For the x-position, that's 600-30 pixels - so your line was 570 pixels long.
         // Multiply that by p, making it longer and longer. Finally, it's offset by the 30 pixels from your moveTo above. So, when p is 0, the line moves to 30 (not drawn at all), and when p is 1, the line moves to 600 (where it was for you). For y, it's the same, but with your y values.
-        .lineTo(targetX, targetY)
+        .lineTo(targetX + 6, targetY + 6)
         .endFill()
       lines.push(lineGraphics)
     }
@@ -191,7 +191,6 @@ export class KnowledgeGraph<
       .beginFill(0xffffff, 1)
       .drawCircle(0, 0, 4.5)
       .endFill()
-
     setupFpsMonitor(this.app)
     const circleTextureByParentId: Record<string, PIXI.RenderTexture> = {
       fallback: this.app.renderer.generateTexture(fallbackCircleGraphics),

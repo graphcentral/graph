@@ -36,7 +36,7 @@ self.onmessage = (msg) => {
         .force(`y`, forceY().strength(-0.05))
         .force(`center`, forceCenter())
         .stop()
-      const LAST_ITERATION = 15
+      const LAST_ITERATION = 5
       for (let i = 0; i < LAST_ITERATION; ++i) {
         simulation.tick(3)
         self.postMessage({
