@@ -5,7 +5,7 @@ import { Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
 import { setupFpsMonitor } from "./setupFpsMonitor"
 import { Layer } from "@pixi/layers"
-import { WorkerMessageType } from "./graphEnums"
+import { GraphGraphics, WorkerMessageType } from "./graphEnums"
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -116,10 +116,10 @@ export class KnowledgeGraph<
         continue
       const lineGraphics = new PIXI.Graphics()
         .lineStyle(0.2, 0xffffff, 0.7, 1, false)
-        .moveTo(sourceX + 6, sourceY + 6)
+        .moveTo(sourceX, sourceY)
         // This is the length of the line. For the x-position, that's 600-30 pixels - so your line was 570 pixels long.
         // Multiply that by p, making it longer and longer. Finally, it's offset by the 30 pixels from your moveTo above. So, when p is 0, the line moves to 30 (not drawn at all), and when p is 1, the line moves to 600 (where it was for you). For y, it's the same, but with your y values.
-        .lineTo(targetX + 6, targetY + 6)
+        .lineTo(targetX, targetY)
         .endFill()
       lines.push(lineGraphics)
     }
@@ -145,9 +145,9 @@ export class KnowledgeGraph<
         if (parentId && !(parentId in circleTextureByParentId)) {
           const c = parseInt(colorHash.hex(parentId).replace(/^#/, ``), 16)
           const circleGraphics = new PIXI.Graphics()
-            .lineStyle(1, 0xfff, 1, 1, false)
+            .lineStyle(3, 0xffffff, 1, 1, false)
             .beginFill(c, 1)
-            .drawCircle(0, 0, 4.5)
+            .drawCircle(0, 0, GraphGraphics.CIRCLE_SIZE)
             .endFill()
           const texture = this.app.renderer.generateTexture(circleGraphics)
           circleTextureByParentId[parentId] = texture
@@ -164,18 +164,21 @@ export class KnowledgeGraph<
         circle.zIndex = 100
         if (node.x) circle.x = node.x
         if (node.y) circle.y = node.y
+        // https://stackoverflow.com/questions/70302580/pixi-js-graphics-resize-circle-while-maintaining-center
+        circle.pivot.x = circle.width / 2
+        circle.pivot.y = circle.height / 2
+        if (node.cc)
+          circle.scale.set(1 + Math.log10(node.cc), 1 + Math.log10(node.cc))
         circle.interactive = true
         circle.on(`mouseover`, () => {
           console.log(node)
-          circle.x -= 4
-          circle.y -= 4
-          circle.scale.set(2, 2)
+          circle.scale.set(circle.scale.x + 0.3, circle.scale.y + 0.3)
+          this.app.renderer.plugins[`interaction`].setCursorMode(`pointer`)
         })
         circle.on(`mouseout`, () => {
           console.log(node)
-          circle.x += 4
-          circle.y += 4
-          circle.scale.set(1, 1)
+          circle.scale.set(circle.scale.x - 0.3, circle.scale.y - 0.3)
+          this.app.renderer.plugins[`interaction`].setCursorMode(`auto`)
         })
         nodeChildren.push(circle)
       } else {
@@ -199,7 +202,7 @@ export class KnowledgeGraph<
     const fallbackCircleGraphics = new PIXI.Graphics()
       .lineStyle(0)
       .beginFill(0xffffff, 1)
-      .drawCircle(0, 0, 4.5)
+      .drawCircle(0, 0, GraphGraphics.CIRCLE_SIZE)
       .endFill()
     setupFpsMonitor(this.app)
     const circleTextureByParentId: Record<string, PIXI.RenderTexture> = {

@@ -31,7 +31,7 @@ self.onmessage = (msg) => {
         )
         .distance(50)
       const simulation = forceSimulation(nodes)
-        .force(`charge`, forceCollide().radius(18))
+        .force(`charge`, forceCollide().radius(300))
         .force(`link`, forceLinks)
         .force(`x`, forceX().strength(-0.06))
         .force(`y`, forceY().strength(-0.06))

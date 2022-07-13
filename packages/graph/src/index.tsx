@@ -3,7 +3,7 @@ import ReactDOM from "react-dom"
 import { KnowledgeGraph } from "./lib/createNetworkGraph"
 import { ExampleImpure } from "./components/Example"
 import "./index.css"
-import testData from "../../test-data/test6.json"
+import testData from "../../test-data/test10.json"
 
 ReactDOM.render(
   // @ts-ignore
