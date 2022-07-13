@@ -145,7 +145,7 @@ export class KnowledgeGraph<
         if (parentId && !(parentId in circleTextureByParentId)) {
           const c = parseInt(colorHash.hex(parentId).replace(/^#/, ``), 16)
           const circleGraphics = new PIXI.Graphics()
-            .lineStyle(3, 0xffffff, 1, 1, false)
+            .lineStyle(5, 0xffffff, 1, 1, false)
             .beginFill(c, 1)
             .drawCircle(0, 0, GraphGraphics.CIRCLE_SIZE)
             .endFill()

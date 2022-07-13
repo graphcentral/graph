@@ -37,9 +37,9 @@ self.onmessage = (msg) => {
         .force(`y`, forceY().strength(-0.06))
         .force(`center`, forceCenter())
         .stop()
-      const LAST_ITERATION = 10
+      const LAST_ITERATION = 15
       for (let i = 0; i < LAST_ITERATION; ++i) {
-        simulation.tick(3)
+        simulation.tick(2)
         self.postMessage({
           nodes: simulation.nodes(),
           type: WorkerMessageType.UPDATE_NODES,
