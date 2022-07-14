@@ -5,5 +5,5 @@ export enum WorkerMessageType {
 }
 
 export enum GraphGraphics {
-  CIRCLE_SIZE = 20,
+  CIRCLE_SIZE = 50,
 }

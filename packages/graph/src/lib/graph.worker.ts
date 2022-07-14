@@ -9,6 +9,7 @@ import {
   forceX,
   forceY,
   forceCollide,
+  forceRadial,
 } from "d3-force"
 import { WorkerMessageType } from "./graphEnums"
 
@@ -29,13 +30,17 @@ self.onmessage = (msg) => {
             // @ts-ignore
             node.id
         )
-        .distance(50)
+        .distance(2000)
       const simulation = forceSimulation(nodes)
-        .force(`charge`, forceCollide().radius(300))
+        // .force(`charge`, forceCollide().radius(150))
+        // .force(`link`, forceLinks)
+        // .force(`x`, forceX().strength(-0.1))
+        // .force(`y`, forceY().strength(-0.1))
+        // .force(`center`, forceCenter())
         .force(`link`, forceLinks)
-        .force(`x`, forceX().strength(-0.06))
-        .force(`y`, forceY().strength(-0.06))
+        .force(`charge`, forceManyBody().strength(-40_000))
         .force(`center`, forceCenter())
+        .force(`dagRadial`, forceRadial(1))
         .stop()
       const LAST_ITERATION = 15
       for (let i = 0; i < LAST_ITERATION; ++i) {

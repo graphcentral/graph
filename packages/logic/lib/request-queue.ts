@@ -51,7 +51,7 @@ export class RequestQueue<Res, Err> {
    * If there are no more requests to send, it will emit `complete` event and terminate.
    */
   private checkAndSendRequest() {
-    let timeoutId: null | NodeJS.Timeout = null
+    let timeoutIds: NodeJS.Timeout[] = []
     let totalRequestCount = 0
     const run = () => {
       console.log(
@@ -66,7 +66,8 @@ export class RequestQueue<Res, Err> {
         while (this.currentRequestCount < this.maxConcurrentRequest) {
           ++totalRequestCount
 
-          if (timeoutId) clearTimeout(timeoutId)
+          timeoutIds.forEach((id) => clearTimeout(id))
+          timeoutIds = []
           this.sendRequest()
             .catch((err: Err) => {
               this.responses.push(err)
@@ -79,15 +80,19 @@ export class RequestQueue<Res, Err> {
               // if it is clear that no more requests will be enqueued,
               // check if the function can end right away
               if (this.hasNoMoreRequestEnqueued) {
+                console.log(`terminate #1`)
                 this.terminateIfPossible()
               }
-              timeoutId = setTimeout(() => {
-                // if things seem to be completed, check again after 1 second,
-                // and if it is empty, that means new request has not been sent anymore
-                // which means every request has been sent and there's no more work to do
+              timeoutIds.push(
+                setTimeout(() => {
+                  // if things seem to be completed, check again after 1 second,
+                  // and if it is empty, that means new request has not been sent anymore
+                  // which means every request has been sent and there's no more work to do
 
-                this.terminateIfPossible()
-              }, this.lastRequestTimeoutMs)
+                  console.log(`terminate #2`)
+                  this.terminateIfPossible()
+                }, this.lastRequestTimeoutMs)
+              )
             })
           ++this.currentRequestCount
         }

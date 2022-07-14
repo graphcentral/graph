@@ -47,7 +47,6 @@ export class KnowledgeGraph<
 > {
   private nodes: N[]
   private links: L[]
-  private linksMap: Record<L[`source`], L[`target`]>
   private app: PIXI.Application
   private viewport: Viewport
   private graphWorker: Worker = new Worker(
@@ -73,18 +72,11 @@ export class KnowledgeGraph<
   }) {
     this.nodes = nodes
     this.links = links
-    this.linksMap = (() => {
-      const linksM: Record<string, string> = {}
-      for (const link of links) {
-        linksM[link.source] = link.target
-      }
-      return linksM
-    })()
     this.app = new PIXI.Application({
       backgroundColor: 0x131313,
       resizeTo: window,
       view: canvasElement,
-      // antialias: true,
+      antialias: true,
       // autoDensity: true,
     })
     this.viewport = new Viewport({
@@ -115,7 +107,7 @@ export class KnowledgeGraph<
       )
         continue
       const lineGraphics = new PIXI.Graphics()
-        .lineStyle(0.2, 0xffffff, 0.7, 1, false)
+        .lineStyle(3, 0xffffff, 0.7, 1, false)
         .moveTo(sourceX, sourceY)
         // This is the length of the line. For the x-position, that's 600-30 pixels - so your line was 570 pixels long.
         // Multiply that by p, making it longer and longer. Finally, it's offset by the 30 pixels from your moveTo above. So, when p is 0, the line moves to 30 (not drawn at all), and when p is 1, the line moves to 600 (where it was for you). For y, it's the same, but with your y values.
