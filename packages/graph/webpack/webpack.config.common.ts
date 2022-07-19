@@ -1,6 +1,8 @@
 import path from "path"
 import webpack from "webpack"
 import HtmlWebpackPlugin from "html-webpack-plugin"
+// @ts-ignore
+import PreloadWebpackPlugin from "@vue/preload-webpack-plugin"
 
 export const workerConfig: webpack.Configuration = {
   entry: `./src/lib/graph.worker.ts`,
@@ -68,6 +70,19 @@ export const commonConfig: webpack.Configuration = {
         test: /\.css?$/,
         use: [`style-loader`, `css-loader`],
       },
+      {
+        test: /\.fnt$/,
+        use: [
+          `file-loader`,
+          `extract-loader`,
+          {
+            loader: `html-loader`,
+            options: {
+              sources: true,
+            },
+          },
+        ],
+      },
       // {
       //   test: /\.worker\.ts$/,
       //   type: `asset/source`,
@@ -98,5 +113,6 @@ export const commonConfig: webpack.Configuration = {
     new HtmlWebpackPlugin({
       template: path.join(__dirname, `..`, `public`, `index.html`),
     }),
+    new PreloadWebpackPlugin({}),
   ],
 }

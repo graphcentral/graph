@@ -1,11 +1,9 @@
 import * as PIXI from "pixi.js"
-import createLayout from "ngraph.forcelayout"
-import createGraph from "ngraph.graph"
 import { Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
 import { setupFpsMonitor } from "./setupFpsMonitor"
-import { Layer } from "@pixi/layers"
 import { GraphGraphics, WorkerMessageType } from "./graphEnums"
+import { WebfontLoaderPlugin } from "pixi-webfont-loader"
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -56,6 +54,7 @@ export class KnowledgeGraph<
    * whether drawing graph is finished
    */
   private isDrawing = true
+  private isFontLoaded = false
   private eventTarget = new EventTarget()
 
   constructor({
@@ -66,7 +65,7 @@ export class KnowledgeGraph<
     nodes: N[]
     links: L[]
     /**
-     * if you want to access it later, use this.app. to do so
+     * if you want to access it later, use this.app. to do sos
      */
     canvasElement: HTMLCanvasElement
   }) {
@@ -91,6 +90,25 @@ export class KnowledgeGraph<
     this.viewport.sortableChildren = true
     this.viewport.drag().pinch().wheel().decelerate()
     this.app.stage.addChild(this.viewport)
+
+    // WebFont.load({
+    //   google: {
+    //     families: [`Droid Sans`, `Droid Serif`],
+    //   },
+    // })
+
+    PIXI.Loader.registerPlugin(WebfontLoaderPlugin)
+
+    PIXI.Loader.shared.add({
+      name: `From Google`,
+      url: `https://fonts.googleapis.com/css2?family=Rowdies:wght@300;400;700&display=swap`,
+    })
+    PIXI.Loader.shared.onComplete.once(() => {
+      console.log(`font added`)
+    })
+    // PIXI.Loader.shared
+    //   .add(`roboto`, Roboto)
+    //   .load(() => (this.isFontLoaded = true))
   }
 
   private updateLinks({ links }: { links: L[] }) {
@@ -116,6 +134,22 @@ export class KnowledgeGraph<
       lines.push(lineGraphics)
     }
     this.viewport.addChild(...lines)
+  }
+
+  private updateTexts() {
+    const texts: PIXI.BitmapText[] = []
+    for (const node of this.nodes) {
+      if (!node.title) continue
+      if (node.x === undefined || node.y === undefined) continue
+
+      const text = new PIXI.BitmapText(node.title, {
+        fontSize: 35,
+      })
+      text.x = node.x
+      text.y = node.y
+      texts.push(text)
+    }
+    this.viewport.addChild(...texts)
   }
 
   private updateNodes({
@@ -152,7 +186,6 @@ export class KnowledgeGraph<
           ? circleTextureByParentId[parentId]
           : fallbackCircleTexture
         const circle = new PIXI.Sprite(circleTexture ?? fallbackCircleTexture)
-        circle.zOrder = 100
         circle.zIndex = 100
         if (node.x) circle.x = node.x
         if (node.y) circle.y = node.y
@@ -164,12 +197,18 @@ export class KnowledgeGraph<
         circle.interactive = true
         circle.on(`mouseover`, () => {
           console.log(node)
-          circle.scale.set(circle.scale.x + 0.3, circle.scale.y + 0.3)
+          circle.scale.set(
+            circle.scale.x * GraphGraphics.CIRCLE_SCALE_FACTOR,
+            circle.scale.y * GraphGraphics.CIRCLE_SCALE_FACTOR
+          )
           this.app.renderer.plugins[`interaction`].setCursorMode(`pointer`)
         })
         circle.on(`mouseout`, () => {
           console.log(node)
-          circle.scale.set(circle.scale.x - 0.3, circle.scale.y - 0.3)
+          circle.scale.set(
+            circle.scale.x / GraphGraphics.CIRCLE_SCALE_FACTOR,
+            circle.scale.y / GraphGraphics.CIRCLE_SCALE_FACTOR
+          )
           this.app.renderer.plugins[`interaction`].setCursorMode(`auto`)
         })
         nodeChildren.push(circle)
@@ -222,6 +261,7 @@ export class KnowledgeGraph<
             links: msg.data.links,
           })
           this.isDrawing = false
+          this.updateTexts()
           this.eventTarget.dispatchEvent(new Event(`is_dr`))
           break
         }

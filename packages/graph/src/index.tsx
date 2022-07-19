@@ -1,6 +1,6 @@
 import React from "react"
 import ReactDOM from "react-dom"
-import { KnowledgeGraph } from "./lib/createNetworkGraph"
+import { KnowledgeGraph } from "./lib"
 import { ExampleImpure } from "./components/Example"
 import "./index.css"
 import testData from "../../test-data/test10.json"
