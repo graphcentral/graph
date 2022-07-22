@@ -208,7 +208,7 @@ export class KnowledgeGraph<
         .endFill()
       lines.push(lineGraphics)
     }
-    this.viewport.addChild(...lines)
+    if (lines.length > 0) this.viewport.addChild(...lines)
   }
 
   /**
@@ -269,8 +269,7 @@ export class KnowledgeGraph<
       )
         continue
       console.log(doNotDrawNodes)
-      console.log(`${node.x.toFixed(3)}${node.y.toFixed(3)}`)
-      if (doNotDrawNodes[`${node.x.toFixed(3)}${node.y.toFixed(3)}`]) {
+      if (doNotDrawNodes[`${node.x.toFixed(3)},${node.y.toFixed(3)}`]) {
         console.log(doNotDrawNodes[`${node.x.toFixed(3)}${node.y.toFixed(3)}`])
         continue
       }
@@ -291,7 +290,7 @@ export class KnowledgeGraph<
       text.zIndex = 101
       texts.push(text)
     }
-    this.nodeLabelsContainer.addChild(...texts)
+    if (texts.length > 0) this.nodeLabelsContainer.addChild(...texts)
   }
 
   private updateNodes({
@@ -394,7 +393,7 @@ export class KnowledgeGraph<
             nodes: msg.data.nodes,
           })
           if (isFirstTimeUpdatingNodes) {
-            this.viewport.addChild(...nodeChildren)
+            if (nodeChildren.length > 0) this.viewport.addChild(...nodeChildren)
             isFirstTimeUpdatingNodes = false
           }
           break
