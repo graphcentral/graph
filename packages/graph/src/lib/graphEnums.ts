@@ -1,7 +1,14 @@
-export enum WorkerMessageType {
+export const enum WorkerMessageType {
   START_GRAPH = `START_GRAPH`,
   UPDATE_NODES = `UPDATE_NODES`,
   UPDATE_LINKS = `UPDATE_LINKS`,
+
+  INIT_GRAPH_COMPUTATION_WORKER = `INIT_GRAPH_COMPUTATION_WORKER`,
+  FIND_NODES_INSIDE_BOUND = `FIND_NODES_INSIDE_BOUND`,
+}
+
+export const enum GraphEvents {
+  FORCE_LAYOUT_COMPLETE = `FORCE_LAYOUT_COMPLETE`,
 }
 
 export enum GraphGraphics {

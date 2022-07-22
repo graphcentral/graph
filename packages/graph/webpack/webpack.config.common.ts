@@ -4,8 +4,10 @@ import HtmlWebpackPlugin from "html-webpack-plugin"
 // @ts-ignore
 import PreloadWebpackPlugin from "@vue/preload-webpack-plugin"
 
-export const workerConfig: webpack.Configuration = {
-  entry: `./src/lib/graph.worker.ts`,
+const createWorkerConfig: (workerPath: string) => webpack.Configuration = (
+  workerPath
+) => ({
+  entry: workerPath,
   output: {
     filename: `[name].worker.js`,
     path: path.resolve(__dirname, `dist`),
@@ -31,12 +33,19 @@ export const workerConfig: webpack.Configuration = {
       },
     ],
   },
-}
+})
+
+export const workerConfigs = [
+  `./src/lib/graph.worker.ts`,
+  `./src/lib/graph-computation.worker.ts`,
+].map(createWorkerConfig)
 
 export const commonConfig: webpack.Configuration = {
   entry: `./src/index.tsx`,
   // https://webpack.js.org/plugins/split-chunks-plugin/
   optimization: {
+    // https://stackoverflow.com/questions/58073626/uncaught-typeerror-cannot-read-property-call-of-undefined-at-webpack-requir
+    sideEffects: false, // <----- in prod defaults to true if left blank
     splitChunks: {
       chunks: `all`,
       minSize: 500,
@@ -71,29 +80,12 @@ export const commonConfig: webpack.Configuration = {
         use: [`style-loader`, `css-loader`],
       },
       {
-        test: /\.fnt$/,
-        use: [
-          `file-loader`,
-          `extract-loader`,
-          {
-            loader: `html-loader`,
-            options: {
-              sources: true,
-            },
-          },
-        ],
+        test: /\.(fnt)$/i,
+        type: `asset/resource`,
+        generator: {
+          filename: `static/[name].fnt`,
+        },
       },
-      // {
-      //   test: /\.worker\.ts$/,
-      //   type: `asset/source`,
-      // },
-      // {
-      //   test: /\.worker\.ts$/,
-      //   loader: `worker-loader`,
-      //   options: {
-      //     inline: !process.env[`production`] ? `fallback` : `no-fallback`,
-      //   },
-      // },
     ],
   },
   resolve: {

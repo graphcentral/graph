@@ -5,13 +5,14 @@ import webpack from "webpack"
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as webpackDevServer from "webpack-dev-server"
-import { commonConfig, workerConfig } from "./webpack.config.common"
+import { commonConfig, workerConfigs } from "./webpack.config.common"
 
 const config: webpack.Configuration = {
   mode: `development`,
   devtool: `inline-source-map`,
   devServer: {
     static: path.join(__dirname, `dist`),
+    // publicPath: path.resolve(`static`),
     compress: true,
     port: 8080,
     open: true,
@@ -19,4 +20,4 @@ const config: webpack.Configuration = {
   ...commonConfig,
 }
 
-export default [config, workerConfig]
+export default [config, ...workerConfigs]

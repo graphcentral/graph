@@ -1,9 +1,16 @@
 import * as PIXI from "pixi.js"
-import { Viewport } from "pixi-viewport"
+import { MovedEventType, Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
 import { setupFpsMonitor } from "./setupFpsMonitor"
-import { GraphGraphics, WorkerMessageType } from "./graphEnums"
+import { GraphEvents, GraphGraphics, WorkerMessageType } from "./graphEnums"
 import { WebfontLoaderPlugin } from "pixi-webfont-loader"
+// @ts-ignore
+// import Test from "./test.txt"
+import { Container, Graphics, Loader } from "pixi.js"
+import { debounce } from "lodash"
+import { isNodeInsideBonds } from "./common-graph-util"
+
+// console.log(Test)
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -50,6 +57,11 @@ export class KnowledgeGraph<
   private graphWorker: Worker = new Worker(
     new URL(`./graph.worker.ts`, import.meta.url)
   )
+  private graphComputationWorker: Worker = new Worker(
+    new URL(`./graph-computation.worker.ts`, import.meta.url)
+  )
+  private maxNodeTitleLength = 35
+  private nodeLabelsContainer = new Container()
   /**
    * whether drawing graph is finished
    */
@@ -90,25 +102,88 @@ export class KnowledgeGraph<
     this.viewport.sortableChildren = true
     this.viewport.drag().pinch().wheel().decelerate()
     this.app.stage.addChild(this.viewport)
+    this.viewport.addChild(this.nodeLabelsContainer)
+    this.setupListeners()
+  }
 
-    // WebFont.load({
-    //   google: {
-    //     families: [`Droid Sans`, `Droid Serif`],
-    //   },
-    // })
+  /**
+   * @param scale decreases as user zooms out
+   */
+  private scaleToChildrenCount(scale: number): number {
+    const CAN_SEE_BIG_NODES_WELL = 0.04608368838069515
+    switch (true) {
+      // only handle big nodes
+      case scale <= 0: {
+        console.log(`not accepted`)
+        return -1
+      }
+      case scale < CAN_SEE_BIG_NODES_WELL: {
+        // show text from nodes having cc above 20
+        return 20
+      }
+      case scale > CAN_SEE_BIG_NODES_WELL: {
+        // show text from nodes having cc above 0
+        return 0
+      }
+    }
 
-    PIXI.Loader.registerPlugin(WebfontLoaderPlugin)
+    return -1
+  }
 
-    PIXI.Loader.shared.add({
-      name: `From Google`,
-      url: `https://fonts.googleapis.com/css2?family=Rowdies:wght@300;400;700&display=swap`,
+  /**
+   * call this function only once as it sets up event listeners.
+   */
+  private async setupListeners() {
+    await new Promise((resolve) => {
+      this.eventTarget.addEventListener(
+        GraphEvents.FORCE_LAYOUT_COMPLETE,
+        () => {
+          resolve(GraphEvents.FORCE_LAYOUT_COMPLETE)
+        },
+        { once: true }
+      )
     })
-    PIXI.Loader.shared.onComplete.once(() => {
-      console.log(`font added`)
+    this.graphComputationWorker.postMessage({
+      type: WorkerMessageType.INIT_GRAPH_COMPUTATION_WORKER,
+      nodes: this.nodes,
+      links: this.links,
     })
-    // PIXI.Loader.shared
-    //   .add(`roboto`, Roboto)
-    //   .load(() => (this.isFontLoaded = true))
+
+    let notDeleted: Record<string, boolean> = {}
+    const onMessageFromGraphComputationWorker = (
+      event: Parameters<NonNullable<Worker[`onmessage`]>>[0]
+    ) => {
+      switch (event.data.type) {
+        case WorkerMessageType.FIND_NODES_INSIDE_BOUND:
+          console.log(event)
+          this.createBitmapTextsAsNodeLabels(event.data.nodes, notDeleted)
+          break
+      }
+    }
+    this.viewport.on(
+      // includes zoom, drag, ... everything.
+      // @ts-ignore
+      `moved-end`,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      debounce((_movedEndEvent: MovedEventType) => {
+        notDeleted = this.removeNodeLabelsIfNeeded()
+        // do not listen to the request for previous computation anymore
+        // because the viewport has already moved to somewhere else
+        this.graphComputationWorker.removeEventListener(
+          `message`,
+          onMessageFromGraphComputationWorker
+        )
+        this.graphComputationWorker.addEventListener(
+          `message`,
+          onMessageFromGraphComputationWorker
+        )
+        this.graphComputationWorker.postMessage({
+          type: WorkerMessageType.FIND_NODES_INSIDE_BOUND,
+          minimumRenderCC: this.scaleToChildrenCount(this.viewport.scale.x),
+          bounds: this.viewport.hitArea,
+        })
+      }, 1000)
+    )
   }
 
   private updateLinks({ links }: { links: L[] }) {
@@ -136,20 +211,87 @@ export class KnowledgeGraph<
     this.viewport.addChild(...lines)
   }
 
-  private updateTexts() {
-    const texts: PIXI.BitmapText[] = []
-    for (const node of this.nodes) {
-      if (!node.title) continue
-      if (node.x === undefined || node.y === undefined) continue
+  /**
+   *
+   * @param cc node.cc (children count)
+   * @returns scaled number bigger than cc
+   */
+  private scaleByCC(cc: number): number {
+    return 1 + Math.log10(cc)
+  }
 
-      const text = new PIXI.BitmapText(node.title, {
-        fontSize: 35,
-      })
+  private removeNodeLabelsIfNeeded(): Record<string, boolean> {
+    console.log(this.nodeLabelsContainer.children)
+    const toBeDeleted: PIXI.DisplayObject[] = []
+    const notDeleted: Record<string, boolean> = {}
+    for (const text of this.nodeLabelsContainer.children) {
+      if (this.viewport.hitArea?.contains(text.x, text.y)) {
+        // todo change to node id
+        notDeleted[`${text.x.toFixed(3)},${text.y.toFixed(3)}`] = true
+        continue
+      }
+      toBeDeleted.push(text)
+    }
+    this.viewport.removeChild(...toBeDeleted)
+
+    return notDeleted
+  }
+
+  private createBitmapTextsAsNodeLabels(
+    nodes: N[],
+    doNotDrawNodes: Record<string, boolean>
+  ) {
+    const texts: PIXI.BitmapText[] = []
+    const fontName = `foobar`
+    PIXI.BitmapFont.from(
+      fontName,
+      {
+        fill: `#FFFFFF`,
+        fontSize: 100,
+        fontWeight: `bold`,
+      },
+      {
+        resolution: window.devicePixelRatio,
+        chars: [
+          [`a`, `z`],
+          [`A`, `Z`],
+          [`0`, `9`],
+          `~!@#$%^&*()_+-={}|:"<>?[]\\;',./ `,
+        ],
+      }
+    )
+    for (const node of nodes) {
+      if (!node.title) continue
+      if (
+        node.x === undefined ||
+        node.y === undefined
+        // doNotDrawNodes[`${node.x.toFixed(3)}${node.y.toFixed(3)}`]
+      )
+        continue
+      console.log(doNotDrawNodes)
+      console.log(`${node.x.toFixed(3)}${node.y.toFixed(3)}`)
+      if (doNotDrawNodes[`${node.x.toFixed(3)}${node.y.toFixed(3)}`]) {
+        console.log(doNotDrawNodes[`${node.x.toFixed(3)}${node.y.toFixed(3)}`])
+        continue
+      }
+      const initialTextScale = this.scaleByCC(node.cc ?? 0)
+      const text = new PIXI.BitmapText(
+        node.title.length > this.maxNodeTitleLength
+          ? `${node.title.substring(0, this.maxNodeTitleLength)}...`
+          : node.title,
+        {
+          fontSize: 100 * Math.max(1, initialTextScale),
+          fontName,
+        }
+      )
+      text.cacheAsBitmap = true
       text.x = node.x
       text.y = node.y
+      text.alpha = 0.7
+      text.zIndex = 101
       texts.push(text)
     }
-    this.viewport.addChild(...texts)
+    this.nodeLabelsContainer.addChild(...texts)
   }
 
   private updateNodes({
@@ -193,7 +335,7 @@ export class KnowledgeGraph<
         circle.pivot.x = circle.width / 2
         circle.pivot.y = circle.height / 2
         if (node.cc)
-          circle.scale.set(1 + Math.log10(node.cc), 1 + Math.log10(node.cc))
+          circle.scale.set(this.scaleByCC(node.cc), this.scaleByCC(node.cc))
         circle.interactive = true
         circle.on(`mouseover`, () => {
           console.log(node)
@@ -203,6 +345,7 @@ export class KnowledgeGraph<
           )
           this.app.renderer.plugins[`interaction`].setCursorMode(`pointer`)
         })
+        // circle.cullable = true
         circle.on(`mouseout`, () => {
           console.log(node)
           circle.scale.set(
@@ -261,8 +404,9 @@ export class KnowledgeGraph<
             links: msg.data.links,
           })
           this.isDrawing = false
-          this.updateTexts()
-          this.eventTarget.dispatchEvent(new Event(`is_dr`))
+          this.eventTarget.dispatchEvent(
+            new Event(GraphEvents.FORCE_LAYOUT_COMPLETE)
+          )
           break
         }
       }

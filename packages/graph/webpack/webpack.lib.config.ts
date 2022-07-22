@@ -1,8 +1,8 @@
 import webpack from "webpack"
-import { workerConfig as originalWorkerConfig } from "./webpack.config.common"
+import { workerConfigs } from "./webpack.config.common"
 import path from "path"
 
-const optimization: webpack.Configuration['optimization'] = {
+const optimization: webpack.Configuration[`optimization`] = {
   splitChunks: {
     chunks: `all`,
     name: `shared`,
@@ -73,28 +73,34 @@ export const libConfig: webpack.Configuration = {
   },
   output: {
     chunkFilename: (pathData) => {
-      return pathData.chunk?.name === 'main' ? '[name].js' : '[name].[chunkhash].js';
+      return pathData.chunk?.name === `main`
+        ? `[name].js`
+        : `[name].[chunkhash].js`
     },
     path: path.resolve(__dirname, `dist`),
     library: {
       name: `@graphcentral/graph`,
-      type: `commonjs`
+      type: `commonjs`,
     },
     libraryTarget: `commonjs`,
   },
 }
 
-const workerConfig: webpack.Configuration = {
-  ...originalWorkerConfig,
+const createProductionWorkerConfig: (
+  devWorkerConfig: webpack.Configuration
+) => webpack.Configuration = (devWorkerConfig) => ({
+  ...devWorkerConfig,
   mode: `production`,
   optimization,
   output: {
     filename: `[name].worker.js`,
     chunkFilename: (pathData) => {
-      return pathData.chunk?.name === 'main' ? '[name].worker.js' : '[name].[chunkhash].worker.js';
+      return pathData.chunk?.name === `main`
+        ? `[name].worker.js`
+        : `[name].[chunkhash].worker.js`
     },
     path: path.resolve(__dirname, `dist`),
   },
-}
+})
 
-export default [libConfig, workerConfig]
+export default [libConfig, ...workerConfigs.map(createProductionWorkerConfig)]
