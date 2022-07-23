@@ -12,6 +12,7 @@ import {
 // import Test from "./test.txt"
 import { Container } from "pixi.js"
 import { debounce } from "lodash"
+import { NodeLabel } from "./node-label"
 
 // console.log(Test)
 /**
@@ -221,23 +222,32 @@ export class KnowledgeGraph<
   }
 
   private removeNodeLabelsIfNeeded(): Record<string, boolean> {
-    let toBeDeleted: PIXI.DisplayObject[] = []
+    const toBeDeleted: PIXI.DisplayObject[] = []
     const notDeleted: Record<string, boolean> = {}
     const minCc = this.scaleToChildrenCount(this.viewport.scale.x)
 
     switch (minCc) {
       case 20: {
-        toBeDeleted = this.nodeLabelsContainer.children
+        for (const text of this.nodeLabelsContainer
+          .children as NodeLabel<N>[]) {
+          const cc = text.getNodeData().cc ?? 0
+
+          if (cc >= 20) {
+            notDeleted[text.getNodeData().id] = true
+          } else {
+            toBeDeleted.push(text)
+          }
+        }
         break
       }
       case 0: {
-        for (const text of this.nodeLabelsContainer.children) {
+        for (const text of this.nodeLabelsContainer
+          .children as NodeLabel<N>[]) {
           if (this.viewport.hitArea?.contains(text.x, text.y)) {
-            // todo change to node id
-            notDeleted[`${text.x.toFixed(3)},${text.y.toFixed(3)}`] = true
-            continue
+            notDeleted[text.getNodeData().id] = true
+          } else {
+            toBeDeleted.push(text)
           }
-          toBeDeleted.push(text)
         }
       }
     }
@@ -250,7 +260,7 @@ export class KnowledgeGraph<
     nodes: N[],
     doNotDrawNodes: Record<string, boolean>
   ) {
-    const texts: PIXI.BitmapText[] = []
+    const texts: NodeLabel<N>[] = []
     const fontName = `foobar`
     PIXI.BitmapFont.from(
       fontName,
@@ -271,26 +281,21 @@ export class KnowledgeGraph<
     )
     for (const node of nodes) {
       if (!node.title) continue
-      if (
-        node.x === undefined ||
-        node.y === undefined
-        // doNotDrawNodes[`${node.x.toFixed(3)}${node.y.toFixed(3)}`]
-      )
-        continue
-      if (doNotDrawNodes[`${node.x.toFixed(3)},${node.y.toFixed(3)}`]) {
+      if (node.x === undefined || node.y === undefined) continue
+      if (doNotDrawNodes[node.id]) {
         continue
       }
       const initialTextScale = this.scaleByCC(node.cc ?? 0)
-      const text = new PIXI.BitmapText(
+      const text = new NodeLabel<N>(
         node.title.length > this.maxNodeTitleLength
           ? `${node.title.substring(0, this.maxNodeTitleLength)}...`
           : node.title,
+        node as WithCoords<N>,
         {
           fontSize: 100 * Math.max(1, initialTextScale),
           fontName,
         }
       )
-      text.cacheAsBitmap = true
       text.x = node.x
       text.y = node.y
       text.alpha = 0.7
