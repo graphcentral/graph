@@ -15,3 +15,8 @@ export enum GraphGraphics {
   CIRCLE_SIZE = 50,
   CIRCLE_SCALE_FACTOR = 1.5,
 }
+
+export enum GraphScales {
+  CAN_SEE_BIG_NODES_WELL = 0.04608368838069515,
+  CANNOT_SEE_ANYTHING_WELL = 0.05449999848460085,
+}

@@ -2,13 +2,16 @@ import * as PIXI from "pixi.js"
 import { MovedEventType, Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
 import { setupFpsMonitor } from "./setupFpsMonitor"
-import { GraphEvents, GraphGraphics, WorkerMessageType } from "./graphEnums"
-import { WebfontLoaderPlugin } from "pixi-webfont-loader"
+import {
+  GraphEvents,
+  GraphGraphics,
+  GraphScales,
+  WorkerMessageType,
+} from "./graphEnums"
 // @ts-ignore
 // import Test from "./test.txt"
-import { Container, Graphics, Loader } from "pixi.js"
+import { Container } from "pixi.js"
 import { debounce } from "lodash"
-import { isNodeInsideBonds } from "./common-graph-util"
 
 // console.log(Test)
 /**
@@ -93,11 +96,8 @@ export class KnowledgeGraph<
     this.viewport = new Viewport({
       screenWidth: window.innerWidth,
       screenHeight: window.innerHeight,
-      worldWidth: 1000,
-      worldHeight: 1000,
       interaction: this.app.renderer.plugins[`interaction`],
       passiveWheel: true,
-      // stopPropagation: true,
     })
     this.viewport.sortableChildren = true
     this.viewport.drag().pinch().wheel().decelerate()
@@ -110,18 +110,17 @@ export class KnowledgeGraph<
    * @param scale decreases as user zooms out
    */
   private scaleToChildrenCount(scale: number): number {
-    const CAN_SEE_BIG_NODES_WELL = 0.04608368838069515
     switch (true) {
       // only handle big nodes
       case scale <= 0: {
         console.log(`not accepted`)
         return -1
       }
-      case scale < CAN_SEE_BIG_NODES_WELL: {
+      case scale < GraphScales.CAN_SEE_BIG_NODES_WELL: {
         // show text from nodes having cc above 20
         return 20
       }
-      case scale > CAN_SEE_BIG_NODES_WELL: {
+      case scale > GraphScales.CAN_SEE_BIG_NODES_WELL: {
         // show text from nodes having cc above 0
         return 0
       }
@@ -166,6 +165,7 @@ export class KnowledgeGraph<
       `moved-end`,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       debounce((_movedEndEvent: MovedEventType) => {
+        console.log(this.viewport.scale.x)
         notDeleted = this.removeNodeLabelsIfNeeded()
         // do not listen to the request for previous computation anymore
         // because the viewport has already moved to somewhere else
@@ -221,16 +221,25 @@ export class KnowledgeGraph<
   }
 
   private removeNodeLabelsIfNeeded(): Record<string, boolean> {
-    console.log(this.nodeLabelsContainer.children)
-    const toBeDeleted: PIXI.DisplayObject[] = []
+    let toBeDeleted: PIXI.DisplayObject[] = []
     const notDeleted: Record<string, boolean> = {}
-    for (const text of this.nodeLabelsContainer.children) {
-      if (this.viewport.hitArea?.contains(text.x, text.y)) {
-        // todo change to node id
-        notDeleted[`${text.x.toFixed(3)},${text.y.toFixed(3)}`] = true
-        continue
+    const minCc = this.scaleToChildrenCount(this.viewport.scale.x)
+
+    switch (minCc) {
+      case 20: {
+        toBeDeleted = this.nodeLabelsContainer.children
+        break
       }
-      toBeDeleted.push(text)
+      case 0: {
+        for (const text of this.nodeLabelsContainer.children) {
+          if (this.viewport.hitArea?.contains(text.x, text.y)) {
+            // todo change to node id
+            notDeleted[`${text.x.toFixed(3)},${text.y.toFixed(3)}`] = true
+            continue
+          }
+          toBeDeleted.push(text)
+        }
+      }
     }
     this.viewport.removeChild(...toBeDeleted)
 
@@ -268,9 +277,7 @@ export class KnowledgeGraph<
         // doNotDrawNodes[`${node.x.toFixed(3)}${node.y.toFixed(3)}`]
       )
         continue
-      console.log(doNotDrawNodes)
       if (doNotDrawNodes[`${node.x.toFixed(3)},${node.y.toFixed(3)}`]) {
-        console.log(doNotDrawNodes[`${node.x.toFixed(3)}${node.y.toFixed(3)}`])
         continue
       }
       const initialTextScale = this.scaleByCC(node.cc ?? 0)
@@ -287,7 +294,7 @@ export class KnowledgeGraph<
       text.x = node.x
       text.y = node.y
       text.alpha = 0.7
-      text.zIndex = 101
+      text.zIndex = 200
       texts.push(text)
     }
     if (texts.length > 0) this.nodeLabelsContainer.addChild(...texts)
