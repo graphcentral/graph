@@ -13,42 +13,14 @@ import {
 import { Container } from "pixi.js"
 import { debounce } from "lodash"
 import { NodeLabel } from "./node-label"
-
-// console.log(Test)
-/**
- * A type used to represent a single Notion 'block'
- * or 'node' as we'd like to call it in this graph-related project
- */
-export type Node<Type = string> = {
-  title?: string
-  id: string
-  /**
-   * parent node's id
-   */
-  parentId?: Node[`id`]
-  /**
-   * nodeChildren count
-   */
-  cc?: number
-  type?: Type
-}
-
-export interface Link {
-  source: Node[`id`]
-  target: Node[`id`]
-}
-
-export type Coords = {
-  x: number
-  y: number
-}
-
-export type WithCoords<T> = T & Coords
-export type WithPartialCoords<T> = T & Partial<Coords>
-export type LinkWithPartialCoords = {
-  source: WithPartialCoords<Link[`source`]>
-  target: WithPartialCoords<Link[`target`]>
-}
+import {
+  WithPartialCoords,
+  LinkWithPartialCoords,
+  WithCoords,
+  Node,
+} from "./types"
+import { scaleByCC } from "./common-graph-util"
+import { ConditionalNodeLabelsRenderer } from "src/lib/conditional-node-labels-renderer"
 
 export class KnowledgeGraph<
   N extends WithPartialCoords<Node>,
@@ -61,11 +33,8 @@ export class KnowledgeGraph<
   private graphWorker: Worker = new Worker(
     new URL(`./graph.worker.ts`, import.meta.url)
   )
-  private graphComputationWorker: Worker = new Worker(
-    new URL(`./graph-computation.worker.ts`, import.meta.url)
-  )
-  private maxNodeTitleLength = 35
-  private nodeLabelsContainer = new Container()
+  private conditionalNodeLabelsRenderer: ConditionalNodeLabelsRenderer | null =
+    null
   /**
    * whether drawing graph is finished
    */
@@ -103,37 +72,10 @@ export class KnowledgeGraph<
     this.viewport.sortableChildren = true
     this.viewport.drag().pinch().wheel().decelerate()
     this.app.stage.addChild(this.viewport)
-    this.viewport.addChild(this.nodeLabelsContainer)
-    this.setupListeners()
+    this.setupConditionalNodeLabelsRenderer()
   }
 
-  /**
-   * @param scale decreases as user zooms out
-   */
-  private scaleToChildrenCount(scale: number): number {
-    switch (true) {
-      // only handle big nodes
-      case scale <= 0: {
-        console.log(`not accepted`)
-        return -1
-      }
-      case scale < GraphScales.CAN_SEE_BIG_NODES_WELL: {
-        // show text from nodes having cc above 20
-        return 20
-      }
-      case scale > GraphScales.CAN_SEE_BIG_NODES_WELL: {
-        // show text from nodes having cc above 0
-        return 0
-      }
-    }
-
-    return -1
-  }
-
-  /**
-   * call this function only once as it sets up event listeners.
-   */
-  private async setupListeners() {
+  private async setupConditionalNodeLabelsRenderer() {
     await new Promise((resolve) => {
       this.eventTarget.addEventListener(
         GraphEvents.FORCE_LAYOUT_COMPLETE,
@@ -143,47 +85,11 @@ export class KnowledgeGraph<
         { once: true }
       )
     })
-    this.graphComputationWorker.postMessage({
-      type: WorkerMessageType.INIT_GRAPH_COMPUTATION_WORKER,
-      nodes: this.nodes,
-      links: this.links,
-    })
-
-    let notDeleted: Record<string, boolean> = {}
-    const onMessageFromGraphComputationWorker = (
-      event: Parameters<NonNullable<Worker[`onmessage`]>>[0]
-    ) => {
-      switch (event.data.type) {
-        case WorkerMessageType.FIND_NODES_INSIDE_BOUND:
-          console.log(event)
-          this.createBitmapTextsAsNodeLabels(event.data.nodes, notDeleted)
-          break
-      }
-    }
-    this.viewport.on(
-      // includes zoom, drag, ... everything.
-      // @ts-ignore
-      `moved-end`,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      debounce((_movedEndEvent: MovedEventType) => {
-        console.log(this.viewport.scale.x)
-        notDeleted = this.removeNodeLabelsIfNeeded()
-        // do not listen to the request for previous computation anymore
-        // because the viewport has already moved to somewhere else
-        this.graphComputationWorker.removeEventListener(
-          `message`,
-          onMessageFromGraphComputationWorker
-        )
-        this.graphComputationWorker.addEventListener(
-          `message`,
-          onMessageFromGraphComputationWorker
-        )
-        this.graphComputationWorker.postMessage({
-          type: WorkerMessageType.FIND_NODES_INSIDE_BOUND,
-          minimumRenderCC: this.scaleToChildrenCount(this.viewport.scale.x),
-          bounds: this.viewport.hitArea,
-        })
-      }, 1000)
+    this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
+      this.viewport,
+      // by now it must have coordinates
+      this.nodes as WithCoords<N>[],
+      this.links
     )
   }
 
@@ -210,99 +116,6 @@ export class KnowledgeGraph<
       lines.push(lineGraphics)
     }
     if (lines.length > 0) this.viewport.addChild(...lines)
-  }
-
-  /**
-   *
-   * @param cc node.cc (children count)
-   * @returns scaled number bigger than cc
-   */
-  private scaleByCC(cc: number): number {
-    return 1 + Math.log10(cc)
-  }
-
-  private removeNodeLabelsIfNeeded(): Record<string, boolean> {
-    const toBeDeleted: PIXI.DisplayObject[] = []
-    const notDeleted: Record<string, boolean> = {}
-    const minCc = this.scaleToChildrenCount(this.viewport.scale.x)
-
-    switch (minCc) {
-      case 20: {
-        for (const text of this.nodeLabelsContainer
-          .children as NodeLabel<N>[]) {
-          const cc = text.getNodeData().cc ?? 0
-
-          if (cc >= 20) {
-            notDeleted[text.getNodeData().id] = true
-          } else {
-            toBeDeleted.push(text)
-          }
-        }
-        break
-      }
-      case 0: {
-        for (const text of this.nodeLabelsContainer
-          .children as NodeLabel<N>[]) {
-          if (this.viewport.hitArea?.contains(text.x, text.y)) {
-            notDeleted[text.getNodeData().id] = true
-          } else {
-            toBeDeleted.push(text)
-          }
-        }
-      }
-    }
-    this.viewport.removeChild(...toBeDeleted)
-
-    return notDeleted
-  }
-
-  private createBitmapTextsAsNodeLabels(
-    nodes: N[],
-    doNotDrawNodes: Record<string, boolean>
-  ) {
-    const texts: NodeLabel<N>[] = []
-    const fontName = `foobar`
-    PIXI.BitmapFont.from(
-      fontName,
-      {
-        fill: `#FFFFFF`,
-        fontSize: 100,
-        fontWeight: `bold`,
-      },
-      {
-        resolution: window.devicePixelRatio,
-        chars: [
-          [`a`, `z`],
-          [`A`, `Z`],
-          [`0`, `9`],
-          `~!@#$%^&*()_+-={}|:"<>?[]\\;',./ `,
-        ],
-      }
-    )
-    for (const node of nodes) {
-      if (!node.title) continue
-      if (node.x === undefined || node.y === undefined) continue
-      if (doNotDrawNodes[node.id]) {
-        continue
-      }
-      const initialTextScale = this.scaleByCC(node.cc ?? 0)
-      const text = new NodeLabel<N>(
-        node.title.length > this.maxNodeTitleLength
-          ? `${node.title.substring(0, this.maxNodeTitleLength)}...`
-          : node.title,
-        node as WithCoords<N>,
-        {
-          fontSize: 100 * Math.max(1, initialTextScale),
-          fontName,
-        }
-      )
-      text.x = node.x
-      text.y = node.y
-      text.alpha = 0.7
-      text.zIndex = 200
-      texts.push(text)
-    }
-    if (texts.length > 0) this.nodeLabelsContainer.addChild(...texts)
   }
 
   private updateNodes({
@@ -345,8 +158,7 @@ export class KnowledgeGraph<
         // https://stackoverflow.com/questions/70302580/pixi-js-graphics-resize-circle-while-maintaining-center
         circle.pivot.x = circle.width / 2
         circle.pivot.y = circle.height / 2
-        if (node.cc)
-          circle.scale.set(this.scaleByCC(node.cc), this.scaleByCC(node.cc))
+        if (node.cc) circle.scale.set(scaleByCC(node.cc), scaleByCC(node.cc))
         circle.interactive = true
         circle.on(`mouseover`, () => {
           console.log(node)

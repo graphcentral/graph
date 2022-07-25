@@ -21,3 +21,12 @@ export function isNodeInsideBonds(
     bounds.height
   ).contains(node.x, node.y)
 }
+
+/**
+ *
+ * @param cc node.cc (children count)
+ * @returns scaled number bigger than cc
+ */
+export function scaleByCC(cc: number): number {
+  return 1 + Math.log10(cc)
+}
