@@ -5,6 +5,10 @@ import { ExampleImpure } from "./components/Example"
 import "./index.css"
 import testData from "../../test-data/test10.json"
 
+console.log(testData.nodes[0])
+console.log(testData.nodes[10001])
+console.log(testData.nodes[10002])
+
 ReactDOM.render(
   // @ts-ignore
   <ExampleImpure color="#345345" />,

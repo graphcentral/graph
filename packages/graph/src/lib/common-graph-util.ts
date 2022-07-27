@@ -1,5 +1,5 @@
 import { Rectangle } from "pixi.js"
-import { WithCoords, Node } from "."
+import { WithCoords, Node } from "./types"
 
 export function isNodeInsideBonds(
   node: WithCoords<Node>,

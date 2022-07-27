@@ -18,9 +18,10 @@ import {
   LinkWithPartialCoords,
   WithCoords,
   Node,
+  LinkWithCoords,
 } from "./types"
 import { scaleByCC } from "./common-graph-util"
-import { ConditionalNodeLabelsRenderer } from "src/lib/conditional-node-labels-renderer"
+import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
 
 export class KnowledgeGraph<
   N extends WithPartialCoords<Node>,
@@ -76,6 +77,7 @@ export class KnowledgeGraph<
   }
 
   private async setupConditionalNodeLabelsRenderer() {
+    console.log(`SETUP`)
     await new Promise((resolve) => {
       this.eventTarget.addEventListener(
         GraphEvents.FORCE_LAYOUT_COMPLETE,
@@ -85,11 +87,15 @@ export class KnowledgeGraph<
         { once: true }
       )
     })
+    console.log(`FORCE_LAYOUT_COMPLETE`)
     this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
       this.viewport,
       // by now it must have coordinates
       this.nodes as WithCoords<N>[],
-      this.links
+      this.links as LinkWithCoords[]
+    )
+    this.viewport.addChild(
+      this.conditionalNodeLabelsRenderer.getNodeLabelsContainer()
     )
   }
 
@@ -189,7 +195,7 @@ export class KnowledgeGraph<
     }
   }
 
-  public async createNetworkGraph() {
+  public createNetworkGraph() {
     this.graphWorker.postMessage({
       type: WorkerMessageType.START_GRAPH,
       nodes: this.nodes,

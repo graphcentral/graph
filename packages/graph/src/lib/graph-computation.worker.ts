@@ -1,7 +1,7 @@
 import { MovedEventData } from "pixi-viewport"
 import { Rectangle } from "pixi.js"
 import { isNodeInsideBonds } from "./common-graph-util"
-import { Link, Node, WithCoords } from "."
+import { Link, Node, WithCoords } from "./types"
 import { WorkerMessageType } from "./graphEnums"
 
 let links: Link[]
@@ -14,7 +14,7 @@ self.onmessage = (msg) => {
       nodes = msg.data.nodes
       break
     }
-    case WorkerMessageType.FIND_NODES_INSIDE_BOUND: {
+    case WorkerMessageType.UPDATE_VISIBLE_NODES: {
       console.log(links)
       console.log(nodes)
 
@@ -32,7 +32,7 @@ self.onmessage = (msg) => {
       }
 
       self.postMessage({
-        type: WorkerMessageType.FIND_NODES_INSIDE_BOUND,
+        type: WorkerMessageType.UPDATE_VISIBLE_NODES,
         nodes: nodesInsideBound,
       })
       break

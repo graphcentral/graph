@@ -32,3 +32,7 @@ export type LinkWithPartialCoords = {
   source: WithPartialCoords<Link[`source`]>
   target: WithPartialCoords<Link[`target`]>
 }
+export type LinkWithCoords = {
+  source: WithCoords<Link[`source`]>
+  target: WithCoords<Link[`target`]>
+}
