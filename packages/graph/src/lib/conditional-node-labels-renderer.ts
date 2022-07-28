@@ -139,6 +139,7 @@ export class ConditionalNodeLabelsRenderer {
           }
         })()
         console.log(smallestAndSets)
+        console.log({ visibleNodesSet })
         const nowVisibleNodeIds: Node[`id`][] = []
         const nowAppearingNodeIds: Node[`id`][] = []
         const nowDisappearingNodeIds: Node[`id`][] = []
@@ -235,7 +236,7 @@ export class ConditionalNodeLabelsRenderer {
     //   minimumRenderCC: this.scaleToChildrenCount(this.viewport.scale.x),
     //   bounds: this.viewport.hitArea,
     // })
-  }, 1000)
+  }, 100)
 
   private async init(nodes: WithCoords<Node>[], links: LinkWithCoords[]) {
     await this.db.delete().then(() => this.db.open())
@@ -291,7 +292,6 @@ export class ConditionalNodeLabelsRenderer {
   private createBitmapTextsAsNodeLabels(nodes: WithPartialCoords<Node>[]) {
     const labels: NodeLabel<Node>[] = []
 
-    this.labelsMap = {}
     for (const node of nodes) {
       if (!node.title || node.x === undefined || node.y === undefined) continue
       const text = new NodeLabel<Node>(
@@ -306,7 +306,6 @@ export class ConditionalNodeLabelsRenderer {
       labels.push(text)
       this.labelsMap[node.id] = text
     }
-    // this.nodeLabelsContainer.removeChild()
     if (labels.length > 0) this.nodeLabelsContainer.addChild(...labels)
   }
 
