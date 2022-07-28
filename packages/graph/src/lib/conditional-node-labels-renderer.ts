@@ -1,13 +1,20 @@
 import { MovedEventType, Viewport } from "pixi-viewport"
 import { Container } from "pixi.js"
 import debounce from "lodash.debounce"
-import { Link, LinkWithCoords, Node, WithCoords } from "./types"
+import {
+  Link,
+  LinkWithCoords,
+  Node,
+  WithCoords,
+  WithPartialCoords,
+  WithStringCoords,
+} from "./types"
 import { GraphScales, WorkerMessageType } from "./graphEnums"
 import { NodeLabel } from "./node-label"
 import * as PIXI from "pixi.js"
 import { scaleByCC } from "./common-graph-util"
 import { KnowledgeGraphDb } from "./db"
-import { PromiseExtended } from "dexie"
+import Dexie, { PromiseExtended } from "dexie"
 import { render } from "enzyme"
 
 /**
@@ -38,6 +45,7 @@ export class ConditionalNodeLabelsRenderer {
   // private nodes: WithCoords<Node>[]
   // private links: LinkWithCoords[]
   private db = new KnowledgeGraphDb()
+  private labelsMap: Record<Node[`id`], NodeLabel<Node>> = {}
 
   constructor(
     viewport: Viewport,
@@ -45,11 +53,11 @@ export class ConditionalNodeLabelsRenderer {
     links: LinkWithCoords[]
   ) {
     this.viewport = viewport
-    this.graphComputationWorker.postMessage({
-      type: WorkerMessageType.INIT_GRAPH_COMPUTATION_WORKER,
-      nodes,
-      links,
-    })
+    // this.graphComputationWorker.postMessage({
+    //   type: WorkerMessageType.INIT_GRAPH_COMPUTATION_WORKER,
+    //   nodes,
+    //   links,
+    // })
     this.init(nodes, links)
   }
 
@@ -67,16 +75,6 @@ export class ConditionalNodeLabelsRenderer {
     }
   }
 
-  private onMessageFromGraphComputationWorker(
-    event: Parameters<NonNullable<Worker[`onmessage`]>>[0]
-  ) {
-    switch (event.data.type) {
-      case WorkerMessageType.UPDATE_VISIBLE_NODES:
-        this.createBitmapTextsAsNodeLabels(event.data.nodes, {})
-        break
-    }
-  }
-
   private getLabelsToAppear() {
     const renderLabelsWithCCAboveOrEqual = this.scaleToChildrenCount(
       this.viewport.scale.x
@@ -86,23 +84,109 @@ export class ConditionalNodeLabelsRenderer {
     if (!hitArea) return null
     console.log(hitArea)
     // @ts-ignore
-    const x0: number = hitArea.x
+    const xLow: number = hitArea.left
     // @ts-ignore
-    const y0: number = hitArea.y
+    const yLow: number = hitArea.top
     // @ts-ignore
-    const x1: number = hitArea.x + hitArea.width
+    const xHigh: number = hitArea.right
     // @ts-ignore
-    const y1: number = hitArea.y - hitArea.height
+    const yHigh: number = hitArea.bottom
 
-    console.log({ x0, x1, y0, y1 })
-    const { query, cancel } = this.db.cancellableQuery<
-      WithCoords<Node<string>>[]
-    >(`r`, [this.db.nodes], () =>
-      this.db.nodes
-        .where(`[cc+x+y]`)
-        .between([renderLabelsWithCCAboveOrEqual, x0, y1], [Infinity, x1, y0])
-        .toArray()
+    console.log({ xLow, xHigh, yHigh, yLow, renderLabelsWithCCAboveOrEqual })
+    // const { query, cancel } = this.db.cancellableQuery(
+    //   `r`,
+    //   [this.db.nodes],
+    //   () =>
+    //     this.db.nodes
+    //       .where([`cc`, `x`, `y`])
+    //       .between(
+    //         [
+    //           String(renderLabelsWithCCAboveOrEqual),
+    //           String(xLow.toFixed(0)),
+    //           String(yLow.toFixed(0)),
+    //         ],
+    //         [Dexie.maxKey, String(xHigh.toFixed(0)), String(yHigh.toFixed(0))],
+    //         true
+    //       )
+    //       // .and((node) => hitArea.contains(node.x, node.y))
+    //       .toArray()
+    // )
+    const query = this.db.transaction(
+      `rw`,
+      [this.db.nodes, this.db.visibleNodes],
+      async () => {
+        const [a, b, c, visibleNodes] = await Promise.all([
+          this.db.nodes.where(`x`).between(xLow, xHigh).primaryKeys(),
+          this.db.nodes.where(`y`).between(yLow, yHigh).primaryKeys(),
+          this.db.nodes
+            .where(`cc`)
+            .between(renderLabelsWithCCAboveOrEqual, Dexie.maxKey, true, true)
+            .primaryKeys(),
+          this.db.visibleNodes.toCollection().primaryKeys(),
+        ])
+        const minLen = Math.min(a.length, b.length, c.length)
+        const visibleNodesSet = new Set(visibleNodes)
+        const smallestAndSets = (() => {
+          switch (true) {
+            case minLen === a.length:
+              return { smallest: a, set0: new Set(b), set1: new Set(c) }
+            case minLen === b.length:
+              return { smallest: b, set0: new Set(a), set1: new Set(c) }
+            case minLen === c.length:
+              return { smallest: c, set0: new Set(a), set1: new Set(b) }
+            default:
+              return { smallest: a, set0: new Set(b), set1: new Set(c) }
+          }
+        })()
+        console.log(smallestAndSets)
+        const nowVisibleNodeIds: Node[`id`][] = []
+        const nowAppearingNodeIds: Node[`id`][] = []
+        const nowDisappearingNodeIds: Node[`id`][] = []
+        for (const nodeId of smallestAndSets.smallest) {
+          if (
+            smallestAndSets.set0.has(nodeId) &&
+            smallestAndSets.set1.has(nodeId)
+          ) {
+            nowVisibleNodeIds.push(nodeId)
+            if (!visibleNodesSet.has(nodeId)) {
+              nowAppearingNodeIds.push(nodeId)
+            }
+          } else {
+            if (visibleNodesSet.has(nodeId)) {
+              nowDisappearingNodeIds.push(nodeId)
+            }
+          }
+        }
+        console.log({
+          a,
+          b,
+          c,
+          visibleNodes,
+          nowDisappearingNodeIds,
+        })
+        // const nodesPrimaryKeys = smallestAndSets.smallest.filter((nodeId) => {
+        //   return (
+        //      &&
+
+        //   )
+        // })
+        return Promise.all([
+          this.db.nodes.bulkGet(nowAppearingNodeIds) as PromiseExtended<Node[]>,
+          this.db.transaction(`rw`, [this.db.visibleNodes], async () => {
+            // todo would using a plain Set() or object be faster than using a table?
+            await this.db.visibleNodes.clear()
+            await this.db.visibleNodes.bulkAdd(
+              nowVisibleNodeIds.map((n) => ({
+                id: n,
+              }))
+            )
+          }),
+          nowDisappearingNodeIds,
+        ])
+      }
     )
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    const cancel = () => {}
 
     return {
       nodesToAppearPromise: query,
@@ -121,10 +205,23 @@ export class ConditionalNodeLabelsRenderer {
     if (!maybeLabelsToAppear) return
     const { nodesToAppearPromise, cancel } = maybeLabelsToAppear
     this.cancelNodesToAppearPromise = cancel
-    const nodesToAppear = await nodesToAppearPromise
+    const t0 = performance.now()
+    const [nodesToAppear, , nowDisappearingNodeIds] = await nodesToAppearPromise
+    const t1 = performance.now()
+    console.log(`took ${(t1 - t0) / 1000} secs`)
     this.cancelNodesToAppearPromise = null
     console.log(nodesToAppear)
-    this.createBitmapTextsAsNodeLabels(nodesToAppear, {})
+    // this.labelsMap
+    const labelsToDelete: NodeLabel<Node<string>>[] = []
+    nowDisappearingNodeIds.forEach((id) => {
+      if (id in this.labelsMap) {
+        labelsToDelete.push(this.labelsMap[id] as NodeLabel<Node<string>>)
+        delete this.labelsMap[id]
+      }
+    })
+    this.nodeLabelsContainer.removeChild(...labelsToDelete)
+    console.log(labelsToDelete, labelsToDelete.length)
+    this.createBitmapTextsAsNodeLabels(nodesToAppear)
     // this.graphComputationWorker.removeEventListener(
     //   `message`,
     //   this.getLabelsToAppear
@@ -142,13 +239,17 @@ export class ConditionalNodeLabelsRenderer {
 
   private async init(nodes: WithCoords<Node>[], links: LinkWithCoords[]) {
     await this.db.delete().then(() => this.db.open())
+    const n = nodes.map(({ cc, ...rest }) => ({
+      cc: cc ?? 0,
+      ...rest,
+    }))
     await this.db.transaction(
       `rw`,
       [this.db.nodes, this.db.links],
       async () => {
         return Promise.all([
           this.db.links.bulkAdd(links),
-          this.db.nodes.bulkAdd(nodes),
+          this.db.nodes.bulkAdd(n),
         ])
       }
     )
@@ -187,67 +288,62 @@ export class ConditionalNodeLabelsRenderer {
     return -1
   }
 
-  private createBitmapTextsAsNodeLabels(
-    nodes: WithCoords<Node>[],
-    doNotDrawNodes: Record<string, boolean>
-  ) {
-    const texts: NodeLabel<Node>[] = []
+  private createBitmapTextsAsNodeLabels(nodes: WithPartialCoords<Node>[]) {
+    const labels: NodeLabel<Node>[] = []
+
+    this.labelsMap = {}
     for (const node of nodes) {
-      if (
-        !node.title ||
-        node.x === undefined ||
-        node.y === undefined ||
-        node.id in doNotDrawNodes
-      )
-        continue
-      const text = new NodeLabel<WithCoords<Node>>(
+      if (!node.title || node.x === undefined || node.y === undefined) continue
+      const text = new NodeLabel<Node>(
         node.title,
         node as WithCoords<Node>,
-        node.cc ?? 0
+        Number(node.cc ?? 0)
       )
       text.x = node.x
       text.y = node.y
       text.alpha = 0.7
       text.zIndex = 200
-      texts.push(text)
+      labels.push(text)
+      this.labelsMap[node.id] = text
     }
-    if (texts.length > 0) this.nodeLabelsContainer.addChild(...texts)
+    // this.nodeLabelsContainer.removeChild()
+    if (labels.length > 0) this.nodeLabelsContainer.addChild(...labels)
   }
 
-  private removeNodeLabelsIfNeeded(): Record<string, boolean> {
-    const toBeDeleted: PIXI.DisplayObject[] = []
-    const notDeleted: Record<string, boolean> = {}
-    const minCc = this.scaleToChildrenCount(this.viewport.scale.x)
+  // private removeNodeLabelsIfNeeded(): Record<string, boolean> {
+  //   const toBeDeleted: PIXI.DisplayObject[] = []
+  //   const notDeleted: Record<string, boolean> = {}
+  //   const minCc = this.scaleToChildrenCount(this.viewport.scale.x)
 
-    switch (minCc) {
-      case 20: {
-        for (const text of this.nodeLabelsContainer.children as NodeLabel<
-          WithCoords<Node>
-        >[]) {
-          const cc = text.getNodeData().cc ?? 0
+  //   switch (minCc) {
+  //     case 20: {
+  //       for (const text of this.nodeLabelsContainer.children as NodeLabel<
+  //         WithCoords<Node>
+  //       >[]) {
+  //         const cc = text.getNodeData().cc ?? 0
 
-          if (cc >= 20) {
-            notDeleted[text.getNodeData().id] = true
-          } else {
-            toBeDeleted.push(text)
-          }
-        }
-        break
-      }
-      case 0: {
-        for (const text of this.nodeLabelsContainer.children as NodeLabel<
-          WithCoords<Node>
-        >[]) {
-          if (this.viewport.hitArea?.contains(text.x, text.y)) {
-            notDeleted[text.getNodeData().id] = true
-          } else {
-            toBeDeleted.push(text)
-          }
-        }
-      }
-    }
-    this.viewport.removeChild(...toBeDeleted)
+  //         if (cc >= 20) {
+  //           notDeleted[text.getNodeData().id] = true
+  //         } else {
+  //           toBeDeleted.push(text)
+  //         }
+  //       }
+  //       break
+  //     }
+  //     case 0: {
+  //       for (const text of this.nodeLabelsContainer.children as NodeLabel<
+  //         WithCoords<Node>
+  //       >[]) {
+  //         if (this.viewport.hitArea?.contains(text.x, text.y)) {
+  //           notDeleted[text.getNodeData().id] = true
+  //         } else {
+  //           toBeDeleted.push(text)
+  //         }
+  //       }
+  //     }
+  //   }
+  //   this.viewport.removeChild(...toBeDeleted)
 
-    return notDeleted
-  }
+  //   return notDeleted
+  // }
 }

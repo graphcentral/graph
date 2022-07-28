@@ -26,7 +26,13 @@ export type Coords = {
   y: number
 }
 
+export type StringCoords = {
+  x: number
+  y: number
+}
+
 export type WithCoords<T> = T & Coords
+export type WithStringCoords<T> = T & StringCoords
 export type WithPartialCoords<T> = T & Partial<Coords>
 export type LinkWithPartialCoords = {
   source: WithPartialCoords<Link[`source`]>

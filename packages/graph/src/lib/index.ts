@@ -77,7 +77,6 @@ export class KnowledgeGraph<
   }
 
   private async setupConditionalNodeLabelsRenderer() {
-    console.log(`SETUP`)
     await new Promise((resolve) => {
       this.eventTarget.addEventListener(
         GraphEvents.FORCE_LAYOUT_COMPLETE,
@@ -139,6 +138,7 @@ export class KnowledgeGraph<
     const colorHash = new ColorHash()
     for (const [i, node] of nodes.entries()) {
       if (isFirstTimeUpdatingNodes) {
+        node.cc = node.cc ?? 0
         const parentId = node.parentId
         if (parentId && !(parentId in circleTextureByParentId)) {
           const c = parseInt(colorHash.hex(parentId).replace(/^#/, ``), 16)
@@ -172,7 +172,6 @@ export class KnowledgeGraph<
             circle.scale.x * GraphGraphics.CIRCLE_SCALE_FACTOR,
             circle.scale.y * GraphGraphics.CIRCLE_SCALE_FACTOR
           )
-          this.app.renderer.plugins[`interaction`].setCursorMode(`pointer`)
         })
         // circle.cullable = true
         circle.on(`mouseout`, () => {
@@ -181,13 +180,33 @@ export class KnowledgeGraph<
             circle.scale.x / GraphGraphics.CIRCLE_SCALE_FACTOR,
             circle.scale.y / GraphGraphics.CIRCLE_SCALE_FACTOR
           )
-          this.app.renderer.plugins[`interaction`].setCursorMode(`auto`)
         })
         nodeChildren.push(circle)
       } else {
         // nodeChildren order is preserved across force directed graph iterations
         const child = nodeChildren[i]
         if (child) {
+          child.off(`mouseover`)
+          child.off(`mouseout`)
+          child.on(`mouseover`, () => {
+            console.log(child)
+            console.log(child.position)
+            console.log(child.getGlobalPosition())
+            child.scale.set(
+              child.scale.x * GraphGraphics.CIRCLE_SCALE_FACTOR,
+              child.scale.y * GraphGraphics.CIRCLE_SCALE_FACTOR
+            )
+          })
+          // circle.cullable = true
+          child.on(`mouseout`, () => {
+            console.log(child)
+            console.log(child.position)
+            console.log(child.getGlobalPosition())
+            child.scale.set(
+              child.scale.x / GraphGraphics.CIRCLE_SCALE_FACTOR,
+              child.scale.y / GraphGraphics.CIRCLE_SCALE_FACTOR
+            )
+          })
           if (node.x) child.x = node.x
           if (node.y) child.y = node.y
         }

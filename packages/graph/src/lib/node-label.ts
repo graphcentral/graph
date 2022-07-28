@@ -4,7 +4,7 @@ import { scaleByCC } from "./common-graph-util"
 import { WithCoords } from "./types"
 
 /**
- * Below logic not included as a private functions in `NodeLabel` because
+ *  not included as a private function because
  * it cannot be called before `super` call in the class
  */
 class NodeLabelHelper {

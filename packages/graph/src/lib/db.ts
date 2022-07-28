@@ -16,13 +16,14 @@ export class KnowledgeGraphDb extends Dexie {
     { source: WithCoords<Link[`source`]>; target: WithCoords<Link[`target`]> },
     number
   >
-  visibleNodes!: Dexie.Table<Pick<Node, `id`>, string>
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  visibleNodes!: Dexie.Table<{}, string>
   //...other tables goes here...
 
   constructor() {
     super(`kgDb`)
     this.version(1).stores({
-      nodes: `id, title, parentId, cc, type, [cc+x+y]`,
+      nodes: `id, title, parentId, cc, type, x, y, [cc+x+y]`,
       links: `++id, source, target`,
       visibleNodes: `id`,
     })
