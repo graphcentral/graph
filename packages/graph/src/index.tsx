@@ -3,7 +3,7 @@ import ReactDOM from "react-dom"
 import { KnowledgeGraph } from "./lib"
 import { ExampleImpure } from "./components/Example"
 import "./index.css"
-import testData from "../../test-data/test10.json"
+import testData from "../../test-data/test11.json"
 
 console.log(testData.nodes[0])
 console.log(testData.nodes[10001])

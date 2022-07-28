@@ -93,31 +93,19 @@ export class ConditionalNodeLabelsRenderer {
     const yHigh: number = hitArea.bottom
 
     console.log({ xLow, xHigh, yHigh, yLow, renderLabelsWithCCAboveOrEqual })
-    // const { query, cancel } = this.db.cancellableQuery(
-    //   `r`,
-    //   [this.db.nodes],
-    //   () =>
-    //     this.db.nodes
-    //       .where([`cc`, `x`, `y`])
-    //       .between(
-    //         [
-    //           String(renderLabelsWithCCAboveOrEqual),
-    //           String(xLow.toFixed(0)),
-    //           String(yLow.toFixed(0)),
-    //         ],
-    //         [Dexie.maxKey, String(xHigh.toFixed(0)), String(yHigh.toFixed(0))],
-    //         true
-    //       )
-    //       // .and((node) => hitArea.contains(node.x, node.y))
-    //       .toArray()
-    // )
     const query = this.db.transaction(
       `rw`,
       [this.db.nodes, this.db.visibleNodes],
       async () => {
         const [a, b, c, visibleNodes] = await Promise.all([
-          this.db.nodes.where(`x`).between(xLow, xHigh).primaryKeys(),
-          this.db.nodes.where(`y`).between(yLow, yHigh).primaryKeys(),
+          this.db.nodes
+            .where(`x`)
+            .between(xLow, xHigh, true, true)
+            .primaryKeys(),
+          this.db.nodes
+            .where(`y`)
+            .between(yLow, yHigh, true, true)
+            .primaryKeys(),
           this.db.nodes
             .where(`cc`)
             .between(renderLabelsWithCCAboveOrEqual, Dexie.maxKey, true, true)
@@ -142,7 +130,7 @@ export class ConditionalNodeLabelsRenderer {
         console.log({ visibleNodesSet })
         const nowVisibleNodeIds: Node[`id`][] = []
         const nowAppearingNodeIds: Node[`id`][] = []
-        const nowDisappearingNodeIds: Node[`id`][] = []
+        const nowDisappearingNodes: NodeLabel<Node<string>>[] = []
         for (const nodeId of smallestAndSets.smallest) {
           if (
             smallestAndSets.set0.has(nodeId) &&
@@ -152,25 +140,14 @@ export class ConditionalNodeLabelsRenderer {
             if (!visibleNodesSet.has(nodeId)) {
               nowAppearingNodeIds.push(nodeId)
             }
-          } else {
-            if (visibleNodesSet.has(nodeId)) {
-              nowDisappearingNodeIds.push(nodeId)
-            }
           }
         }
-        console.log({
-          a,
-          b,
-          c,
-          visibleNodes,
-          nowDisappearingNodeIds,
-        })
-        // const nodesPrimaryKeys = smallestAndSets.smallest.filter((nodeId) => {
-        //   return (
-        //      &&
-
-        //   )
-        // })
+        for (const [nodeId, label] of Object.entries(this.labelsMap)) {
+          if (!visibleNodesSet.has(nodeId)) {
+            nowDisappearingNodes.push(label)
+            delete this.labelsMap[nodeId]
+          }
+        }
         return Promise.all([
           this.db.nodes.bulkGet(nowAppearingNodeIds) as PromiseExtended<Node[]>,
           this.db.transaction(`rw`, [this.db.visibleNodes], async () => {
@@ -182,7 +159,7 @@ export class ConditionalNodeLabelsRenderer {
               }))
             )
           }),
-          nowDisappearingNodeIds,
+          nowDisappearingNodes,
         ])
       }
     )
@@ -199,7 +176,10 @@ export class ConditionalNodeLabelsRenderer {
 
   private cancelNodesToAppearPromise: VoidFunction | null = null
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private onMovedEnd = debounce(async (_movedEndEvent: MovedEventType) => {
+  private onMovedEnd = debounce(async (movedEndEvent: MovedEventType) => {
+    console.log(`{ movedEndEvent }`)
+    console.log({ movedEndEvent })
+    console.log(`{ movedEndEvent }`)
     console.log(this.viewport.scale.x)
     this.cancelNodesToAppearPromise?.()
     const maybeLabelsToAppear = this.getLabelsToAppear()
@@ -207,21 +187,13 @@ export class ConditionalNodeLabelsRenderer {
     const { nodesToAppearPromise, cancel } = maybeLabelsToAppear
     this.cancelNodesToAppearPromise = cancel
     const t0 = performance.now()
-    const [nodesToAppear, , nowDisappearingNodeIds] = await nodesToAppearPromise
+    const [nodesToAppear, , nowDisappearingNodes] = await nodesToAppearPromise
     const t1 = performance.now()
     console.log(`took ${(t1 - t0) / 1000} secs`)
     this.cancelNodesToAppearPromise = null
     console.log(nodesToAppear)
     // this.labelsMap
-    const labelsToDelete: NodeLabel<Node<string>>[] = []
-    nowDisappearingNodeIds.forEach((id) => {
-      if (id in this.labelsMap) {
-        labelsToDelete.push(this.labelsMap[id] as NodeLabel<Node<string>>)
-        delete this.labelsMap[id]
-      }
-    })
-    this.nodeLabelsContainer.removeChild(...labelsToDelete)
-    console.log(labelsToDelete, labelsToDelete.length)
+    this.nodeLabelsContainer.removeChild(...nowDisappearingNodes)
     this.createBitmapTextsAsNodeLabels(nodesToAppear)
     // this.graphComputationWorker.removeEventListener(
     //   `message`,
@@ -236,7 +208,7 @@ export class ConditionalNodeLabelsRenderer {
     //   minimumRenderCC: this.scaleToChildrenCount(this.viewport.scale.x),
     //   bounds: this.viewport.hitArea,
     // })
-  }, 100)
+  }, 500)
 
   private async init(nodes: WithCoords<Node>[], links: LinkWithCoords[]) {
     await this.db.delete().then(() => this.db.open())
@@ -306,6 +278,9 @@ export class ConditionalNodeLabelsRenderer {
       labels.push(text)
       this.labelsMap[node.id] = text
     }
+    console.log(`@@@@@@@@@@this.labelsMap`)
+    console.log(this.labelsMap)
+    console.log(`@@@@@@@@@@this.labelsMap`)
     if (labels.length > 0) this.nodeLabelsContainer.addChild(...labels)
   }
 
