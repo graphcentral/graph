@@ -1,28 +1,24 @@
-import React, { useEffect, useLayoutEffect, useRef } from "react"
+import React, { useLayoutEffect, useRef } from "react"
 import { FC } from "react"
+import { KnowledgeGraph } from "../../lib"
 import { enhance } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
+import testData from "../../../../test-data/test10.json"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type ExampleImpureProps = {
-  color: string
-}
-
-export const ExampleImpure: FC<ExampleImpureProps> =
-  enhance<ExampleImpureProps>(() => {
-    const canvasElement = useRef<null | HTMLCanvasElement>(null)
-    useLayoutEffect(() => {
+export const Example: FC<{}> = enhance<{}>(() => {
+  const canvasElement = useRef<null | HTMLCanvasElement>(null)
+  useLayoutEffect(() => {
+    ;(async () => {
       if (!canvasElement.current) return
-    }, [])
+      const knowledgeGraph = new KnowledgeGraph({
+        nodes: testData.nodes,
+        links: testData.links,
+        canvasElement: canvasElement.current,
+      })
+      knowledgeGraph.createNetworkGraph()
+    })()
+  }, [])
 
-    return <canvas />
-  })(ExampleFallback)
-
-// // eslint-disable-next-line @typescript-eslint/ban-types
-// export type ExamplePureProps = {
-//   canvasElement: React.MutableRefObject<HTMLCanvasElement | null>
-// }
-
-// export const ExamplePure: FC<ExamplePureProps> = enhance<ExamplePureProps>(
-//   ({ canvasElement }) => <canvas ref={canvasElement}></canvas>
-// )(ExampleFallback)
+  return <canvas ref={canvasElement} />
+})(ExampleFallback)

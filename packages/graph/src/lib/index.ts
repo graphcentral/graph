@@ -1,8 +1,8 @@
 import * as PIXI from "pixi.js"
 import { Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
-import { setupFpsMonitor } from "./setupFpsMonitor"
-import { GraphEvents, GraphGraphics, WorkerMessageType } from "./graphEnums"
+import { setupFpsMonitor } from "./setup-fps-monitor"
+import { GraphEvents, GraphGraphics, WorkerMessageType } from "./graph-enums"
 // @ts-ignore
 // import Test from "./test.txt"
 import {
@@ -28,12 +28,12 @@ export class KnowledgeGraph<
   )
   private conditionalNodeLabelsRenderer: ConditionalNodeLabelsRenderer | null =
     null
+  private eventTarget = new EventTarget()
   /**
    * whether all the necessary steps for a fully functional, interactive graph
    * have been completed
    */
-  private isLoaded = false
-  private eventTarget = new EventTarget()
+  public isLoaded: Readonly<boolean> = false
 
   constructor({
     nodes,

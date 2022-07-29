@@ -8,7 +8,7 @@ import {
   forceCollide,
   forceRadial,
 } from "d3-force"
-import { WorkerMessageType } from "./graphEnums"
+import { WorkerMessageType } from "./graph-enums"
 
 self.onmessage = (msg) => {
   switch (msg.data.type) {

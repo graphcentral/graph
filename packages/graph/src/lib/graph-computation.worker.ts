@@ -2,7 +2,7 @@ import { MovedEventData } from "pixi-viewport"
 import { Rectangle } from "pixi.js"
 import { isNodeInsideBonds } from "./common-graph-util"
 import { Link, Node, WithCoords } from "./types"
-import { WorkerMessageType } from "./graphEnums"
+import { WorkerMessageType } from "./graph-enums"
 
 let links: Link[]
 let nodes: WithCoords<Node>[]
