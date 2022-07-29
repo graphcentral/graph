@@ -1,0 +1,25 @@
+{
+  "name": "test-data",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "gen": "ts-node test-data-gen.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/9oelM/notion-knowledge-graph.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/9oelM/notion-knowledge-graph/issues"
+  },
+  "homepage": "https://github.com/9oelM/notion-knowledge-graph#readme",
+  "description": "### `this.unofficialNotionAPI.getPage()` - Returns the list of the page itself and recurisve parents. - The order of the list reflects the parent-child relationship: for example,",
+  "dependencies": {
+    "random-words": "^1.2.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.1"
+  }
+}

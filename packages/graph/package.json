@@ -62,6 +62,7 @@
   },
   "dependencies": {
     "@notion-knowledge-graph/d3-wasm-force": "*",
+    "@pixi-essentials/cull": "^1.1.0",
     "@pixi/layers": "^1.0.11",
     "@vue/preload-webpack-plugin": "^2.0.0",
     "await-to-js": "^3.0.0",

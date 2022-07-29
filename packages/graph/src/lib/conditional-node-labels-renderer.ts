@@ -1,5 +1,5 @@
 import { MovedEventType, Viewport } from "pixi-viewport"
-import { Container } from "pixi.js"
+import { Container, ParticleContainer } from "pixi.js"
 import debounce from "lodash.debounce"
 import { LinkWithCoords, Node, WithCoords, WithPartialCoords } from "./types"
 import { GraphEvents, GraphScales } from "./graph-enums"

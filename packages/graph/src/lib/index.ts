@@ -14,6 +14,9 @@ import {
 } from "./types"
 import { scaleByCC } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
+import { Cull } from "@pixi-essentials/cull"
+import { Container, ParticleContainer, Rectangle } from "pixi.js"
+import debounce from "lodash.debounce"
 
 export class KnowledgeGraph<
   N extends WithPartialCoords<Node>,
@@ -29,6 +32,8 @@ export class KnowledgeGraph<
   private conditionalNodeLabelsRenderer: ConditionalNodeLabelsRenderer | null =
     null
   private eventTarget = new EventTarget()
+  private lineGraphicsContainer = new Container()
+  private circleNodesContainer = new Container()
   /**
    * whether all the necessary steps for a fully functional, interactive graph
    * have been completed
@@ -47,6 +52,7 @@ export class KnowledgeGraph<
      */
     canvasElement: HTMLCanvasElement
   }) {
+    PIXI.Ticker.shared.maxFPS = 10
     this.nodes = nodes
     this.links = links
     this.app = new PIXI.Application({
@@ -65,7 +71,35 @@ export class KnowledgeGraph<
     this.viewport.sortableChildren = true
     this.viewport.drag().pinch().wheel().decelerate()
     this.app.stage.addChild(this.viewport)
+    this.viewport.addChild(this.lineGraphicsContainer)
+    this.lineGraphicsContainer.interactiveChildren = false
+    this.lineGraphicsContainer.interactive = false
+    this.viewport.addChild(this.circleNodesContainer)
     this.setupConditionalNodeLabelsRenderer()
+    const culler = new Cull()
+    culler.add(this.viewport)
+    this.viewport.on(`drag-start`, () => {
+      // console.log(`moved`)
+      // this.lineGraphicsContainer.visible = false
+      // this.lineGraphicsContainer.renderable = false
+    })
+    this.viewport.on(`zoomed`, () => {
+      // console.log(`moved`)
+      // this.lineGraphicsContainer.visible = false
+      // this.lineGraphicsContainer.renderable = false
+    })
+    this.viewport.on(
+      `moved-end`,
+      debounce(() => {
+        // console.log(`moved`)
+        // this.lineGraphicsContainer.visible = true
+        // this.lineGraphicsContainer.renderable = true
+      }, 300)
+    )
+    this.app.renderer.on(`prerender`, () => {
+      // Cull out all objects that don't intersect with the screen
+      culler.cull(this.app.renderer.screen)
+    })
   }
 
   public onLoadGraphComplete(cb: (...params: any[]) => any) {
@@ -114,13 +148,20 @@ export class KnowledgeGraph<
       const lineGraphics = new PIXI.Graphics()
         .lineStyle(3, 0xffffff, 0.7, 1, false)
         .moveTo(sourceX, sourceY)
-        // This is the length of the line. For the x-position, that's 600-30 pixels - so your line was 570 pixels long.
-        // Multiply that by p, making it longer and longer. Finally, it's offset by the 30 pixels from your moveTo above. So, when p is 0, the line moves to 30 (not drawn at all), and when p is 1, the line moves to 600 (where it was for you). For y, it's the same, but with your y values.
         .lineTo(targetX, targetY)
         .endFill()
+      // const lineSprite = new PIXI.Sprite(
+      //   this.app.renderer.generateTexture(lineGraphics)
+      // )
+      // lineSprite.rotation
+      // lineSprite.x = sourceX
+      // lineSprite.y = sourceY
+      // lineGraphics.visible = false
       lines.push(lineGraphics)
     }
-    if (lines.length > 0) this.viewport.addChild(...lines)
+    if (lines.length > 0) {
+      this.lineGraphicsContainer.addChild(...lines)
+    }
   }
 
   private updateNodes({
@@ -242,7 +283,8 @@ export class KnowledgeGraph<
             nodes: msg.data.nodes,
           })
           if (isFirstTimeUpdatingNodes) {
-            if (nodeChildren.length > 0) this.viewport.addChild(...nodeChildren)
+            if (nodeChildren.length > 0)
+              this.circleNodesContainer.addChild(...nodeChildren)
             isFirstTimeUpdatingNodes = false
           }
           break
