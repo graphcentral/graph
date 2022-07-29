@@ -1,18 +1,10 @@
 import * as PIXI from "pixi.js"
-import { MovedEventType, Viewport } from "pixi-viewport"
+import { Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
 import { setupFpsMonitor } from "./setupFpsMonitor"
-import {
-  GraphEvents,
-  GraphGraphics,
-  GraphScales,
-  WorkerMessageType,
-} from "./graphEnums"
+import { GraphEvents, GraphGraphics, WorkerMessageType } from "./graphEnums"
 // @ts-ignore
 // import Test from "./test.txt"
-import { Container } from "pixi.js"
-import { debounce } from "lodash"
-import { NodeLabel } from "./node-label"
 import {
   WithPartialCoords,
   LinkWithPartialCoords,
@@ -37,10 +29,10 @@ export class KnowledgeGraph<
   private conditionalNodeLabelsRenderer: ConditionalNodeLabelsRenderer | null =
     null
   /**
-   * whether drawing graph is finished
+   * whether all the necessary steps for a fully functional, interactive graph
+   * have been completed
    */
-  private isDrawing = true
-  private isFontLoaded = false
+  private isLoaded = false
   private eventTarget = new EventTarget()
 
   constructor({
@@ -76,6 +68,12 @@ export class KnowledgeGraph<
     this.setupConditionalNodeLabelsRenderer()
   }
 
+  public onLoadGraphComplete(cb: (...params: any[]) => any) {
+    this.eventTarget.addEventListener(GraphEvents.LOAD_GRAPH_COMPLETE, cb, {
+      once: true,
+    })
+  }
+
   private async setupConditionalNodeLabelsRenderer() {
     await new Promise((resolve) => {
       this.eventTarget.addEventListener(
@@ -86,13 +84,18 @@ export class KnowledgeGraph<
         { once: true }
       )
     })
-    console.log(`FORCE_LAYOUT_COMPLETE`)
     this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
       this.viewport,
       // by now it must have coordinates
       this.nodes as WithCoords<N>[],
       this.links as LinkWithCoords[]
     )
+    await new Promise((resolve) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.conditionalNodeLabelsRenderer!.onInitComplete(resolve)
+    })
+    this.isLoaded = true
+    this.eventTarget.dispatchEvent(new Event(GraphEvents.LOAD_GRAPH_COMPLETE))
   }
 
   private updateLinks({ links }: { links: L[] }) {
@@ -248,7 +251,6 @@ export class KnowledgeGraph<
           this.updateLinks({
             links: msg.data.links,
           })
-          this.isDrawing = false
           this.eventTarget.dispatchEvent(
             new Event(GraphEvents.FORCE_LAYOUT_COMPLETE)
           )

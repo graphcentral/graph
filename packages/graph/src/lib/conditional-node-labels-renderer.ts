@@ -58,7 +58,9 @@ export class ConditionalNodeLabelsRenderer {
 
   public onInitComplete(cb: (...params: any[]) => any) {
     this.initComplete = true
-    this.eventTarget.addEventListener(GraphEvents.INIT_DB_COMPLETE, cb)
+    this.eventTarget.addEventListener(GraphEvents.INIT_DB_COMPLETE, cb, {
+      once: true,
+    })
   }
 
   public getNodeLabelsContainer(): Container {
