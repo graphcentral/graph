@@ -29,20 +29,24 @@ export class KnowledgeGraphDb extends Dexie {
     })
   }
 
-  public cancellableQuery<Returns>(
+  public cancellableTx<Returns>(
     transactionMode: TransactionMode,
     includedTables: Table<any, IndexableType>[],
-    querierFunction: (...params: any[]) => PromiseExtended<Returns>
+    querierFunction: (...params: any[]) => Promise<Returns>
   ) {
     let tx: Transaction | null = null
     let cancelled = false
-    const query = this.transaction(transactionMode, includedTables, () => {
-      if (cancelled) throw new Dexie.AbortError(`Query was cancelled`)
-      tx = Dexie.currentTransaction
-      return querierFunction()
-    })
+    const transaction = this.transaction(
+      transactionMode,
+      includedTables,
+      () => {
+        if (cancelled) throw new Dexie.AbortError(`Query was cancelled`)
+        tx = Dexie.currentTransaction
+        return querierFunction()
+      }
+    )
     return {
-      query,
+      transaction,
       cancel: () => {
         cancelled = true // In case transaction hasn't been started yet.
         if (tx) tx.abort() // If started, abort it.

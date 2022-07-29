@@ -93,9 +93,6 @@ export class KnowledgeGraph<
       this.nodes as WithCoords<N>[],
       this.links as LinkWithCoords[]
     )
-    this.viewport.addChild(
-      this.conditionalNodeLabelsRenderer.getNodeLabelsContainer()
-    )
   }
 
   private updateLinks({ links }: { links: L[] }) {
