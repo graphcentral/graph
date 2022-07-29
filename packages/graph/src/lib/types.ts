@@ -42,3 +42,21 @@ export type LinkWithCoords = {
   source: WithCoords<Link[`source`]>
   target: WithCoords<Link[`target`]>
 }
+
+export type SmallestNextVisibilityInput = {
+  data: string[]
+  name: string
+  renderAll?: boolean
+  array: string[]
+}
+
+export type NotSmallestNextVisibilityInput = {
+  data: Set<string>
+  name: string
+  renderAll?: boolean
+  array: string[]
+}
+
+export type NextVisibilityInput =
+  | SmallestNextVisibilityInput
+  | NotSmallestNextVisibilityInput

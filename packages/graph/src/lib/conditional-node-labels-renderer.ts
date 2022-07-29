@@ -1,8 +1,15 @@
 import { MovedEventType, Viewport } from "pixi-viewport"
 import { Container, ParticleContainer } from "pixi.js"
 import debounce from "lodash.debounce"
-import { LinkWithCoords, Node, WithCoords, WithPartialCoords } from "./types"
-import { GraphEvents, GraphScales } from "./graph-enums"
+import {
+  LinkWithCoords,
+  Node,
+  NotSmallestNextVisibilityInput,
+  SmallestNextVisibilityInput,
+  WithCoords,
+  WithPartialCoords,
+} from "./types"
+import { GraphEvents, GraphScales, RENDER_ALL } from "./graph-enums"
 import { NodeLabel } from "./node-label"
 import { KnowledgeGraphDb } from "./db"
 import Dexie, { PromiseExtended } from "dexie"
@@ -57,10 +64,16 @@ export class ConditionalNodeLabelsRenderer {
   }
 
   public onInitComplete(cb: (...params: any[]) => any) {
-    this.initComplete = true
-    this.eventTarget.addEventListener(GraphEvents.INIT_DB_COMPLETE, cb, {
-      once: true,
-    })
+    this.eventTarget.addEventListener(
+      GraphEvents.INIT_DB_COMPLETE,
+      () => {
+        this.initComplete = true
+        cb()
+      },
+      {
+        once: true,
+      }
+    )
   }
 
   public getNodeLabelsContainer(): Container {
@@ -79,94 +92,64 @@ export class ConditionalNodeLabelsRenderer {
   }: {
     nodeIdsWithinXRange: Node[`id`][]
     nodeIdsWithinYRange: Node[`id`][]
-    nodeIdsWithinCCRange: Node[`id`][]
+    nodeIdsWithinCCRange: Node[`id`][] | typeof RENDER_ALL
     visibleNodes: Node[`id`][]
   }): {
-    smallest: {
-      data: string[]
-      name: string
-    }
-    set0: {
-      data: Set<string>
-      name: string
-    }
-    set1: {
-      data: Set<string>
-      name: string
-    }
+    smallest: SmallestNextVisibilityInput
+    set0: NotSmallestNextVisibilityInput
+    set1: NotSmallestNextVisibilityInput
     visibleNodesSet: Set<string>
   } {
-    const minLen = Math.min(
-      nodeIdsWithinXRange.length,
-      nodeIdsWithinYRange.length,
-      nodeIdsWithinCCRange.length
-    )
     const visibleNodesSet = new Set(visibleNodes)
-    switch (true) {
-      case minLen === nodeIdsWithinXRange.length:
+    const xRange = {
+      data: nodeIdsWithinXRange,
+      name: `x`,
+    }
+    const yRange = {
+      data: nodeIdsWithinYRange,
+      name: `y`,
+    }
+    const ccRange = {
+      data: nodeIdsWithinCCRange,
+      name: `cc`,
+    }
+    const dataAscOrderedByLength = [
+      {
+        range: xRange,
+        array: nodeIdsWithinXRange,
+      },
+      {
+        range: yRange,
+        array: nodeIdsWithinYRange,
+      },
+      {
+        range: ccRange,
+        array: nodeIdsWithinCCRange,
+      },
+    ].sort(
+      ({ range: { data: data0 } }, { range: { data: data1 } }) =>
+        data0.length - data1.length
+    )
+    const optimizedInputs = dataAscOrderedByLength.map(
+      ({ range: { data, name }, array }, i) => {
+        const renderAll = data === `RENDER_ALL`
         return {
-          smallest: {
-            data: nodeIdsWithinXRange,
-            name: `x`,
-          },
-          set0: {
-            data: new Set(nodeIdsWithinYRange),
-            name: `y`,
-          },
-          set1: {
-            data: new Set(nodeIdsWithinCCRange),
-            name: `cc`,
-          },
-          visibleNodesSet,
+          rank: i,
+          data: i === 0 ? (renderAll ? [] : data) : new Set(data),
+          name,
+          renderAll,
+          array,
         }
-      case minLen === nodeIdsWithinYRange.length:
-        return {
-          smallest: {
-            data: nodeIdsWithinYRange,
-            name: `y`,
-          },
-          set0: {
-            data: new Set(nodeIdsWithinXRange),
-            name: `x`,
-          },
-          set1: {
-            data: new Set(nodeIdsWithinCCRange),
-            name: `cc`,
-          },
-          visibleNodesSet,
-        }
-      case minLen === nodeIdsWithinCCRange.length:
-        return {
-          smallest: {
-            data: nodeIdsWithinCCRange,
-            name: `cc`,
-          },
-          set0: {
-            data: new Set(nodeIdsWithinXRange),
-            name: `x`,
-          },
-          set1: {
-            data: new Set(nodeIdsWithinYRange),
-            name: `y`,
-          },
-          visibleNodesSet,
-        }
-      default:
-        return {
-          smallest: {
-            data: nodeIdsWithinXRange,
-            name: `x`,
-          },
-          set0: {
-            data: new Set(nodeIdsWithinYRange),
-            name: `y`,
-          },
-          set1: {
-            data: new Set(nodeIdsWithinCCRange),
-            name: `cc`,
-          },
-          visibleNodesSet,
-        }
+      }
+    )
+
+    console.log(optimizedInputs)
+
+    return {
+      smallest: optimizedInputs[0] as SmallestNextVisibilityInput,
+      set0: optimizedInputs[1] as NotSmallestNextVisibilityInput,
+      set1: optimizedInputs[2] as NotSmallestNextVisibilityInput,
+      visibleNodesSet,
     }
   }
 
@@ -191,14 +174,28 @@ export class ConditionalNodeLabelsRenderer {
     const nowVisibleNodeIds: Node[`id`][] = []
     const nowAppearingNodeIds: Node[`id`][] = []
     const nowDisappearingNodes: NodeLabel<Node<string>>[] = []
-    for (const nodeId of smallest.data) {
-      if (set0.data.has(nodeId) && set1.data.has(nodeId)) {
-        nowVisibleNodeIds.push(nodeId)
-        if (!visibleNodesSet.has(nodeId)) {
-          nowAppearingNodeIds.push(nodeId)
+
+    if (smallest.renderAll) {
+      // set0 is the second smallest array
+      for (const nodeId of set0.array) {
+        if (set1.data.has(nodeId)) {
+          nowVisibleNodeIds.push(nodeId)
+          if (!visibleNodesSet.has(nodeId)) {
+            nowAppearingNodeIds.push(nodeId)
+          }
+        }
+      }
+    } else {
+      for (const nodeId of smallest.data) {
+        if (set0.data.has(nodeId) && set1.data.has(nodeId)) {
+          nowVisibleNodeIds.push(nodeId)
+          if (!visibleNodesSet.has(nodeId)) {
+            nowAppearingNodeIds.push(nodeId)
+          }
         }
       }
     }
+
     for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {
       if (!visibleNodesSet.has(nodeId)) {
         nowDisappearingNodes.push(label)
@@ -254,10 +251,18 @@ export class ConditionalNodeLabelsRenderer {
             .where(`y`)
             .between(yLow, yHigh, true, true)
             .primaryKeys(),
-          this.db.nodes
-            .where(`cc`)
-            .between(renderLabelsWithCCAboveOrEqual, Dexie.maxKey, true, true)
-            .primaryKeys(),
+          // there is no point of querying all primary keys if you get to render nodes in all cc's
+          renderLabelsWithCCAboveOrEqual === 0
+            ? RENDER_ALL
+            : this.db.nodes
+                .where(`cc`)
+                .between(
+                  renderLabelsWithCCAboveOrEqual,
+                  Dexie.maxKey,
+                  true,
+                  true
+                )
+                .primaryKeys(),
           this.db.visibleNodes.toCollection().primaryKeys(),
         ])
         const nextLabelVisibilityInputs =
@@ -274,16 +279,7 @@ export class ConditionalNodeLabelsRenderer {
           this.db.nodes.bulkGet(nowAppearingNodeIds) as PromiseExtended<Node[]>,
           // Immediately resolved promise for the nodes that must disappear now
           nowDisappearingNodes,
-          // Promise for updating currently visible nodes (returns nothing)
-          this.db.transaction(`rw`, [this.db.visibleNodes], async () => {
-            // todo would using a plain Set() or object be faster than using a table?
-            await this.db.visibleNodes.clear()
-            await this.db.visibleNodes.bulkAdd(
-              nowVisibleNodeIds.map((n) => ({
-                id: n,
-              }))
-            )
-          }),
+          nowVisibleNodeIds,
         ])
       }
     )
@@ -301,17 +297,49 @@ export class ConditionalNodeLabelsRenderer {
    *
    * Then this must be called to cancel the previous transaction
    */
-  private cancelPreviousLabelVisibilityTransactionIdempotently: VoidFunction | null =
-    null
+  private cancelFns: VoidFunction[] = []
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private onMovedEnd = debounce(async (_movedEndEvent: MovedEventType) => {
-    // this.cancelPreviousLabelVisibilityTransactionIdempotently?.()
-    const nextLabelVisibilityCalculation = this.calculateNextLabelVisibility()
-    if (!nextLabelVisibilityCalculation) return
-    const { transaction, cancel } = nextLabelVisibilityCalculation
-    this.cancelPreviousLabelVisibilityTransactionIdempotently = cancel
-    const [nodesToAppear, nowDisappearingNodes] = await transaction
-    this.cancelPreviousLabelVisibilityTransactionIdempotently = null
+    this.cancelFns.forEach((fn) => fn())
+    this.cancelFns = []
+
+    const { transaction, cancel } = await this.db.cancellableTx(
+      `rw`,
+      [this.db.nodes, this.db.visibleNodes],
+      async () => {
+        const nextLabelVisibilityCalculation =
+          this.calculateNextLabelVisibility()
+        if (!nextLabelVisibilityCalculation) return null
+        const { transaction: nextLabelVisibilityTransaction } =
+          nextLabelVisibilityCalculation
+        const [nodesToAppear, nowDisappearingNodes, nowVisibleNodeIds] =
+          await nextLabelVisibilityTransaction
+        // Promise for updating currently visible nodes (returns nothing)
+        const { transaction: visibleNodesTransaction } = this.db.cancellableTx(
+          `rw`,
+          [this.db.visibleNodes],
+          async () => {
+            // todo would using a plain Set() or object be faster than using a table?
+            await this.db.visibleNodes.clear()
+            await this.db.visibleNodes.bulkAdd(
+              nowVisibleNodeIds.map((n) => ({
+                id: n,
+              }))
+            )
+          }
+        )
+        await visibleNodesTransaction
+
+        return {
+          nowDisappearingNodes,
+          nodesToAppear,
+        }
+      }
+    )
+    this.cancelFns.push(cancel)
+    const transactionResult = await transaction
+    if (!transactionResult) return
+    const { nowDisappearingNodes, nodesToAppear } = transactionResult
     this.nodeLabelsContainer.removeChild(...nowDisappearingNodes)
     this.createBitmapTextsAsNodeLabels(nodesToAppear)
   }, 100)
@@ -335,6 +363,7 @@ export class ConditionalNodeLabelsRenderer {
         ])
       }
     )
+    console.log(`DB INIT COMPLETE`)
     this.eventTarget.dispatchEvent(new Event(GraphEvents.INIT_DB_COMPLETE))
   }
 
@@ -347,7 +376,6 @@ export class ConditionalNodeLabelsRenderer {
       `moved-end`,
       (movedEndEvent: MovedEventType) => {
         if (this.initComplete) {
-          // this.cancelPreviousLabelVisibilityTransactionIdempotently?.()
           this.onMovedEnd(movedEndEvent)
         }
       }

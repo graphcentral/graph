@@ -12,6 +12,7 @@ const createWorkerConfig: (workerPath: string) => webpack.Configuration = (
     filename: `[name].worker.js`,
     path: path.resolve(__dirname, `dist`),
     publicPath: `dist/`,
+    globalObject: `this`,
   },
   target: `webworker`,
   devtool: `source-map`,

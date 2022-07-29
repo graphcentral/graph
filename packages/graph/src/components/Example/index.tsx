@@ -3,7 +3,7 @@ import { FC } from "react"
 import { KnowledgeGraph } from "../../lib"
 import { enhance } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
-import testData from "../../../../test-data/test11.json"
+import testData from "../../../../test-data/test14.json"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const Example: FC<{}> = enhance<{}>(() => {

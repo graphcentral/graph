@@ -39,7 +39,7 @@ export class KnowledgeGraph<
    * have been completed
    */
   public isLoaded: Readonly<boolean> = false
-
+  private culler = new Cull()
   constructor({
     nodes,
     links,
@@ -76,8 +76,7 @@ export class KnowledgeGraph<
     this.lineGraphicsContainer.interactive = false
     this.viewport.addChild(this.circleNodesContainer)
     this.setupConditionalNodeLabelsRenderer()
-    const culler = new Cull()
-    culler.add(this.viewport)
+    this.culler.add(this.viewport)
     this.viewport.on(`drag-start`, () => {
       // console.log(`moved`)
       // this.lineGraphicsContainer.visible = false
@@ -98,7 +97,7 @@ export class KnowledgeGraph<
     )
     this.app.renderer.on(`prerender`, () => {
       // Cull out all objects that don't intersect with the screen
-      culler.cull(this.app.renderer.screen)
+      this.culler.cull(this.app.renderer.screen)
     })
   }
 
@@ -161,6 +160,7 @@ export class KnowledgeGraph<
     }
     if (lines.length > 0) {
       this.lineGraphicsContainer.addChild(...lines)
+      this.culler.addAll(lines)
     }
   }
 
@@ -283,8 +283,11 @@ export class KnowledgeGraph<
             nodes: msg.data.nodes,
           })
           if (isFirstTimeUpdatingNodes) {
-            if (nodeChildren.length > 0)
+            if (nodeChildren.length > 0) {
               this.circleNodesContainer.addChild(...nodeChildren)
+              this.culler.addAll(nodeChildren)
+            }
+
             isFirstTimeUpdatingNodes = false
           }
           break
