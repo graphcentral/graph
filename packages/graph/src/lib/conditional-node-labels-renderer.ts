@@ -384,8 +384,11 @@ export class ConditionalNodeLabelsRenderer {
       }
     )
     this.cancelFns.push(cancel)
-    const [err, transactionResult] = await to(transaction)
-    await this.deleteLabelsOnDragging()
+    const [[err, transactionResult]] = await Promise.all([
+      to(transaction),
+      this.deleteLabelsOnDragging(),
+    ])
+
     if (!transactionResult || err) {
       return
     }
