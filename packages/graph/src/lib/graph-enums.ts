@@ -11,6 +11,7 @@ export const enum GraphEvents {
   FORCE_LAYOUT_COMPLETE = `FORCE_LAYOUT_COMPLETE`,
   LOAD_GRAPH_COMPLETE = `LOAD_GRAPH_COMPLETE`,
   INIT_DB_COMPLETE = `INIT_DB_COMPLETE`,
+  ERROR = `ERROR`,
 }
 
 export enum GraphGraphics {

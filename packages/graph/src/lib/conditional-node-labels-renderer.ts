@@ -13,6 +13,7 @@ import { GraphEvents, GraphScales, RENDER_ALL } from "./graph-enums"
 import { NodeLabel } from "./node-label"
 import { KnowledgeGraphDb } from "./db"
 import Dexie, { PromiseExtended } from "dexie"
+import to from "await-to-js"
 
 /**
  * Node labels renderer with Hierarchical Level of Detail (HLoD) and culling (only rendering what is currently seen by the camera)
@@ -63,6 +64,13 @@ export class ConditionalNodeLabelsRenderer {
     this.initMovedEndListener()
   }
 
+  public onError(cb: VoidFunction) {
+    this.eventTarget.addEventListener(GraphEvents.ERROR, cb)
+  }
+
+  /**
+   * IndexedDB takes some time to be initialized
+   */
   public onInitComplete(cb: (...params: any[]) => any) {
     this.eventTarget.addEventListener(
       GraphEvents.INIT_DB_COMPLETE,
@@ -308,14 +316,15 @@ export class ConditionalNodeLabelsRenderer {
    * Then this must be called to cancel the previous transaction
    */
   private cancelFns: VoidFunction[] = []
+  private previousVisibleNodesSet: Set<string> = new Set()
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private onMovedEnd = debounce(async (_movedEndEvent: MovedEventType) => {
     this.cancelFns.forEach((fn) => fn())
     this.cancelFns = []
     const visibleNodesSet = await this.getVisibleNodesSet()
-    this.deleteDisappearingLabels(visibleNodesSet)
-
-    const { transaction, cancel } = await this.db.cancellableTx(
+    // this.deleteDisappearingLabels(this.previousVisibleNodesSet)
+    // this.previousVisibleNodesSet = visibleNodesSet
+    const { transaction, cancel } = this.db.cancellableTx(
       `rw`,
       [this.db.nodes, this.db.visibleNodes],
       async () => {
@@ -327,10 +336,8 @@ export class ConditionalNodeLabelsRenderer {
         const [nodesToAppear, nowDisappearingNodes, nowVisibleNodeIds] =
           await nextLabelVisibilityTransaction
         // Promise for updating currently visible nodes (returns nothing)
-        const { transaction: visibleNodesTransaction } = this.db.cancellableTx(
-          `rw`,
-          [this.db.visibleNodes],
-          async () => {
+        const { transaction: visibleNodesTx, cancel: cancelVisibleNodesTx } =
+          this.db.cancellableTx(`rw`, [this.db.visibleNodes], async () => {
             // todo would using a plain Set() or object be faster than using a table?
             await this.db.visibleNodes.clear()
             await this.db.visibleNodes.bulkAdd(
@@ -338,9 +345,9 @@ export class ConditionalNodeLabelsRenderer {
                 id: n,
               }))
             )
-          }
-        )
-        await visibleNodesTransaction
+          })
+        await visibleNodesTx
+        this.cancelFns.push(cancelVisibleNodesTx)
 
         return {
           nowDisappearingNodes,
@@ -349,11 +356,14 @@ export class ConditionalNodeLabelsRenderer {
       }
     )
     this.cancelFns.push(cancel)
-    const transactionResult = await transaction
-    if (!transactionResult) return
+    const [err, transactionResult] = await to(transaction)
+    if (!transactionResult || err) {
+      return
+    }
     const { nodesToAppear } = transactionResult
+    this.deleteDisappearingLabels(visibleNodesSet)
     this.createBitmapTextsAsNodeLabels(nodesToAppear)
-  }, 100)
+  }, 1000)
 
   /**
    * Just dump everything into the db
@@ -382,6 +392,10 @@ export class ConditionalNodeLabelsRenderer {
    * moved-end event includes zoom, drag, ... everything.
    */
   private async initMovedEndListener() {
+    this.viewport.on(`drag-start`, () => {
+      // this.cancelFns.forEach((fn) => fn())
+      // this.cancelFns = []/
+    })
     this.viewport.on(
       // @ts-ignore
       `moved-end`,

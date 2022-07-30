@@ -5,7 +5,7 @@ function main() {
   console.log(`started...`)
   const NODES_NUM = 50_000
   const PARENTS_NUM = 5000
-  const MAX_CC = 200
+  const MAX_CC = 25
   console.log(`generating words...`)
   const words = randomWords({ exactly: NODES_NUM, maxLength: 10 })
   console.log(`generating graph...`)
