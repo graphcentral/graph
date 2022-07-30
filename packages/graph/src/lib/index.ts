@@ -206,6 +206,7 @@ export class KnowledgeGraph<
         circle.pivot.x = circle.width / 2
         circle.pivot.y = circle.height / 2
         if (node.cc) circle.scale.set(scaleByCC(node.cc), scaleByCC(node.cc))
+        circle.buttonMode = true
         circle.interactive = true
         circle.on(`mouseover`, () => {
           console.log(node)

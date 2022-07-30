@@ -210,8 +210,12 @@ export class ConditionalNodeLabelsRenderer {
 
   private async deleteDisappearingLabels(visibleNodesSet: Set<Node[`id`]>) {
     const nowDisappearingNodes = []
+    const renderLabelsWithCCAboveOrEqual = this.scaleToMinChildrenCount(
+      this.viewport.scale.x
+    )
     for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {
-      if (!visibleNodesSet.has(nodeId)) {
+      const cc = label.getNodeData().cc ?? 0
+      if (!visibleNodesSet.has(nodeId) || cc < renderLabelsWithCCAboveOrEqual) {
         nowDisappearingNodes.push(label)
         delete this.visibleLabelsMap[nodeId]
       }
