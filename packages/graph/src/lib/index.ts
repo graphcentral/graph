@@ -11,6 +11,7 @@ import {
   WithCoords,
   Node,
   LinkWithCoords,
+  KnowledgeGraphOptions,
 } from "./types"
 import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
@@ -33,17 +34,23 @@ export class KnowledgeGraph<
     null
   private eventTarget = new EventTarget()
   private lineGraphicsContainer = new Container()
-  private circleNodesContainer = new Container()
+  private circleNodesContainer: ParticleContainer | Container = new Container()
   /**
    * whether all the necessary steps for a fully functional, interactive graph
    * have been completed
    */
   public isLoaded: Readonly<boolean> = false
   private culler = new Cull()
+  private options: KnowledgeGraphOptions | undefined = {}
   constructor({
     nodes,
     links,
     canvasElement,
+    options = {
+      optimization: {
+        showEdgesOnCloseZoomOnly: true,
+      },
+    },
   }: {
     nodes: N[]
     links: L[]
@@ -51,6 +58,7 @@ export class KnowledgeGraph<
      * if you want to access it later, use this.app. to do sos
      */
     canvasElement: HTMLCanvasElement
+    options?: KnowledgeGraphOptions
   }) {
     PIXI.Ticker.shared.maxFPS = 10
     this.nodes = nodes
@@ -62,6 +70,9 @@ export class KnowledgeGraph<
       antialias: true,
       // autoDensity: true,
     })
+    this.options = options
+    if (this.options?.optimization?.useParticleContainer)
+      this.circleNodesContainer = new ParticleContainer(100_000)
     this.viewport = new Viewport({
       screenWidth: window.innerWidth,
       screenHeight: window.innerHeight,
@@ -90,6 +101,7 @@ export class KnowledgeGraph<
     this.viewport.on(
       `moved-end`,
       debounce(() => {
+        if (!this.options?.optimization?.showEdgesOnCloseZoomOnly) return
         const minChildrenCount = scaleToMinChildrenCount(this.viewport.scale.x)
         // console.log(`moved`)
         if (minChildrenCount === Infinity) {
@@ -263,7 +275,6 @@ export class KnowledgeGraph<
           if (isFirstTimeUpdatingNodes) {
             if (nodeChildren.length > 0) {
               this.circleNodesContainer.addChild(...nodeChildren)
-              // this.culler.addAll(nodeChildren)
             }
 
             isFirstTimeUpdatingNodes = false

@@ -60,3 +60,10 @@ export type NotSmallestNextVisibilityInput = {
 export type NextVisibilityInput =
   | SmallestNextVisibilityInput
   | NotSmallestNextVisibilityInput
+
+export type KnowledgeGraphOptions = {
+  optimization?: {
+    useParticleContainer?: boolean
+    showEdgesOnCloseZoomOnly?: boolean
+  }
+}
