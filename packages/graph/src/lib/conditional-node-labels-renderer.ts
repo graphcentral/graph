@@ -14,6 +14,7 @@ import { NodeLabel } from "./node-label"
 import { KnowledgeGraphDb } from "./db"
 import Dexie, { PromiseExtended } from "dexie"
 import to from "await-to-js"
+import { scaleToMinChildrenCount } from "./common-graph-util"
 
 /**
  * Node labels renderer with Hierarchical Level of Detail (HLoD) and culling (only rendering what is currently seen by the camera)
@@ -220,7 +221,7 @@ export class ConditionalNodeLabelsRenderer {
 
   private async deleteDisappearingLabels(visibleNodesSet: Set<Node[`id`]>) {
     const nowDisappearingNodes = []
-    const renderLabelsWithCCAboveOrEqual = this.scaleToMinChildrenCount(
+    const renderLabelsWithCCAboveOrEqual = scaleToMinChildrenCount(
       this.viewport.scale.x
     )
     for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {
@@ -242,7 +243,7 @@ export class ConditionalNodeLabelsRenderer {
    * and a method to `cancel` the transaction.
    */
   private calculateNextLabelVisibility(visibleNodesSet: Set<string>) {
-    const renderLabelsWithCCAboveOrEqual = this.scaleToMinChildrenCount(
+    const renderLabelsWithCCAboveOrEqual = scaleToMinChildrenCount(
       this.viewport.scale.x
     )
     const hitArea = this.viewport.hitArea
@@ -316,7 +317,7 @@ export class ConditionalNodeLabelsRenderer {
    */
   private async deleteLabelsOnDragging() {
     const nowDisappearingNodes = []
-    const renderLabelsWithCCAboveOrEqual = this.scaleToMinChildrenCount(
+    const renderLabelsWithCCAboveOrEqual = scaleToMinChildrenCount(
       this.viewport.scale.x
     )
     const nowDisappearingNodeIds = []
@@ -429,37 +430,6 @@ export class ConditionalNodeLabelsRenderer {
         this.onMovedEnd()
       }
     })
-  }
-
-  /**
-   * Matches the current scale with appropriate minimum children count
-   * Used to calculate which labels must appear based on current scale.
-   * i.e. if zoomed out too much, you should probably see labels of nodes with
-   * large children count (`cc`).
-   * @param scale decreases as user zooms out
-   */
-  private scaleToMinChildrenCount(scale: number): number {
-    // the order of the case statements matters.
-    switch (true) {
-      // invalid case
-      case scale <= 0: {
-        return -1
-      }
-      // don't show any texts
-      case scale < GraphScales.CANNOT_SEE_ANYTHING_WELL:
-        return Infinity
-      case scale < GraphScales.CAN_SEE_BIG_NODES_WELL: {
-        // show text from nodes having cc above 20
-        return 20
-      }
-      case scale > GraphScales.CAN_SEE_BIG_NODES_WELL: {
-        // show text from nodes having cc above 0
-        return 0
-      }
-      default: {
-        return -1
-      }
-    }
   }
 
   /**

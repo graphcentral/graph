@@ -12,7 +12,7 @@ import {
   Node,
   LinkWithCoords,
 } from "./types"
-import { scaleByCC } from "./common-graph-util"
+import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
 import { Cull } from "@pixi-essentials/cull"
 import { Container, ParticleContainer, Rectangle } from "pixi.js"
@@ -90,10 +90,16 @@ export class KnowledgeGraph<
     this.viewport.on(
       `moved-end`,
       debounce(() => {
+        const minChildrenCount = scaleToMinChildrenCount(this.viewport.scale.x)
         // console.log(`moved`)
-        // this.lineGraphicsContainer.visible = true
-        // this.lineGraphicsContainer.renderable = true
-      }, 300)
+        if (minChildrenCount === Infinity) {
+          this.lineGraphicsContainer.visible = false
+          this.lineGraphicsContainer.renderable = false
+        } else {
+          this.lineGraphicsContainer.visible = true
+          this.lineGraphicsContainer.renderable = true
+        }
+      }, 100)
     )
     this.app.renderer.on(`prerender`, () => {
       // Cull out all objects that don't intersect with the screen
@@ -149,13 +155,6 @@ export class KnowledgeGraph<
         .moveTo(sourceX, sourceY)
         .lineTo(targetX, targetY)
         .endFill()
-      // const lineSprite = new PIXI.Sprite(
-      //   this.app.renderer.generateTexture(lineGraphics)
-      // )
-      // lineSprite.rotation
-      // lineSprite.x = sourceX
-      // lineSprite.y = sourceY
-      // lineGraphics.visible = false
       lines.push(lineGraphics)
     }
     if (lines.length > 0) {
@@ -227,27 +226,6 @@ export class KnowledgeGraph<
         // nodeChildren order is preserved across force directed graph iterations
         const child = nodeChildren[i]
         if (child) {
-          child.off(`mouseover`)
-          child.off(`mouseout`)
-          child.on(`mouseover`, () => {
-            console.log(child)
-            console.log(child.position)
-            console.log(child.getGlobalPosition())
-            child.scale.set(
-              child.scale.x * GraphGraphics.CIRCLE_SCALE_FACTOR,
-              child.scale.y * GraphGraphics.CIRCLE_SCALE_FACTOR
-            )
-          })
-          // circle.cullable = true
-          child.on(`mouseout`, () => {
-            console.log(child)
-            console.log(child.position)
-            console.log(child.getGlobalPosition())
-            child.scale.set(
-              child.scale.x / GraphGraphics.CIRCLE_SCALE_FACTOR,
-              child.scale.y / GraphGraphics.CIRCLE_SCALE_FACTOR
-            )
-          })
           if (node.x) child.x = node.x
           if (node.y) child.y = node.y
         }
