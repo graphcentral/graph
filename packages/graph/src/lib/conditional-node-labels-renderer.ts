@@ -318,6 +318,7 @@ export class ConditionalNodeLabelsRenderer {
   private cancelFns: VoidFunction[] = []
   private previousVisibleNodesSet: Set<string> = new Set()
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   private onMovedEnd = debounce(async (_movedEndEvent: MovedEventType) => {
     this.cancelFns.forEach((fn) => fn())
     this.cancelFns = []
@@ -358,12 +359,27 @@ export class ConditionalNodeLabelsRenderer {
     this.cancelFns.push(cancel)
     const [err, transactionResult] = await to(transaction)
     if (!transactionResult || err) {
+      const nowDisappearingNodes = []
+      const renderLabelsWithCCAboveOrEqual = this.scaleToMinChildrenCount(
+        this.viewport.scale.x
+      )
+      for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {
+        const cc = label.getNodeData().cc ?? 0
+        if (
+          !this.viewport.hitArea?.contains(label.x, label.y) ||
+          cc < renderLabelsWithCCAboveOrEqual
+        ) {
+          nowDisappearingNodes.push(label)
+          delete this.visibleLabelsMap[nodeId]
+        }
+      }
+      this.nodeLabelsContainer.removeChild(...nowDisappearingNodes)
       return
     }
     const { nodesToAppear } = transactionResult
     this.deleteDisappearingLabels(visibleNodesSet)
     this.createBitmapTextsAsNodeLabels(nodesToAppear)
-  }, 1000)
+  }, 100)
 
   /**
    * Just dump everything into the db
@@ -415,11 +431,15 @@ export class ConditionalNodeLabelsRenderer {
    * @param scale decreases as user zooms out
    */
   private scaleToMinChildrenCount(scale: number): number {
+    // the order of the case statements matters.
     switch (true) {
       // invalid case
       case scale <= 0: {
         return -1
       }
+      // don't show any texts
+      case scale < GraphScales.CANNOT_SEE_ANYTHING_WELL:
+        return Infinity
       case scale < GraphScales.CAN_SEE_BIG_NODES_WELL: {
         // show text from nodes having cc above 20
         return 20
@@ -446,7 +466,7 @@ export class ConditionalNodeLabelsRenderer {
       const text = new NodeLabel<Node>(
         node.title,
         node as WithCoords<Node>,
-        Number(node.cc ?? 0)
+        node.cc ?? 0
       )
       text.x = node.x
       text.y = node.y
