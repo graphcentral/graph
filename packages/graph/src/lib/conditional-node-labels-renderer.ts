@@ -88,19 +88,15 @@ export class ConditionalNodeLabelsRenderer {
     nodeIdsWithinXRange,
     nodeIdsWithinYRange,
     nodeIdsWithinCCRange,
-    visibleNodes,
   }: {
     nodeIdsWithinXRange: Node[`id`][]
     nodeIdsWithinYRange: Node[`id`][]
     nodeIdsWithinCCRange: Node[`id`][] | typeof RENDER_ALL
-    visibleNodes: Node[`id`][]
   }): {
     smallest: SmallestNextVisibilityInput
     set0: NotSmallestNextVisibilityInput
     set1: NotSmallestNextVisibilityInput
-    visibleNodesSet: Set<string>
   } {
-    const visibleNodesSet = new Set(visibleNodes)
     const xRange = {
       data: nodeIdsWithinXRange,
       name: `x`,
@@ -149,7 +145,6 @@ export class ConditionalNodeLabelsRenderer {
       smallest: optimizedInputs[0] as SmallestNextVisibilityInput,
       set0: optimizedInputs[1] as NotSmallestNextVisibilityInput,
       set1: optimizedInputs[2] as NotSmallestNextVisibilityInput,
-      visibleNodesSet,
     }
   }
 
@@ -164,9 +159,12 @@ export class ConditionalNodeLabelsRenderer {
     set0,
     set1,
     visibleNodesSet,
-  }: ReturnType<
-    ConditionalNodeLabelsRenderer[`optimizeNextLabelVisibilityInputs`]
-  >): {
+  }:
+    | ReturnType<
+        ConditionalNodeLabelsRenderer[`optimizeNextLabelVisibilityInputs`]
+      > & {
+        visibleNodesSet: Set<string>
+      }): {
     nowVisibleNodeIds: Node[`id`][]
     nowAppearingNodeIds: Node[`id`][]
     nowDisappearingNodes: NodeLabel<Node<string>>[]
@@ -196,18 +194,29 @@ export class ConditionalNodeLabelsRenderer {
       }
     }
 
+    return {
+      nowVisibleNodeIds,
+      nowAppearingNodeIds,
+      nowDisappearingNodes,
+    }
+  }
+
+  private async getVisibleNodesSet() {
+    const pksPromise = this.db.visibleNodes.toCollection().primaryKeys()
+    const pks = await pksPromise
+
+    return new Set(pks)
+  }
+
+  private async deleteDisappearingLabels(visibleNodesSet: Set<Node[`id`]>) {
+    const nowDisappearingNodes = []
     for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {
       if (!visibleNodesSet.has(nodeId)) {
         nowDisappearingNodes.push(label)
         delete this.visibleLabelsMap[nodeId]
       }
     }
-
-    return {
-      nowVisibleNodeIds,
-      nowAppearingNodeIds,
-      nowDisappearingNodes,
-    }
+    this.nodeLabelsContainer.removeChild(...nowDisappearingNodes)
   }
 
   /**
@@ -218,7 +227,7 @@ export class ConditionalNodeLabelsRenderer {
    *
    * and a method to `cancel` the transaction.
    */
-  private calculateNextLabelVisibility() {
+  private calculateNextLabelVisibility(visibleNodesSet: Set<string>) {
     const renderLabelsWithCCAboveOrEqual = this.scaleToMinChildrenCount(
       this.viewport.scale.x
     )
@@ -237,43 +246,40 @@ export class ConditionalNodeLabelsRenderer {
       `rw`,
       [this.db.nodes, this.db.visibleNodes],
       async () => {
-        const [
-          nodeIdsWithinXRange,
-          nodeIdsWithinYRange,
-          nodeIdsWithinCCRange,
-          visibleNodes,
-        ] = await Promise.all([
-          this.db.nodes
-            .where(`x`)
-            .between(xLow, xHigh, true, true)
-            .primaryKeys(),
-          this.db.nodes
-            .where(`y`)
-            .between(yLow, yHigh, true, true)
-            .primaryKeys(),
-          // there is no point of querying all primary keys if you get to render nodes in all cc's
-          renderLabelsWithCCAboveOrEqual === 0
-            ? RENDER_ALL
-            : this.db.nodes
-                .where(`cc`)
-                .between(
-                  renderLabelsWithCCAboveOrEqual,
-                  Dexie.maxKey,
-                  true,
-                  true
-                )
-                .primaryKeys(),
-          this.db.visibleNodes.toCollection().primaryKeys(),
-        ])
+        const [nodeIdsWithinXRange, nodeIdsWithinYRange, nodeIdsWithinCCRange] =
+          await Promise.all([
+            this.db.nodes
+              .where(`x`)
+              .between(xLow, xHigh, true, true)
+              .primaryKeys(),
+            this.db.nodes
+              .where(`y`)
+              .between(yLow, yHigh, true, true)
+              .primaryKeys(),
+            // there is no point of querying all primary keys if you get to render nodes in all cc's
+            renderLabelsWithCCAboveOrEqual === 0
+              ? RENDER_ALL
+              : this.db.nodes
+                  .where(`cc`)
+                  .between(
+                    renderLabelsWithCCAboveOrEqual,
+                    Dexie.maxKey,
+                    true,
+                    true
+                  )
+                  .primaryKeys(),
+          ])
         const nextLabelVisibilityInputs =
           this.optimizeNextLabelVisibilityInputs({
             nodeIdsWithinXRange,
             nodeIdsWithinYRange,
             nodeIdsWithinCCRange,
-            visibleNodes,
           })
         const { nowAppearingNodeIds, nowDisappearingNodes, nowVisibleNodeIds } =
-          this.processPreviousAndNextLabels(nextLabelVisibilityInputs)
+          this.processPreviousAndNextLabels({
+            ...nextLabelVisibilityInputs,
+            visibleNodesSet,
+          })
         return Promise.all([
           // Promise for the nodes that must appear now
           this.db.nodes.bulkGet(nowAppearingNodeIds) as PromiseExtended<Node[]>,
@@ -302,13 +308,15 @@ export class ConditionalNodeLabelsRenderer {
   private onMovedEnd = debounce(async (_movedEndEvent: MovedEventType) => {
     this.cancelFns.forEach((fn) => fn())
     this.cancelFns = []
+    const visibleNodesSet = await this.getVisibleNodesSet()
+    this.deleteDisappearingLabels(visibleNodesSet)
 
     const { transaction, cancel } = await this.db.cancellableTx(
       `rw`,
       [this.db.nodes, this.db.visibleNodes],
       async () => {
         const nextLabelVisibilityCalculation =
-          this.calculateNextLabelVisibility()
+          this.calculateNextLabelVisibility(visibleNodesSet)
         if (!nextLabelVisibilityCalculation) return null
         const { transaction: nextLabelVisibilityTransaction } =
           nextLabelVisibilityCalculation
@@ -339,8 +347,7 @@ export class ConditionalNodeLabelsRenderer {
     this.cancelFns.push(cancel)
     const transactionResult = await transaction
     if (!transactionResult) return
-    const { nowDisappearingNodes, nodesToAppear } = transactionResult
-    this.nodeLabelsContainer.removeChild(...nowDisappearingNodes)
+    const { nodesToAppear } = transactionResult
     this.createBitmapTextsAsNodeLabels(nodesToAppear)
   }, 100)
 

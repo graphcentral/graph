@@ -159,8 +159,8 @@ export class KnowledgeGraph<
       lines.push(lineGraphics)
     }
     if (lines.length > 0) {
-      this.lineGraphicsContainer.addChild(...lines)
-      this.culler.addAll(lines)
+      // this.lineGraphicsContainer.addChild(...lines)
+      // this.culler.addAll(lines)
     }
   }
 
