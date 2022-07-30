@@ -58,6 +58,8 @@ export class ConditionalNodeLabelsRenderer {
     db?: KnowledgeGraphDb
   ) {
     this.viewport = viewport
+    this.nodeLabelsContainer.interactive = false
+    this.nodeLabelsContainer.interactiveChildren = false
     this.viewport.addChild(this.nodeLabelsContainer)
     this.initDb(nodes, links)
     this.db = db ?? this.db
@@ -309,6 +311,31 @@ export class ConditionalNodeLabelsRenderer {
   }
 
   /**
+   * make sure you still delete labels that go outside of the current screen
+   * because you are moving around in a viewport
+   */
+  private async deleteLabelsOnDragging() {
+    const nowDisappearingNodes = []
+    const renderLabelsWithCCAboveOrEqual = this.scaleToMinChildrenCount(
+      this.viewport.scale.x
+    )
+    const nowDisappearingNodeIds = []
+    for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {
+      const cc = label.getNodeData().cc ?? 0
+      if (
+        !this.viewport.hitArea?.contains(label.x, label.y) ||
+        cc < renderLabelsWithCCAboveOrEqual
+      ) {
+        nowDisappearingNodes.push(label)
+        nowDisappearingNodeIds.push(nodeId)
+        delete this.visibleLabelsMap[nodeId]
+      }
+    }
+    this.nodeLabelsContainer.removeChild(...nowDisappearingNodes)
+    await this.db.visibleNodes.bulkDelete(nowDisappearingNodeIds)
+  }
+
+  /**
    * For the transaction with large number of nodes,
    * it is possible that the transaction may end up being called concurrently
    * if the user moves around in the screen frequently in a short duration of time.
@@ -316,15 +343,13 @@ export class ConditionalNodeLabelsRenderer {
    * Then this must be called to cancel the previous transaction
    */
   private cancelFns: VoidFunction[] = []
-  private previousVisibleNodesSet: Set<string> = new Set()
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-
-  private onMovedEnd = debounce(async (_movedEndEvent: MovedEventType) => {
+  /**
+   * moved-end callback of `this.viewport`
+   */
+  private onMovedEnd = debounce(async () => {
     this.cancelFns.forEach((fn) => fn())
     this.cancelFns = []
     const visibleNodesSet = await this.getVisibleNodesSet()
-    // this.deleteDisappearingLabels(this.previousVisibleNodesSet)
-    // this.previousVisibleNodesSet = visibleNodesSet
     const { transaction, cancel } = this.db.cancellableTx(
       `rw`,
       [this.db.nodes, this.db.visibleNodes],
@@ -337,8 +362,10 @@ export class ConditionalNodeLabelsRenderer {
         const [nodesToAppear, nowDisappearingNodes, nowVisibleNodeIds] =
           await nextLabelVisibilityTransaction
         // Promise for updating currently visible nodes (returns nothing)
-        const { transaction: visibleNodesTx, cancel: cancelVisibleNodesTx } =
-          this.db.cancellableTx(`rw`, [this.db.visibleNodes], async () => {
+        const { transaction: visibleNodesTx } = this.db.cancellableTx(
+          `rw`,
+          [this.db.visibleNodes],
+          async () => {
             // todo would using a plain Set() or object be faster than using a table?
             await this.db.visibleNodes.clear()
             await this.db.visibleNodes.bulkAdd(
@@ -346,9 +373,9 @@ export class ConditionalNodeLabelsRenderer {
                 id: n,
               }))
             )
-          })
+          }
+        )
         await visibleNodesTx
-        this.cancelFns.push(cancelVisibleNodesTx)
 
         return {
           nowDisappearingNodes,
@@ -358,22 +385,8 @@ export class ConditionalNodeLabelsRenderer {
     )
     this.cancelFns.push(cancel)
     const [err, transactionResult] = await to(transaction)
+    await this.deleteLabelsOnDragging()
     if (!transactionResult || err) {
-      const nowDisappearingNodes = []
-      const renderLabelsWithCCAboveOrEqual = this.scaleToMinChildrenCount(
-        this.viewport.scale.x
-      )
-      for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {
-        const cc = label.getNodeData().cc ?? 0
-        if (
-          !this.viewport.hitArea?.contains(label.x, label.y) ||
-          cc < renderLabelsWithCCAboveOrEqual
-        ) {
-          nowDisappearingNodes.push(label)
-          delete this.visibleLabelsMap[nodeId]
-        }
-      }
-      this.nodeLabelsContainer.removeChild(...nowDisappearingNodes)
       return
     }
     const { nodesToAppear } = transactionResult
@@ -408,19 +421,11 @@ export class ConditionalNodeLabelsRenderer {
    * moved-end event includes zoom, drag, ... everything.
    */
   private async initMovedEndListener() {
-    this.viewport.on(`drag-start`, () => {
-      // this.cancelFns.forEach((fn) => fn())
-      // this.cancelFns = []/
-    })
-    this.viewport.on(
-      // @ts-ignore
-      `moved-end`,
-      (movedEndEvent: MovedEventType) => {
-        if (this.initComplete) {
-          this.onMovedEnd(movedEndEvent)
-        }
+    this.viewport.on(`moved-end`, () => {
+      if (this.initComplete) {
+        this.onMovedEnd()
       }
-    )
+    })
   }
 
   /**
