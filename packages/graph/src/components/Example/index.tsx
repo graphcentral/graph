@@ -11,6 +11,29 @@ export const Example: FC<{}> = enhance<{}>(() => {
   useLayoutEffect(() => {
     ;(async () => {
       if (!canvasElement.current) return
+
+      const canvas = canvasElement.current
+      canvas.id = `gameplay-canvas`
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+      canvas.style.width = `100%`
+      canvas.style.height = `100%`
+      document.body.appendChild(canvas)
+
+      const offscreen = canvas.transferControlToOffscreen()
+
+      const pixiWorker = new Worker(
+        new URL(`../../lib/offscreencanvas.worker.ts`, import.meta.url)
+      )
+
+      pixiWorker.postMessage(
+        {
+          canvas: offscreen,
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+        [offscreen]
+      )
       const knowledgeGraph = new KnowledgeGraph({
         nodes: testData.nodes,
         links: testData.links,
