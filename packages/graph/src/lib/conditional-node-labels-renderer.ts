@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MovedEventType, Viewport } from "pixi-viewport"
 import { Container, ParticleContainer } from "pixi.js"
 import debounce from "lodash.debounce"
@@ -44,7 +45,11 @@ export class ConditionalNodeLabelsRenderer {
    * Container that stores all labels.
    */
   private nodeLabelsContainer = new Container()
-  private db = new KnowledgeGraphDb()
+  /**
+   * This is always defined!!
+   * The typing is just because of how TS works
+   */
+  private db: KnowledgeGraphDb | null = null
   private visibleLabelsMap: Record<Node[`id`], NodeLabel<Node>> = {}
   private eventTarget = new EventTarget()
   private initComplete = false
@@ -63,7 +68,7 @@ export class ConditionalNodeLabelsRenderer {
     this.nodeLabelsContainer.interactiveChildren = false
     this.viewport.addChild(this.nodeLabelsContainer)
     this.initDb(nodes, links)
-    this.db = db ?? this.db
+    this.db = db ?? new KnowledgeGraphDb()
     this.initMovedEndListener()
   }
 
@@ -213,7 +218,7 @@ export class ConditionalNodeLabelsRenderer {
   }
 
   private async getVisibleNodesSet() {
-    const pksPromise = this.db.visibleNodes.toCollection().primaryKeys()
+    const pksPromise = this.db!.visibleNodes.toCollection().primaryKeys()
     const pks = await pksPromise
 
     return new Set(pks)
@@ -257,25 +262,22 @@ export class ConditionalNodeLabelsRenderer {
     // @ts-ignore
     const yHigh: number = hitArea.bottom
 
-    const { transaction, cancel } = this.db.cancellableTx(
+    const { transaction, cancel } = this.db!.cancellableTx(
       `rw`,
-      [this.db.nodes, this.db.visibleNodes],
+      [this.db!.nodes, this.db!.visibleNodes],
       async () => {
         const [nodeIdsWithinXRange, nodeIdsWithinYRange, nodeIdsWithinCCRange] =
           await Promise.all([
-            this.db.nodes
-              .where(`x`)
+            this.db!.nodes.where(`x`)
               .between(xLow, xHigh, true, true)
               .primaryKeys(),
-            this.db.nodes
-              .where(`y`)
+            this.db!.nodes.where(`y`)
               .between(yLow, yHigh, true, true)
               .primaryKeys(),
             // there is no point of querying all primary keys if you get to render nodes in all cc's
             renderLabelsWithCCAboveOrEqual === 0
               ? RENDER_ALL
-              : this.db.nodes
-                  .where(`cc`)
+              : this.db!.nodes.where(`cc`)
                   .between(
                     renderLabelsWithCCAboveOrEqual,
                     Dexie.maxKey,
@@ -297,7 +299,9 @@ export class ConditionalNodeLabelsRenderer {
           })
         return Promise.all([
           // Promise for the nodes that must appear now
-          this.db.nodes.bulkGet(nowAppearingNodeIds) as PromiseExtended<Node[]>,
+          this.db!.nodes.bulkGet(nowAppearingNodeIds) as PromiseExtended<
+            Node[]
+          >,
           // Immediately resolved promise for the nodes that must disappear now
           nowDisappearingNodes,
           nowVisibleNodeIds,
@@ -333,7 +337,7 @@ export class ConditionalNodeLabelsRenderer {
       }
     }
     this.nodeLabelsContainer.removeChild(...nowDisappearingNodes)
-    await this.db.visibleNodes.bulkDelete(nowDisappearingNodeIds)
+    await this.db!.visibleNodes.bulkDelete(nowDisappearingNodeIds)
   }
 
   /**
@@ -351,9 +355,9 @@ export class ConditionalNodeLabelsRenderer {
     this.cancelFns.forEach((fn) => fn())
     this.cancelFns = []
     const visibleNodesSet = await this.getVisibleNodesSet()
-    const { transaction, cancel } = this.db.cancellableTx(
+    const { transaction, cancel } = this.db!.cancellableTx(
       `rw`,
-      [this.db.nodes, this.db.visibleNodes],
+      [this.db!.nodes, this.db!.visibleNodes],
       async () => {
         const nextLabelVisibilityCalculation =
           this.calculateNextLabelVisibility(visibleNodesSet)
@@ -363,13 +367,13 @@ export class ConditionalNodeLabelsRenderer {
         const [nodesToAppear, nowDisappearingNodes, nowVisibleNodeIds] =
           await nextLabelVisibilityTransaction
         // Promise for updating currently visible nodes (returns nothing)
-        const { transaction: visibleNodesTx } = this.db.cancellableTx(
+        const { transaction: visibleNodesTx } = this.db!.cancellableTx(
           `rw`,
-          [this.db.visibleNodes],
+          [this.db!.visibleNodes],
           async () => {
             // todo would using a plain Set() or object be faster than using a table?
-            await this.db.visibleNodes.clear()
-            await this.db.visibleNodes.bulkAdd(
+            await this.db!.visibleNodes.clear()
+            await this.db!.visibleNodes.bulkAdd(
               nowVisibleNodeIds.map((n) => ({
                 id: n,
               }))
@@ -402,18 +406,18 @@ export class ConditionalNodeLabelsRenderer {
    * Just dump everything into the db
    */
   private async initDb(nodes: WithCoords<Node>[], links: LinkWithCoords[]) {
-    await this.db.delete().then(() => this.db.open())
+    await this.db!.delete().then(() => this.db!.open())
     const n = nodes.map(({ cc, ...rest }) => ({
       cc: cc ?? 0,
       ...rest,
     }))
-    await this.db.transaction(
+    await this.db!.transaction(
       `rw`,
-      [this.db.nodes, this.db.links],
+      [this.db!.nodes, this.db!.links],
       async () => {
         return Promise.all([
-          this.db.links.bulkAdd(links),
-          this.db.nodes.bulkAdd(n),
+          this.db!.links.bulkAdd(links),
+          this.db!.nodes.bulkAdd(n),
         ])
       }
     )

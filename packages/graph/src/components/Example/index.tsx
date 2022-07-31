@@ -3,7 +3,7 @@ import { FC } from "react"
 import { KnowledgeGraph } from "../../lib"
 import { enhance } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
-import testData from "../../../../test-data//prelayout-true-nodes-55000-links-62499.json"
+import testData from "../../../../test-data/test11.json"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const Example: FC<{}> = enhance<{}>(() => {
@@ -19,13 +19,14 @@ export const Example: FC<{}> = enhance<{}>(() => {
         canvasElement: canvasElement.current,
         options: {
           optimization: {
-            useParticleContainer: true,
-            useShadowContainer: true,
+            useParticleContainer: false,
+            useShadowContainer: false,
             showEdgesOnCloseZoomOnly: true,
-            maxTargetFPS: 15,
+            useMouseHoverEffect: true,
+            maxTargetFPS: 60,
           },
           graph: {
-            runForceLayout: false,
+            runForceLayout: true,
           },
         },
       })

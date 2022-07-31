@@ -67,7 +67,9 @@ export type KnowledgeGraphOptions = {
      * uses particle container for circle sprites.
      * this will show uniform color for all of the nodes when zoomed out.
      *
-     * this will generally make rendering a bit faster
+     * this will generally make rendering a bit faster but will disable
+     * mouse hover interaction (only click possible) and set colors of all nodes
+     * as white
      */
     useParticleContainer?: boolean
     /**
@@ -86,6 +88,11 @@ export type KnowledgeGraphOptions = {
      * this will have no affect if `useParticleContainer === false`.
      */
     useShadowContainer?: boolean
+    /**
+     * if set true, changes node (circle) style when hovered.
+     * has no effect if `useParticleContainer === true`
+     */
+    useMouseHoverEffect?: boolean
   }
   graph?: {
     runForceLayout?: boolean

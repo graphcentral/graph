@@ -3,8 +3,6 @@ import { Viewport } from "pixi-viewport"
 import ColorHash from "color-hash"
 import { setupFpsMonitor } from "./setup-fps-monitor"
 import { GraphEvents, GraphGraphics, WorkerMessageType } from "./graph-enums"
-// @ts-ignore
-// import Test from "./test.txt"
 import {
   WithPartialCoords,
   LinkWithPartialCoords,
@@ -16,8 +14,9 @@ import {
 import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
 import { Cull } from "@pixi-essentials/cull"
-import { Container, ParticleContainer, Rectangle } from "pixi.js"
+import { Container, ParticleContainer } from "pixi.js"
 import debounce from "lodash.debounce"
+import { KnowledgeGraphDb } from "./db"
 
 export class KnowledgeGraph<
   N extends WithPartialCoords<Node>,
@@ -43,6 +42,8 @@ export class KnowledgeGraph<
   public isLoaded: Readonly<boolean> = false
   private culler = new Cull()
   private options: KnowledgeGraphOptions | undefined = {}
+  private db: KnowledgeGraphDb = new KnowledgeGraphDb()
+
   constructor({
     nodes,
     links,
@@ -123,20 +124,6 @@ export class KnowledgeGraph<
             this.lineGraphicsContainer.renderable = true
           }
         }
-        if (
-          this.options?.optimization?.useParticleContainer &&
-          this.options?.optimization?.useShadowContainer
-        ) {
-          if (!this.circleNodesShadowContainer) return
-          if (minChildrenCount <= 20) {
-            this.circleNodesShadowContainer.visible = true
-            this.circleNodesShadowContainer.renderable = true
-          } else {
-            this.circleNodesShadowContainer.visible = false
-            this.circleNodesShadowContainer.renderable = false
-          }
-        }
-        // console.log(`moved`)
       }, 100)
     )
     this.app.renderer.on(`prerender`, () => {
@@ -165,7 +152,8 @@ export class KnowledgeGraph<
       this.viewport,
       // by now it must have coordinates
       this.nodes as WithCoords<N>[],
-      this.links as LinkWithCoords[]
+      this.links as LinkWithCoords[],
+      this.db
     )
     await new Promise((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -200,14 +188,49 @@ export class KnowledgeGraph<
     }
   }
 
+  private addEventListenersToCircle(
+    normalContainerCircle: PIXI.Sprite,
+    node: WithPartialCoords<N>
+  ) {
+    normalContainerCircle.off(`mousedown`)
+    normalContainerCircle.off(`mouseover`)
+    normalContainerCircle.off(`mouseout`)
+
+    normalContainerCircle.interactive = true
+    normalContainerCircle.on(`mousedown`, () => {
+      console.log(node)
+    })
+    if (this.options?.optimization?.useMouseHoverEffect) {
+      // buttonMode will make cursor: pointer when hovered
+      normalContainerCircle.buttonMode = true
+      normalContainerCircle.on(`mouseover`, () => {
+        console.log(node)
+        normalContainerCircle.scale.set(
+          normalContainerCircle.scale.x * GraphGraphics.CIRCLE_SCALE_FACTOR,
+          normalContainerCircle.scale.y * GraphGraphics.CIRCLE_SCALE_FACTOR
+        )
+      })
+      // normalContainerCircle.cullable = true
+      normalContainerCircle.on(`mouseout`, () => {
+        console.log(node)
+        normalContainerCircle.scale.set(
+          normalContainerCircle.scale.x / GraphGraphics.CIRCLE_SCALE_FACTOR,
+          normalContainerCircle.scale.y / GraphGraphics.CIRCLE_SCALE_FACTOR
+        )
+      })
+    }
+  }
+
   private updateNodes({
     circleTextureByParentId,
-    nodeChildren,
+    particleContainerCircles,
+    normalContainerCircles,
     isFirstTimeUpdatingNodes,
     nodes,
   }: {
     circleTextureByParentId: Record<string, PIXI.RenderTexture>
-    nodeChildren: Array<PIXI.Sprite>
+    particleContainerCircles: Array<PIXI.Sprite>
+    normalContainerCircles: Array<PIXI.Sprite>
     isFirstTimeUpdatingNodes: boolean
     nodes: WithPartialCoords<N>[]
   }) {
@@ -225,6 +248,7 @@ export class KnowledgeGraph<
             .drawCircle(0, 0, GraphGraphics.CIRCLE_SIZE)
             .endFill()
           const texture = this.app.renderer.generateTexture(circleGraphics)
+          circleGraphics.destroy()
           circleTextureByParentId[parentId] = texture
         }
 
@@ -235,45 +259,81 @@ export class KnowledgeGraph<
           parentId && !this.options?.optimization?.useParticleContainer
             ? circleTextureByParentId[parentId]
             : fallbackCircleTexture
-        const circle = new PIXI.Sprite(circleTexture ?? fallbackCircleTexture)
-        circle.zIndex = 100
-        if (node.x) circle.x = node.x
-        if (node.y) circle.y = node.y
-        // https://stackoverflow.com/questions/70302580/pixi-js-graphics-resize-circle-while-maintaining-center
-        circle.pivot.x = circle.width / 2
-        circle.pivot.y = circle.height / 2
-        if (node.cc) circle.scale.set(scaleByCC(node.cc), scaleByCC(node.cc))
-        circle.buttonMode = true
-        circle.interactive = true
-        circle.on(`mouseover`, () => {
-          console.log(node)
-          circle.scale.set(
-            circle.scale.x * GraphGraphics.CIRCLE_SCALE_FACTOR,
-            circle.scale.y * GraphGraphics.CIRCLE_SCALE_FACTOR
-          )
-        })
-        // circle.cullable = true
-        circle.on(`mouseout`, () => {
-          console.log(node)
-          circle.scale.set(
-            circle.scale.x / GraphGraphics.CIRCLE_SCALE_FACTOR,
-            circle.scale.y / GraphGraphics.CIRCLE_SCALE_FACTOR
-          )
-        })
-        nodeChildren.push(circle)
+        const normalContainerCircle = new PIXI.Sprite(
+          circleTexture ?? fallbackCircleTexture
+        )
+        const particleContainerCircle = this.options?.optimization
+          ?.useParticleContainer
+          ? new PIXI.Sprite(circleTexture ?? fallbackCircleTexture)
+          : null
+        normalContainerCircle.zIndex = 100
+
+        if (node.x === undefined || node.y === undefined) return
+        normalContainerCircle.x = node.x
+        if (particleContainerCircle) particleContainerCircle.x = node.x
+        normalContainerCircle.y = node.y
+        if (particleContainerCircle) particleContainerCircle.y = node.y
+        // https://stackoverflow.com/questions/70302580/pixi-js-graphics-resize-normalContainerCircle-while-maintaining-center
+        normalContainerCircle.pivot.x = normalContainerCircle.width / 2
+        normalContainerCircle.pivot.y = normalContainerCircle.height / 2
+        if (node.cc) {
+          const scaleAmount = scaleByCC(node.cc)
+          normalContainerCircle.scale.set(scaleAmount, scaleAmount)
+          if (particleContainerCircle) {
+            particleContainerCircle.scale.set(scaleAmount, scaleAmount)
+            // pivot does not work for ParticleContainer, so manually adjust
+            // for the pivot
+            particleContainerCircle.y -= particleContainerCircle.height / 2
+            particleContainerCircle.x -= particleContainerCircle.width / 2
+          }
+        }
+        this.addEventListenersToCircle(normalContainerCircle, node)
+        if (particleContainerCircle) {
+          particleContainerCircles.push(particleContainerCircle)
+        }
+        normalContainerCircles.push(normalContainerCircle)
       } else {
-        // nodeChildren order is preserved across force directed graph iterations
-        const child = nodeChildren[i]
-        if (child) {
-          if (node.x) child.x = node.x
-          if (node.y) child.y = node.y
+        if (node.x === undefined || node.y === undefined) return
+        // normalContainerCircles order is preserved across force directed graph iterations
+        const normalCircle = normalContainerCircles[i]
+        const particleCircle = particleContainerCircles?.[i]
+        if (normalCircle) {
+          normalCircle.x = node.x
+          normalCircle.y = node.y
+          this.addEventListenersToCircle(normalCircle, node)
+        }
+        if (particleCircle) {
+          // pivot does not work for ParticleContainer, so manually adjust
+          // for the pivot
+          particleCircle.x = node.x - particleCircle.width / 2
+          particleCircle.y = node.y - particleCircle.height / 2
         }
       }
     }
   }
 
+  private addChildrenToCircleContainers({
+    particleContainerCircles,
+    normalContainerCircles,
+  }: {
+    particleContainerCircles: Array<PIXI.Sprite>
+    normalContainerCircles: Array<PIXI.Sprite>
+  }) {
+    if (this.options?.optimization?.useParticleContainer) {
+      if (particleContainerCircles.length > 0)
+        this.circleNodesContainer.addChild(...particleContainerCircles)
+      if (this.options.optimization.useShadowContainer) {
+        if (normalContainerCircles.length > 0)
+          this.circleNodesShadowContainer?.addChild(...normalContainerCircles)
+      }
+    } else {
+      this.circleNodesContainer.addChild(...normalContainerCircles)
+    }
+  }
+
   public createNetworkGraph() {
-    const nodeChildren: Array<PIXI.Sprite> = []
+    const particleContainerCircles: Array<PIXI.Sprite> = []
+    const normalContainerCircles: Array<PIXI.Sprite> = []
     const fallbackCircleGraphics = new PIXI.Graphics()
       .lineStyle(5, 0xffffff, 1, 1, false)
       .beginFill(0xffffff, 1)
@@ -287,14 +347,15 @@ export class KnowledgeGraph<
     if (this.options?.graph?.runForceLayout === false) {
       this.updateNodes({
         circleTextureByParentId,
-        nodeChildren,
+        particleContainerCircles,
+        normalContainerCircles,
         isFirstTimeUpdatingNodes: true,
         nodes: this.nodes,
       })
-      if (nodeChildren.length > 0) {
-        this.circleNodesContainer.addChild(...nodeChildren)
-        this.circleNodesShadowContainer?.addChild(...nodeChildren)
-      }
+      this.addChildrenToCircleContainers({
+        particleContainerCircles,
+        normalContainerCircles,
+      })
       this.updateLinks({
         links: this.links,
       })
@@ -317,15 +378,16 @@ export class KnowledgeGraph<
         case WorkerMessageType.UPDATE_NODES: {
           this.updateNodes({
             circleTextureByParentId,
-            nodeChildren,
+            particleContainerCircles,
+            normalContainerCircles,
             isFirstTimeUpdatingNodes,
             nodes: msg.data.nodes,
           })
           if (isFirstTimeUpdatingNodes) {
-            if (nodeChildren.length > 0) {
-              this.circleNodesContainer.addChild(...nodeChildren)
-            }
-
+            this.addChildrenToCircleContainers({
+              particleContainerCircles,
+              normalContainerCircles,
+            })
             isFirstTimeUpdatingNodes = false
           }
           break

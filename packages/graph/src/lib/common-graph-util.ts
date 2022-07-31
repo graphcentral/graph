@@ -29,7 +29,8 @@ export function isNodeInsideBonds(
  * @returns scaled number bigger than cc
  */
 export function scaleByCC(cc: number): number {
-  const numerator = Math.log(cc)
+  const ceiledAt40 = Math.min(cc, 40)
+  const numerator = Math.log(ceiledAt40)
   const denominator = Math.log(6)
   return 1 + numerator / denominator
 }
