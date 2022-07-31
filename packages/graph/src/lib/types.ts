@@ -63,7 +63,15 @@ export type NextVisibilityInput =
 
 export type KnowledgeGraphOptions = {
   optimization?: {
+    /**
+     * uses particle container for circle sprites.
+     * this will show uniform color for all of the nodes when zoomed out
+     */
     useParticleContainer?: boolean
+    /**
+     * does not show edges between nodes
+     * when user zooms out beyond certain level
+     */
     showEdgesOnCloseZoomOnly?: boolean
   }
 }
