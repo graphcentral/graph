@@ -35,6 +35,7 @@ export class KnowledgeGraph<
   private eventTarget = new EventTarget()
   private lineGraphicsContainer = new Container()
   private circleNodesContainer: ParticleContainer | Container = new Container()
+  private circleNodesShadowContainer: Container | null = null
   /**
    * whether all the necessary steps for a fully functional, interactive graph
    * have been completed
@@ -60,7 +61,7 @@ export class KnowledgeGraph<
     canvasElement: HTMLCanvasElement
     options?: KnowledgeGraphOptions
   }) {
-    // PIXI.Ticker.shared.maxFPS = 10
+    PIXI.Ticker.shared.maxFPS = this.options?.optimization?.maxTargetFPS ?? 60
     this.nodes = nodes
     this.links = links
     this.app = new PIXI.Application({
@@ -87,6 +88,17 @@ export class KnowledgeGraph<
     this.lineGraphicsContainer.interactive = false
     this.viewport.addChild(this.circleNodesContainer)
     this.setupConditionalNodeLabelsRenderer()
+
+    this.circleNodesShadowContainer =
+      this.options.optimization?.useShadowContainer &&
+      this.options.optimization.useParticleContainer
+        ? new Container()
+        : null
+    if (this.circleNodesShadowContainer) {
+      this.circleNodesShadowContainer.visible = false
+      this.circleNodesShadowContainer.renderable = false
+      this.viewport.addChild(this.circleNodesShadowContainer)
+    }
     this.culler.add(this.viewport)
     this.viewport.on(`drag-start`, () => {
       // console.log(`moved`)
@@ -101,16 +113,30 @@ export class KnowledgeGraph<
     this.viewport.on(
       `moved-end`,
       debounce(() => {
-        if (!this.options?.optimization?.showEdgesOnCloseZoomOnly) return
         const minChildrenCount = scaleToMinChildrenCount(this.viewport.scale.x)
-        // console.log(`moved`)
-        if (minChildrenCount === Infinity) {
-          this.lineGraphicsContainer.visible = false
-          this.lineGraphicsContainer.renderable = false
-        } else {
-          this.lineGraphicsContainer.visible = true
-          this.lineGraphicsContainer.renderable = true
+        if (this.options?.optimization?.showEdgesOnCloseZoomOnly) {
+          if (minChildrenCount === Infinity) {
+            this.lineGraphicsContainer.visible = false
+            this.lineGraphicsContainer.renderable = false
+          } else {
+            this.lineGraphicsContainer.visible = true
+            this.lineGraphicsContainer.renderable = true
+          }
         }
+        if (
+          this.options?.optimization?.useParticleContainer &&
+          this.options?.optimization?.useShadowContainer
+        ) {
+          if (!this.circleNodesShadowContainer) return
+          if (minChildrenCount <= 20) {
+            this.circleNodesShadowContainer.visible = true
+            this.circleNodesShadowContainer.renderable = true
+          } else {
+            this.circleNodesShadowContainer.visible = false
+            this.circleNodesShadowContainer.renderable = false
+          }
+        }
+        // console.log(`moved`)
       }, 100)
     )
     this.app.renderer.on(`prerender`, () => {
@@ -247,12 +273,7 @@ export class KnowledgeGraph<
   }
 
   public createNetworkGraph() {
-    this.graphWorker.postMessage({
-      type: WorkerMessageType.START_GRAPH,
-      nodes: this.nodes,
-      links: this.links,
-    })
-
+    const nodeChildren: Array<PIXI.Sprite> = []
     const fallbackCircleGraphics = new PIXI.Graphics()
       .lineStyle(5, 0xffffff, 1, 1, false)
       .beginFill(0xffffff, 1)
@@ -262,7 +283,34 @@ export class KnowledgeGraph<
     const circleTextureByParentId: Record<string, PIXI.RenderTexture> = {
       default: this.app.renderer.generateTexture(fallbackCircleGraphics),
     }
-    const nodeChildren: Array<PIXI.Sprite> = []
+
+    if (this.options?.graph?.runForceLayout === false) {
+      this.updateNodes({
+        circleTextureByParentId,
+        nodeChildren,
+        isFirstTimeUpdatingNodes: true,
+        nodes: this.nodes,
+      })
+      if (nodeChildren.length > 0) {
+        this.circleNodesContainer.addChild(...nodeChildren)
+        this.circleNodesShadowContainer?.addChild(...nodeChildren)
+      }
+      this.updateLinks({
+        links: this.links,
+      })
+      this.eventTarget.dispatchEvent(
+        new Event(GraphEvents.FORCE_LAYOUT_COMPLETE)
+      )
+
+      return
+    }
+
+    this.graphWorker.postMessage({
+      type: WorkerMessageType.START_GRAPH,
+      nodes: this.nodes,
+      links: this.links,
+    })
+
     let isFirstTimeUpdatingNodes = true
     this.graphWorker.onmessage = (msg) => {
       switch (msg.data.type) {

@@ -65,7 +65,9 @@ export type KnowledgeGraphOptions = {
   optimization?: {
     /**
      * uses particle container for circle sprites.
-     * this will show uniform color for all of the nodes when zoomed out
+     * this will show uniform color for all of the nodes when zoomed out.
+     *
+     * this will generally make rendering a bit faster
      */
     useParticleContainer?: boolean
     /**
@@ -73,5 +75,19 @@ export type KnowledgeGraphOptions = {
      * when user zooms out beyond certain level
      */
     showEdgesOnCloseZoomOnly?: boolean
+    /**
+     * set target FPS. between 1 and 60.
+     */
+    maxTargetFPS?: number
+    /**
+     * uses another transparent container on the top of particle container.
+     * this will allow interaction with the particle container.
+     *
+     * this will have no affect if `useParticleContainer === false`.
+     */
+    useShadowContainer?: boolean
+  }
+  graph?: {
+    runForceLayout?: boolean
   }
 }

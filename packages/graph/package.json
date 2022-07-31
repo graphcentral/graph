@@ -11,7 +11,7 @@
   "private": false,
   "scripts": {
     "test": "jest --config ./jest/jest.config.ts",
-    "dev": "webpack serve --config ./webpack/webpack.config.dev.ts --mode development",
+    "dev": "node --max-old-space-size=8192 ../../node_modules/.bin/webpack-dev-server --config ./webpack/webpack.config.dev.ts --mode development",
     "prod": "webpack --config ./webpack/webpack.config.prod.ts --mode production",
     "build": "webpack --config ./webpack/webpack.lib.config.ts --mode production",
     "storybook": "start-storybook -p 6006",

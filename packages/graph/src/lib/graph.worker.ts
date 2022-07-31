@@ -1,4 +1,4 @@
-import { forceSimulation, forceLink, forceCenter, forceRadial } from "d3-force"
+import { forceSimulation, forceLink, forceCenter, forceRadial, forceManyBody } from "d3-force"
 // @ts-ignore
 import { forceManyBodyReuse } from "d3-force-reuse"
 import { WorkerMessageType } from "./graph-enums"
@@ -24,13 +24,13 @@ self.onmessage = (msg) => {
         // .force(`y`, forceY().strength(-0.1))
         // .force(`center`, forceCenter())
         .force(`link`, forceLinks)
-        .force(`charge`, forceManyBodyReuse().strength(-40_000))
+        .force(`charge`, forceManyBody().strength(-40_000))
         .force(`center`, forceCenter())
         .force(`dagRadial`, forceRadial(1))
         .stop()
       const LAST_ITERATION = 10
       for (let i = 0; i < LAST_ITERATION; ++i) {
-        simulation.tick(2)
+        simulation.tick(5)
         self.postMessage({
           nodes: simulation.nodes(),
           type: WorkerMessageType.UPDATE_NODES,
