@@ -3,7 +3,7 @@ import { FC } from "react"
 import { KnowledgeGraph } from "../../lib"
 import { enhance } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
-import testData from "../../../../test-data/test15.json"
+import testData from "../../../../test-data/test16.json"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const Example: FC<{}> = enhance<{}>(() => {
@@ -15,6 +15,12 @@ export const Example: FC<{}> = enhance<{}>(() => {
         nodes: testData.nodes,
         links: testData.links,
         canvasElement: canvasElement.current,
+        options: {
+          optimization: {
+            useParticleContainer: true,
+            showEdgesOnCloseZoomOnly: true,
+          },
+        },
       })
       knowledgeGraph.createNetworkGraph()
     })()

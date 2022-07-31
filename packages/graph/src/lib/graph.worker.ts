@@ -1,13 +1,6 @@
-import {
-  forceSimulation,
-  forceLink,
-  forceManyBody,
-  forceCenter,
-  forceX,
-  forceY,
-  forceCollide,
-  forceRadial,
-} from "d3-force"
+import { forceSimulation, forceLink, forceCenter, forceRadial } from "d3-force"
+// @ts-ignore
+import { forceManyBodyReuse } from "d3-force-reuse"
 import { WorkerMessageType } from "./graph-enums"
 
 self.onmessage = (msg) => {
@@ -31,7 +24,7 @@ self.onmessage = (msg) => {
         // .force(`y`, forceY().strength(-0.1))
         // .force(`center`, forceCenter())
         .force(`link`, forceLinks)
-        .force(`charge`, forceManyBody().strength(-40_000))
+        .force(`charge`, forceManyBodyReuse().strength(-40_000))
         .force(`center`, forceCenter())
         .force(`dagRadial`, forceRadial(1))
         .stop()

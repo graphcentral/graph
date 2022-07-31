@@ -70,6 +70,7 @@
     "color-hash": "^2.0.1",
     "comlink": "^4.3.1",
     "d3-force": "^3.0.0",
+    "d3-force-reuse": "^1.0.1",
     "dexie": "^3.2.2",
     "lodash.flow": "^3.5.0",
     "ngraph.forcelayout": "^3.3.0",

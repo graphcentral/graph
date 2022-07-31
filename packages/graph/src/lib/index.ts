@@ -60,7 +60,7 @@ export class KnowledgeGraph<
     canvasElement: HTMLCanvasElement
     options?: KnowledgeGraphOptions
   }) {
-    PIXI.Ticker.shared.maxFPS = 10
+    // PIXI.Ticker.shared.maxFPS = 10
     this.nodes = nodes
     this.links = links
     this.app = new PIXI.Application({
@@ -205,9 +205,10 @@ export class KnowledgeGraph<
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const fallbackCircleTexture = circleTextureByParentId[`default`]!
 
-        const circleTexture = parentId
-          ? circleTextureByParentId[parentId]
-          : fallbackCircleTexture
+        const circleTexture =
+          parentId && !this.options?.optimization?.useParticleContainer
+            ? circleTextureByParentId[parentId]
+            : fallbackCircleTexture
         const circle = new PIXI.Sprite(circleTexture ?? fallbackCircleTexture)
         circle.zIndex = 100
         if (node.x) circle.x = node.x
@@ -253,13 +254,13 @@ export class KnowledgeGraph<
     })
 
     const fallbackCircleGraphics = new PIXI.Graphics()
-      .lineStyle(0)
+      .lineStyle(5, 0xffffff, 1, 1, false)
       .beginFill(0xffffff, 1)
       .drawCircle(0, 0, GraphGraphics.CIRCLE_SIZE)
       .endFill()
     setupFpsMonitor(this.app)
     const circleTextureByParentId: Record<string, PIXI.RenderTexture> = {
-      fallback: this.app.renderer.generateTexture(fallbackCircleGraphics),
+      default: this.app.renderer.generateTexture(fallbackCircleGraphics),
     }
     const nodeChildren: Array<PIXI.Sprite> = []
     let isFirstTimeUpdatingNodes = true

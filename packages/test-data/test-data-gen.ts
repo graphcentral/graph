@@ -3,7 +3,7 @@ import fs from "fs"
 
 function main() {
   console.log(`started...`)
-  const NODES_NUM = 50_000
+  const NODES_NUM = 100_000
   const PARENTS_NUM = 5000
   const MAX_CC = 25
   console.log(`generating words...`)
@@ -27,15 +27,18 @@ function main() {
     })
   }
 
-  const randomLinks = [...Array(Math.round(NODES_NUM / 2)).keys()]
-    .filter((id) => id)
-    .map((id) => ({
-      source: String(id),
-      target: String(Math.round(Math.random() * (id - 1))),
-    }))
+  // const randomLinks = [...Array(Math.round(NODES_NUM / 2)).keys()]
+  //   .filter((id) => id)
+  //   .map((id) => ({
+  //     source: String(id),
+  //     target: String(Math.round(Math.random() * (id - 1))),
+  //   }))
   const graph = {
     nodes,
-    links: [...parentLinks, ...randomLinks],
+    links: [
+      ...parentLinks,
+      // ...randomLinks
+    ],
   }
   console.log(`generating json...`)
   fs.rmSync(`random-test-data.json`, {

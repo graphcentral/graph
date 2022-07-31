@@ -24,7 +24,7 @@ export enum GraphGraphics {
  */
 export enum GraphScales {
   CAN_SEE_BIG_NODES_WELL = 0.0940836883806951,
-  CANNOT_SEE_ANYTHING_WELL = 0.05449999848460085,
+  CANNOT_SEE_ANYTHING_WELL = 0.00449999848460085,
 }
 
 export const RENDER_ALL = `RENDER_ALL` as const
