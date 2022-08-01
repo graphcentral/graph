@@ -48,7 +48,7 @@ export class NotionGraph {
   /**
    * @see NotionGraph['constructor']
    */
-  private maxDiscoverableNodes: null | number
+  private maxDiscoverableNodes: number
   /**
    * @see NotionGraph['constructor']
    */
@@ -149,8 +149,6 @@ export class NotionGraph {
       return null
     }
 
-    console.log(page.block)
-
     const topmostBlock = Object.values(page.block).find(
       (b) =>
         // the block itself or the block that has parent as a 'space'
@@ -185,7 +183,7 @@ export class NotionGraph {
     this.nodesGraph.addEdge(childNode, parentNode)
     if (parentNode.cc) parentNode.cc += 1
     else parentNode.cc = 1
-
+    requestQueue.incrementExternalRequestMatchCount()
     requestQueue.enqueue(() =>
       this.recursivelyDiscoverBlocks({
         rootBlockSpaceId,
@@ -288,7 +286,6 @@ export class NotionGraph {
     )
     if (err) this.accumulateError(err)
     if (!page) return
-
     // if the parent node was collection_view,
     // the response must contain `collection` and `collection_view` keys
     if (
@@ -462,7 +459,8 @@ export class NotionGraph {
       errors: this.errors,
     }
     const requestQueue = new RequestQueue<any, Error>({
-      maxConcurrentRequest: 10,
+      maxRequestCount: this.maxDiscoverableNodes,
+      maxConcurrentRequest: 300,
       lastRequestTimeoutMs: 30_000,
     })
 
@@ -477,9 +475,7 @@ export class NotionGraph {
         topMostBlock
       )
 
-    console.log(typeSafeRootBlockNode)
     const rootBlockSpaceId = topMostBlock.value.space_id
-    console.log(typeSafeRootBlockNode)
     if (!typeSafeRootBlockNode) {
       this.errors.push(new Error(Errors.NKG_0001(topMostBlock)))
       return defaultReturn

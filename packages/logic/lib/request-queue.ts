@@ -12,14 +12,20 @@ export class RequestQueue<Res, Err> {
   private queue: (() => Promise<Res>)[] = []
   private responses: (Res | Err)[] = []
   private currentRequestCount = 0
+  /**
+   * Once you reach max request count,
+   * it will send no more requests
+   */
+  private maxRequestCount = Infinity
   private maxConcurrentRequest = -1
   private eventEmitter = new EventEmitter()
   private lastRequestTimeoutMs: number
   private intervalId: NodeJS.Timer | null = null
   private hasNoMoreRequestEnqueued = false
-
+  private externalSuccessfulRequestCount = 0
   constructor({
     maxConcurrentRequest,
+    maxRequestCount = Infinity,
     lastRequestTimeoutMs = 15_000,
   }: {
     maxConcurrentRequest: number
@@ -27,19 +33,25 @@ export class RequestQueue<Res, Err> {
      * default: 15000 ms
      */
     lastRequestTimeoutMs?: number
+    maxRequestCount?: number
   }) {
     if (maxConcurrentRequest <= 0) {
       throw new Error(`maxConcurrentRequest must be bigger than 0`)
     }
     this.maxConcurrentRequest = maxConcurrentRequest
     this.lastRequestTimeoutMs = lastRequestTimeoutMs
+    this.maxRequestCount = maxRequestCount
     this.checkAndSendRequest()
+  }
+
+  private terminate() {
+    this.eventEmitter.emit(`complete`, this.responses)
+    if (this.intervalId) clearInterval(this.intervalId)
   }
 
   private terminateIfPossible() {
     if (this.currentRequestCount === 0 && this.queue.length === 0) {
-      this.eventEmitter.emit(`complete`, this.responses)
-      if (this.intervalId) clearInterval(this.intervalId)
+      this.terminate()
     }
   }
 
@@ -53,17 +65,38 @@ export class RequestQueue<Res, Err> {
   private checkAndSendRequest() {
     let timeoutIds: NodeJS.Timeout[] = []
     let totalRequestCount = 0
+    let totalSuccessfulRequestCount = 0
     const run = () => {
       console.log(
         `# current requests: ${this.currentRequestCount} / # items in the queue: ${this.queue.length}`
       )
       console.log(`# total requests sent: ${totalRequestCount}`)
-
+      console.log(`# total successful requests: ${totalSuccessfulRequestCount}`)
+      console.log(
+        JSON.stringify({
+          e: this.externalSuccessfulRequestCount,
+          t: totalSuccessfulRequestCount,
+          m: this.maxRequestCount,
+        })
+      )
+      if (
+        this.externalSuccessfulRequestCount <= totalSuccessfulRequestCount &&
+        this.externalSuccessfulRequestCount >= this.maxRequestCount &&
+        totalSuccessfulRequestCount >= this.maxRequestCount
+      ) {
+        this.terminate()
+      }
       if (
         !(this.currentRequestCount === 0 && this.queue.length === 0) &&
         this.currentRequestCount < this.maxConcurrentRequest
       ) {
         while (this.currentRequestCount < this.maxConcurrentRequest) {
+          if (totalSuccessfulRequestCount >= this.maxRequestCount) {
+            this.queue = []
+            this.currentRequestCount = 0
+            this.hasNoMoreRequestEnqueued = true
+            break
+          }
           ++totalRequestCount
 
           timeoutIds.forEach((id) => clearTimeout(id))
@@ -76,6 +109,7 @@ export class RequestQueue<Res, Err> {
               if (res) this.responses.push(res)
             })
             .finally(() => {
+              ++totalSuccessfulRequestCount
               --this.currentRequestCount
               // if it is clear that no more requests will be enqueued,
               // check if the function can end right away
@@ -136,6 +170,7 @@ export class RequestQueue<Res, Err> {
    * any function that returns a promise (i.e. sends an async request)
    */
   public enqueue(retriveBlockRequestFn: () => Promise<Res>) {
+    if (this.hasNoMoreRequestEnqueued) return
     this.queue.push(retriveBlockRequestFn)
   }
 
@@ -148,5 +183,10 @@ export class RequestQueue<Res, Err> {
 
     this.queue = []
     this.responses = []
+  }
+
+  public incrementExternalRequestMatchCount(increaseBy = 1) {
+    if (increaseBy <= 0) return
+    this.externalSuccessfulRequestCount += increaseBy
   }
 }
