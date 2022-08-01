@@ -14,12 +14,13 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const unofficialNotionAPI = new NotionAPI()
   const notionGraph = new NotionGraph({
     unofficialNotionAPI,
-    maxDiscoverableNodes: 5000,
+    maxDiscoverableNodes: 20_000,
     maxDiscoverableNodesInOtherSpaces: 0,
   })
   const startTime = Date.now()
   const t = await notionGraph.buildGraphFromRootNode(
-    `fdfbe8ec2cdb45ebbd6b7d955a0bfa7a`
+    `e040febf70a94950b8620e6f00005004`
+    // `fdfbe8ec2cdb45ebbd6b7d955a0bfa7a`
   )
   const endTime = Date.now()
 

@@ -13,7 +13,8 @@ export const Example: FC<{}> = enhance<{}>(() => {
       if (!canvasElement.current) return
       const testData = await fetch(
         // `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-100000-links-118749.json`
-        `https://raw.githubusercontent.com/9oelM/datastore/main/3000ish.json`
+        // `https://raw.githubusercontent.com/9oelM/datastore/main/3000ish.json`
+        `https://raw.githubusercontent.com/9oelM/datastore/main/notion-help-docs.json`
       ).then((resp) => resp.json())
 
       const knowledgeGraph = new KnowledgeGraph({

@@ -74,9 +74,9 @@ export class RequestQueue<Res, Err> {
       console.log(`# total successful requests: ${totalSuccessfulRequestCount}`)
       console.log(
         JSON.stringify({
-          e: this.externalSuccessfulRequestCount,
-          t: totalSuccessfulRequestCount,
-          m: this.maxRequestCount,
+          externalSuccessfulRequestCount: this.externalSuccessfulRequestCount,
+          totalSuccessfulRequestCount: totalSuccessfulRequestCount,
+          maxRequestCount: this.maxRequestCount,
         })
       )
       if (
