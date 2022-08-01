@@ -35,6 +35,7 @@ export class KnowledgeGraph<
   private lineGraphicsContainer = new Container()
   private circleNodesContainer: ParticleContainer | Container = new Container()
   private circleNodesShadowContainer: Container | null = null
+  private selectedCircleOutlineFeedback: PIXI.Sprite
   /**
    * whether all the necessary steps for a fully functional, interactive graph
    * have been completed
@@ -72,6 +73,16 @@ export class KnowledgeGraph<
       antialias: true,
       // autoDensity: true,
     })
+    this.selectedCircleOutlineFeedback = (() => {
+      const circleGraphics = new PIXI.Graphics()
+        .lineStyle(5, 0xff0000, 1, 1, false)
+        .beginFill(0, 0)
+        .drawCircle(0, 0, GraphGraphics.CIRCLE_SIZE)
+        .endFill()
+      const circleTexture = this.app.renderer.generateTexture(circleGraphics)
+      circleGraphics.destroy()
+      return new PIXI.Sprite(circleTexture)
+    })()
     this.options = options
     if (this.options?.optimization?.useParticleContainer)
       this.circleNodesContainer = new ParticleContainer(100_000)
@@ -90,6 +101,10 @@ export class KnowledgeGraph<
     this.viewport.addChild(this.circleNodesContainer)
     this.setupConditionalNodeLabelsRenderer()
 
+    this.selectedCircleOutlineFeedback.visible = false
+    this.selectedCircleOutlineFeedback.renderable = false
+    this.selectedCircleOutlineFeedback.zIndex = 300
+    this.viewport.addChild(this.selectedCircleOutlineFeedback)
     this.circleNodesShadowContainer =
       this.options.optimization?.useShadowContainer &&
       this.options.optimization.useParticleContainer
@@ -198,13 +213,21 @@ export class KnowledgeGraph<
 
     normalContainerCircle.interactive = true
     normalContainerCircle.on(`mousedown`, () => {
-      console.log(node)
+      this.selectedCircleOutlineFeedback.scale.set(
+        normalContainerCircle.scale.x,
+        normalContainerCircle.scale.y
+      )
+      this.selectedCircleOutlineFeedback.x =
+        normalContainerCircle.x - normalContainerCircle.width / 2
+      this.selectedCircleOutlineFeedback.y =
+        normalContainerCircle.y - normalContainerCircle.height / 2
+      this.selectedCircleOutlineFeedback.visible = true
+      this.selectedCircleOutlineFeedback.renderable = true
     })
     if (this.options?.optimization?.useMouseHoverEffect) {
       // buttonMode will make cursor: pointer when hovered
       normalContainerCircle.buttonMode = true
       normalContainerCircle.on(`mouseover`, () => {
-        console.log(node)
         normalContainerCircle.scale.set(
           normalContainerCircle.scale.x * GraphGraphics.CIRCLE_SCALE_FACTOR,
           normalContainerCircle.scale.y * GraphGraphics.CIRCLE_SCALE_FACTOR
@@ -212,7 +235,6 @@ export class KnowledgeGraph<
       })
       // normalContainerCircle.cullable = true
       normalContainerCircle.on(`mouseout`, () => {
-        console.log(node)
         normalContainerCircle.scale.set(
           normalContainerCircle.scale.x / GraphGraphics.CIRCLE_SCALE_FACTOR,
           normalContainerCircle.scale.y / GraphGraphics.CIRCLE_SCALE_FACTOR

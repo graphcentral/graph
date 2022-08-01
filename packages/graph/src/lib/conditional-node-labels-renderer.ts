@@ -67,8 +67,8 @@ export class ConditionalNodeLabelsRenderer {
     this.nodeLabelsContainer.interactive = false
     this.nodeLabelsContainer.interactiveChildren = false
     this.viewport.addChild(this.nodeLabelsContainer)
-    this.initDb(nodes, links)
     this.db = db ?? new KnowledgeGraphDb()
+    this.initDb(nodes, links)
     this.initMovedEndListener()
   }
 
