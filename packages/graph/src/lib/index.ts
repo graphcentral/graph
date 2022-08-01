@@ -218,6 +218,7 @@ export class KnowledgeGraph<
 
     normalContainerCircle.interactive = true
     normalContainerCircle.on(`mousedown`, () => {
+      console.log(node)
       this.selectedCircleOutlineFeedback.scale.set(
         normalContainerCircle.scale.x,
         normalContainerCircle.scale.y
@@ -296,11 +297,9 @@ export class KnowledgeGraph<
         normalContainerCircle.zIndex = 100
 
         if (node.x === undefined || node.y === undefined) return
-        normalContainerCircle.cullable = true
         normalContainerCircle.x = node.x
         normalContainerCircle.y = node.y
         if (particleContainerCircle) {
-          particleContainerCircle.cullable = true
           particleContainerCircle.x = node.x
           particleContainerCircle.y = node.y
         }

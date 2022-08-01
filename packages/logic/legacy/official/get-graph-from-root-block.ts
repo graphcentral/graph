@@ -6,7 +6,7 @@ import {
 } from "@notionhq/client/build/src/api-endpoints"
 import to from "await-to-js"
 import { RequestQueue } from "../../lib/request-queue"
-import { UndirectedNodesGraph } from "../../types/nodes-graph"
+import { UndirectedNodesGraph } from "../../lib/nodes-graph"
 import { NotionContentNode } from "../../types/notion-content-node"
 import {
   separateIdWithDashSafe,

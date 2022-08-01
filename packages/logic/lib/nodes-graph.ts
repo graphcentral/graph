@@ -1,5 +1,5 @@
-import { NotionContentNode } from "./notion-content-node"
-import { DeepReadonly } from "./util-types"
+import { NotionContentNode } from "../types/notion-content-node"
+import { DeepReadonly } from "../types/util-types"
 
 /**
  * represents the graph of nodes.
@@ -85,6 +85,9 @@ export class UndirectedNodesGraph<
   /**
    * Adds an edge between two nodes, but avoids making duplicates
    * if the edge already exists
+   *
+   * usually, `target` will be stored as parent of a node
+   * `source` will be the child node
    */
   public addEdge(node0: Node, node1: Node): void {
     this.addEdgeByIds(node0.id, node1.id)
@@ -96,7 +99,8 @@ export class UndirectedNodesGraph<
 
   /**
    * transform `this.graph` to d3.js edge (link) shape.
-   * The output will be used directly in frontend
+   * The output will be used directly in frontend.
+   *
    */
   public getD3JsEdgeFormat(): DeepReadonly<D3JsEdge[]> {
     const d3JsEdges: D3JsEdge[] = []
