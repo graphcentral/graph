@@ -7,11 +7,36 @@ import {
 } from "d3-force"
 // @ts-ignore
 import { forceManyBodyReuse } from "d3-force-reuse"
-import { Node } from "./types"
+import { Link, Node, WithIndex } from "./types"
 import { WorkerMessageType } from "./graph-enums"
+
+function updateNodeChildren(
+  links: { source: WithIndex<Node>; target: WithIndex<Node> }[],
+  nodes: WithIndex<Node>[]
+) {
+  for (const l of links) {
+    const parent = nodes[l.target.index]
+    if (parent) {
+      if (!(`children` in parent)) {
+        parent.children = []
+      }
+      parent.children!.push(l.source.index)
+    }
+  }
+}
 
 self.onmessage = (msg) => {
   switch (msg.data.type) {
+    case WorkerMessageType.UPDATE_NODE_CHILDREN: {
+      const { nodes, links } = msg.data
+      updateNodeChildren(links, nodes)
+      self.postMessage({
+        links,
+        nodes,
+        type: WorkerMessageType.UPDATE_NODE_CHILDREN,
+      })
+      break
+    }
     case WorkerMessageType.START_GRAPH: {
       const { nodes, links } = msg.data
       // const simulation =
@@ -34,13 +59,7 @@ self.onmessage = (msg) => {
       for (let i = 0; i < LAST_ITERATION; ++i) {
         simulation.tick(5)
         if (i === LAST_ITERATION - 1) {
-          for (const l of links) {
-            const parent = nodes[l.target.index]
-            if (!(`children` in parent)) {
-              parent.children = []
-            }
-            parent.children.push(l.source.index)
-          }
+          updateNodeChildren(links, nodes)
           self.postMessage({
             // links are modified by d3-force and will contain x and y coordinates in source and target
             links,

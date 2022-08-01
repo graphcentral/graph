@@ -84,8 +84,8 @@ async function  main() {
       parentId: String(parentId),
     })
     parentLinks.push({
-      source: String(parentId),
-      target: String(index),
+      source: String(index),
+      target: String(parentId),
     })
     parentNodes[parentId].cc += 1
   }
@@ -94,10 +94,14 @@ async function  main() {
   const { forceCenter, forceLink, forceManyBody, forceRadial, forceSimulation } = d3Force
   const randomLinks = [...Array(Math.round(CHILDREN_NODES_NUM / 4)).keys()]
     .filter((id) => id)
-    .map((id) => ({
-      source: String(id),
-      target: String(Math.round(Math.random() * (id - 1))),
-    }))
+    .map((id) => {
+      const parentId = Math.round(Math.random() * (PARENT_NODES_NUM - 1))
+      parentNodes[parentId].cc += 1
+      return ({
+        source: String(id),
+        target: String(parentId),
+      })
+    })
   const nodes = [...childNodes, ...parentNodes]
   const links = [...parentLinks, ...randomLinks]
   console.log(`generating layout...`)

@@ -14,6 +14,12 @@ export type Node<Type = string> = {
    */
   cc?: number
   type?: Type
+
+  /**
+   * array index of children in Node[].
+   * Becomes only available once webworker finishes the work
+   */
+  children?: number[]
 }
 
 export interface Link {
@@ -42,6 +48,9 @@ export type LinkWithCoords = {
   source: WithCoords<Link[`source`]>
   target: WithCoords<Link[`target`]>
 }
+export type WithIndex<T> = T & {
+  index: number
+}
 
 export type SmallestNextVisibilityInput = {
   data: string[]
@@ -61,7 +70,10 @@ export type NextVisibilityInput =
   | SmallestNextVisibilityInput
   | NotSmallestNextVisibilityInput
 
-export type KnowledgeGraphOptions = {
+export type KnowledgeGraphOptions<N extends WithPartialCoords<Node>> = {
+  events?: {
+    onClick?: (parentNode: N, childNodes: N[]) => void
+  }
   optimization?: {
     /**
      * uses particle container for circle sprites.
@@ -95,6 +107,13 @@ export type KnowledgeGraphOptions = {
     useMouseHoverEffect?: boolean
   }
   graph?: {
+    /**
+     * set this as false if you already have
+     * a graph data with x and y coordinates of nodes
+     *
+     * if you need to compute it on the browser when the knowledge graph
+     * initializes, set this as true
+     */
     runForceLayout?: boolean
   }
 }

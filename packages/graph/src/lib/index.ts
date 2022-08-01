@@ -42,7 +42,7 @@ export class KnowledgeGraph<
    */
   public isLoaded: Readonly<boolean> = false
   private culler = new Cull()
-  private options: KnowledgeGraphOptions | undefined = {}
+  private options: KnowledgeGraphOptions<N> | undefined = {}
   private db: KnowledgeGraphDb = new KnowledgeGraphDb()
 
   constructor({
@@ -61,7 +61,7 @@ export class KnowledgeGraph<
      * if you want to access it later, use this.app. to do sos
      */
     canvasElement: HTMLCanvasElement
-    options?: KnowledgeGraphOptions
+    options?: KnowledgeGraphOptions<N>
   }) {
     PIXI.Ticker.shared.maxFPS = this.options?.optimization?.maxTargetFPS ?? 60
     this.nodes = nodes
@@ -106,8 +106,8 @@ export class KnowledgeGraph<
     this.selectedCircleOutlineFeedback.zIndex = 300
     this.viewport.addChild(this.selectedCircleOutlineFeedback)
     this.circleNodesShadowContainer =
-      this.options.optimization?.useShadowContainer &&
-      this.options.optimization.useParticleContainer
+      this.options?.optimization?.useShadowContainer &&
+      this.options?.optimization.useParticleContainer
         ? new Container()
         : null
     if (this.circleNodesShadowContainer) {
@@ -218,7 +218,10 @@ export class KnowledgeGraph<
 
     normalContainerCircle.interactive = true
     normalContainerCircle.on(`mousedown`, () => {
-      console.log(node)
+      const childNodes = (node.children ?? []).map(
+        (index) => this.nodes[index]
+      ) as N[]
+      this.options?.events?.onClick?.(node, childNodes)
       this.selectedCircleOutlineFeedback.scale.set(
         normalContainerCircle.scale.x,
         normalContainerCircle.scale.y
@@ -374,37 +377,32 @@ export class KnowledgeGraph<
       default: this.app.renderer.generateTexture(fallbackCircleGraphics),
     }
 
-    if (this.options?.graph?.runForceLayout === false) {
-      this.updateNodes({
-        circleTextureByParentId,
-        particleContainerCircles,
-        normalContainerCircles,
-        isFirstTimeUpdatingNodes: true,
-        nodes: this.nodes,
-      })
-      this.addChildrenToCircleContainers({
-        particleContainerCircles,
-        normalContainerCircles,
-      })
-      this.updateLinks({
-        links: this.links,
-      })
-      this.eventTarget.dispatchEvent(
-        new Event(GraphEvents.FORCE_LAYOUT_COMPLETE)
-      )
-
-      return
-    }
-
-    this.graphWorker.postMessage({
-      type: WorkerMessageType.START_GRAPH,
-      nodes: this.nodes,
-      links: this.links,
-    })
-
     let isFirstTimeUpdatingNodes = true
     this.graphWorker.onmessage = (msg) => {
       switch (msg.data.type) {
+        case WorkerMessageType.UPDATE_NODE_CHILDREN: {
+          this.nodes = msg.data.nodes
+          this.links = msg.data.links
+
+          this.updateNodes({
+            circleTextureByParentId,
+            particleContainerCircles,
+            normalContainerCircles,
+            isFirstTimeUpdatingNodes: true,
+            nodes: this.nodes,
+          })
+          this.addChildrenToCircleContainers({
+            particleContainerCircles,
+            normalContainerCircles,
+          })
+          this.updateLinks({
+            links: this.links,
+          })
+          this.eventTarget.dispatchEvent(
+            new Event(GraphEvents.FORCE_LAYOUT_COMPLETE)
+          )
+          break
+        }
         case WorkerMessageType.UPDATE_NODES: {
           this.updateNodes({
             circleTextureByParentId,
@@ -433,5 +431,20 @@ export class KnowledgeGraph<
         }
       }
     }
+
+    if (this.options?.graph?.runForceLayout === false) {
+      this.graphWorker.postMessage({
+        type: WorkerMessageType.UPDATE_NODE_CHILDREN,
+        nodes: this.nodes,
+        links: this.links,
+      })
+      return
+    }
+
+    this.graphWorker.postMessage({
+      type: WorkerMessageType.START_GRAPH,
+      nodes: this.nodes,
+      links: this.links,
+    })
   }
 }
