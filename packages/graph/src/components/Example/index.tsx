@@ -3,7 +3,7 @@ import { FC } from "react"
 import { KnowledgeGraph } from "../../lib"
 import { enhance } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
-import testData from "../../../../test-data/test11.json"
+// import testData from "../../../../test-data/test11.json"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const Example: FC<{}> = enhance<{}>(() => {
@@ -11,6 +11,11 @@ export const Example: FC<{}> = enhance<{}>(() => {
   useLayoutEffect(() => {
     ;(async () => {
       if (!canvasElement.current) return
+      const testData = await fetch(
+        // `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-100000-links-118749.json`
+        `https://raw.githubusercontent.com/9oelM/datastore/main/3000ish.json`
+      ).then((resp) => resp.json())
+
       const knowledgeGraph = new KnowledgeGraph({
         // @ts-ignore
         nodes: testData.nodes,

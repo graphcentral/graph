@@ -14,7 +14,7 @@ import {
 import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
 import { Cull } from "@pixi-essentials/cull"
-import { Container, ParticleContainer } from "pixi.js"
+import { Container, ParticleContainer, Rectangle } from "pixi.js"
 import debounce from "lodash.debounce"
 import { KnowledgeGraphDb } from "./db"
 
@@ -128,7 +128,7 @@ export class KnowledgeGraph<
     })
     this.viewport.on(
       `moved-end`,
-      debounce(() => {
+      debounce((event: any) => {
         const minChildrenCount = scaleToMinChildrenCount(this.viewport.scale.x)
         if (this.options?.optimization?.showEdgesOnCloseZoomOnly) {
           if (minChildrenCount === Infinity) {
@@ -200,6 +200,11 @@ export class KnowledgeGraph<
     }
     if (lines.length > 0) {
       this.lineGraphicsContainer.addChild(...lines)
+      setTimeout(() => {
+        // this.lineGraphicsContainer.cacheAsBitmap = true
+        // console.log(this.lineGraphicsContainer)
+        // this.lineGraphicsContainer.cacheAsBitmap = true
+      }, 5000)
     }
   }
 
@@ -291,10 +296,14 @@ export class KnowledgeGraph<
         normalContainerCircle.zIndex = 100
 
         if (node.x === undefined || node.y === undefined) return
+        normalContainerCircle.cullable = true
         normalContainerCircle.x = node.x
-        if (particleContainerCircle) particleContainerCircle.x = node.x
         normalContainerCircle.y = node.y
-        if (particleContainerCircle) particleContainerCircle.y = node.y
+        if (particleContainerCircle) {
+          particleContainerCircle.cullable = true
+          particleContainerCircle.x = node.x
+          particleContainerCircle.y = node.y
+        }
         // https://stackoverflow.com/questions/70302580/pixi-js-graphics-resize-normalContainerCircle-while-maintaining-center
         normalContainerCircle.pivot.x = normalContainerCircle.width / 2
         normalContainerCircle.pivot.y = normalContainerCircle.height / 2
