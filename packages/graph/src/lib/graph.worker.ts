@@ -11,16 +11,21 @@ import { Link, Node, WithIndex } from "./types"
 import { WorkerMessageType } from "./graph-enums"
 
 function updateNodeChildren(
-  links: { source: WithIndex<Node>; target: WithIndex<Node> }[],
+  links: WithIndex<{ source: WithIndex<Node>; target: WithIndex<Node> }>[],
   nodes: WithIndex<Node>[]
 ) {
   for (const l of links) {
     const parent = nodes[l.target.index]
-    if (parent) {
+    const child = nodes[l.source.index]
+    if (parent && child) {
       if (!(`children` in parent)) {
         parent.children = []
       }
-      parent.children!.push(l.source.index)
+      if (!(`parents` in child)) {
+        child.parents = []
+      }
+      parent.children!.push({ node: l.source.index, link: l.index })
+      child.parents!.push({ node: l.target.index, link: l.index })
     }
   }
 }

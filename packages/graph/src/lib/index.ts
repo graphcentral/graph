@@ -10,6 +10,7 @@ import {
   Node,
   LinkWithCoords,
   KnowledgeGraphOptions,
+  Unpacked,
 } from "./types"
 import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
@@ -17,6 +18,7 @@ import { Cull } from "@pixi-essentials/cull"
 import { Container, ParticleContainer, Rectangle } from "pixi.js"
 import debounce from "lodash.debounce"
 import { KnowledgeGraphDb } from "./db"
+import { GraphInteraction } from "./graph-interaction"
 
 export class KnowledgeGraph<
   N extends WithPartialCoords<Node>,
@@ -35,15 +37,15 @@ export class KnowledgeGraph<
   private lineGraphicsContainer = new Container()
   private circleNodesContainer: ParticleContainer | Container = new Container()
   private circleNodesShadowContainer: Container | null = null
-  private selectedCircleOutlineFeedback: PIXI.Sprite
   /**
    * whether all the necessary steps for a fully functional, interactive graph
    * have been completed
    */
   public isLoaded: Readonly<boolean> = false
   private culler = new Cull()
-  private options: KnowledgeGraphOptions<N> | undefined = {}
+  private options: KnowledgeGraphOptions<N, L> | undefined = {}
   private db: KnowledgeGraphDb = new KnowledgeGraphDb()
+  private interaction: GraphInteraction<N, L>
 
   constructor({
     nodes,
@@ -61,7 +63,7 @@ export class KnowledgeGraph<
      * if you want to access it later, use this.app. to do sos
      */
     canvasElement: HTMLCanvasElement
-    options?: KnowledgeGraphOptions<N>
+    options?: KnowledgeGraphOptions<N, L>
   }) {
     PIXI.Ticker.shared.maxFPS = this.options?.optimization?.maxTargetFPS ?? 60
     this.nodes = nodes
@@ -73,19 +75,8 @@ export class KnowledgeGraph<
       antialias: true,
       // autoDensity: true,
     })
-    this.selectedCircleOutlineFeedback = (() => {
-      const circleGraphics = new PIXI.Graphics()
-        .lineStyle(5, 0xff0000, 1, 1, false)
-        .beginFill(0, 0)
-        .drawCircle(0, 0, GraphGraphics.CIRCLE_SIZE)
-        .endFill()
-      const circleTexture = this.app.renderer.generateTexture(circleGraphics)
-      circleGraphics.destroy()
-      return new PIXI.Sprite(circleTexture)
-    })()
     this.options = options
-    if (this.options?.optimization?.useParticleContainer)
-      this.circleNodesContainer = new ParticleContainer(100_000)
+
     this.viewport = new Viewport({
       screenWidth: window.innerWidth,
       screenHeight: window.innerHeight,
@@ -95,16 +86,26 @@ export class KnowledgeGraph<
     this.viewport.sortableChildren = true
     this.viewport.drag().pinch().wheel().decelerate()
     this.app.stage.addChild(this.viewport)
+
     this.viewport.addChild(this.lineGraphicsContainer)
     this.lineGraphicsContainer.interactiveChildren = false
     this.lineGraphicsContainer.interactive = false
+
+    this.interaction = new GraphInteraction({
+      options,
+      app: this.app,
+      viewport: this.viewport,
+      lineGraphicsContainer: this.lineGraphicsContainer,
+      nodes,
+      links,
+    })
+
+    if (this.options?.optimization?.useParticleContainer)
+      this.circleNodesContainer = new ParticleContainer(100_000)
     this.viewport.addChild(this.circleNodesContainer)
+
     this.setupConditionalNodeLabelsRenderer()
 
-    this.selectedCircleOutlineFeedback.visible = false
-    this.selectedCircleOutlineFeedback.renderable = false
-    this.selectedCircleOutlineFeedback.zIndex = 300
-    this.viewport.addChild(this.selectedCircleOutlineFeedback)
     this.circleNodesShadowContainer =
       this.options?.optimization?.useShadowContainer &&
       this.options?.optimization.useParticleContainer
@@ -115,20 +116,11 @@ export class KnowledgeGraph<
       this.circleNodesShadowContainer.renderable = false
       this.viewport.addChild(this.circleNodesShadowContainer)
     }
+
     this.culler.add(this.viewport)
-    this.viewport.on(`drag-start`, () => {
-      // console.log(`moved`)
-      // this.lineGraphicsContainer.visible = false
-      // this.lineGraphicsContainer.renderable = false
-    })
-    this.viewport.on(`zoomed`, () => {
-      // console.log(`moved`)
-      // this.lineGraphicsContainer.visible = false
-      // this.lineGraphicsContainer.renderable = false
-    })
     this.viewport.on(
       `moved-end`,
-      debounce((event: any) => {
+      debounce(() => {
         const minChildrenCount = scaleToMinChildrenCount(this.viewport.scale.x)
         if (this.options?.optimization?.showEdgesOnCloseZoomOnly) {
           if (minChildrenCount === Infinity) {
@@ -208,50 +200,6 @@ export class KnowledgeGraph<
     }
   }
 
-  private addEventListenersToCircle(
-    normalContainerCircle: PIXI.Sprite,
-    node: WithPartialCoords<N>
-  ) {
-    normalContainerCircle.off(`mousedown`)
-    normalContainerCircle.off(`mouseover`)
-    normalContainerCircle.off(`mouseout`)
-
-    normalContainerCircle.interactive = true
-    normalContainerCircle.on(`mousedown`, () => {
-      const childNodes = (node.children ?? []).map(
-        (index) => this.nodes[index]
-      ) as N[]
-      this.options?.events?.onClick?.(node, childNodes)
-      this.selectedCircleOutlineFeedback.scale.set(
-        normalContainerCircle.scale.x,
-        normalContainerCircle.scale.y
-      )
-      this.selectedCircleOutlineFeedback.x =
-        normalContainerCircle.x - normalContainerCircle.width / 2
-      this.selectedCircleOutlineFeedback.y =
-        normalContainerCircle.y - normalContainerCircle.height / 2
-      this.selectedCircleOutlineFeedback.visible = true
-      this.selectedCircleOutlineFeedback.renderable = true
-    })
-    if (this.options?.optimization?.useMouseHoverEffect) {
-      // buttonMode will make cursor: pointer when hovered
-      normalContainerCircle.buttonMode = true
-      normalContainerCircle.on(`mouseover`, () => {
-        normalContainerCircle.scale.set(
-          normalContainerCircle.scale.x * GraphGraphics.CIRCLE_SCALE_FACTOR,
-          normalContainerCircle.scale.y * GraphGraphics.CIRCLE_SCALE_FACTOR
-        )
-      })
-      // normalContainerCircle.cullable = true
-      normalContainerCircle.on(`mouseout`, () => {
-        normalContainerCircle.scale.set(
-          normalContainerCircle.scale.x / GraphGraphics.CIRCLE_SCALE_FACTOR,
-          normalContainerCircle.scale.y / GraphGraphics.CIRCLE_SCALE_FACTOR
-        )
-      })
-    }
-  }
-
   private updateNodes({
     circleTextureByParentId,
     particleContainerCircles,
@@ -320,7 +268,7 @@ export class KnowledgeGraph<
             particleContainerCircle.x -= particleContainerCircle.width / 2
           }
         }
-        this.addEventListenersToCircle(normalContainerCircle, node)
+        this.interaction.addEventListenersToCircle(normalContainerCircle, node)
         if (particleContainerCircle) {
           particleContainerCircles.push(particleContainerCircle)
         }
@@ -333,7 +281,7 @@ export class KnowledgeGraph<
         if (normalCircle) {
           normalCircle.x = node.x
           normalCircle.y = node.y
-          this.addEventListenersToCircle(normalCircle, node)
+          this.interaction.addEventListenersToCircle(normalCircle, node)
         }
         if (particleCircle) {
           // pivot does not work for ParticleContainer, so manually adjust
@@ -398,6 +346,10 @@ export class KnowledgeGraph<
           this.updateLinks({
             links: this.links,
           })
+          this.interaction.updateNodesAndLinks({
+            nodes: this.nodes,
+            links: this.links,
+          })
           this.eventTarget.dispatchEvent(
             new Event(GraphEvents.FORCE_LAYOUT_COMPLETE)
           )
@@ -411,6 +363,9 @@ export class KnowledgeGraph<
             isFirstTimeUpdatingNodes,
             nodes: msg.data.nodes,
           })
+          this.interaction.updateNodesAndLinks({
+            links: msg.data.nodes,
+          })
           if (isFirstTimeUpdatingNodes) {
             this.addChildrenToCircleContainers({
               particleContainerCircles,
@@ -422,6 +377,9 @@ export class KnowledgeGraph<
         }
         case WorkerMessageType.UPDATE_LINKS: {
           this.updateLinks({
+            links: msg.data.links,
+          })
+          this.interaction.updateNodesAndLinks({
             links: msg.data.links,
           })
           this.eventTarget.dispatchEvent(

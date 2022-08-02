@@ -16,10 +16,15 @@ export type Node<Type = string> = {
   type?: Type
 
   /**
-   * array index of children in Node[].
+   * array index of node and link in Node[].
    * Becomes only available once webworker finishes the work
    */
-  children?: number[]
+  children?: { node: number; link: number }[]
+  /**
+   * array index of node and link in Node[].
+   * Becomes only available once webworker finishes the work
+   */
+  parents?: { node: number; link: number }[]
 }
 
 export interface Link {
@@ -70,9 +75,12 @@ export type NextVisibilityInput =
   | SmallestNextVisibilityInput
   | NotSmallestNextVisibilityInput
 
-export type KnowledgeGraphOptions<N extends WithPartialCoords<Node>> = {
+export type KnowledgeGraphOptions<
+  N extends WithPartialCoords<Node>,
+  L extends LinkWithPartialCoords
+> = {
   events?: {
-    onClick?: (parentNode: N, childNodes: N[]) => void
+    onClick?: (parentNode: N) => void
   }
   optimization?: {
     /**
@@ -117,3 +125,5 @@ export type KnowledgeGraphOptions<N extends WithPartialCoords<Node>> = {
     runForceLayout?: boolean
   }
 }
+
+export type Unpacked<T> = T extends (infer U)[] ? U : T
