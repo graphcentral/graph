@@ -86,7 +86,7 @@ async function retrieveDatabaseOrPageChildren(
       if (databaseChildrenQueryResult) {
         databaseChildren = databaseChildrenQueryResult
       }
-      if (err) console.log(err)
+      // if (err) console.log(err)
       break
     }
     case `page`: {
@@ -99,7 +99,7 @@ async function retrieveDatabaseOrPageChildren(
       if (pageChildrenListResult) {
         pageChildren = pageChildrenListResult
       }
-      if (err) console.log(err)
+      // if (err) console.log(err)
     }
   }
 
@@ -195,7 +195,7 @@ export async function buildGraphFromRootNode(
             processNewBlock(newBlock)
           }
         } catch (e) {
-          console.log(e)
+          // console.log(e)
           console.log(`e`)
         }
       }
@@ -205,7 +205,7 @@ export async function buildGraphFromRootNode(
           const newBlock = createNotionContentNodeFromDatabaseChild(child)
           processNewBlock(newBlock)
         } catch (e) {
-          console.log(e)
+          // console.log(e)
           console.log(`e`)
         }
       }

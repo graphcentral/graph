@@ -460,7 +460,7 @@ export class NotionGraph {
     }
     const requestQueue = new RequestQueue<any, Error>({
       maxRequestCount: this.maxDiscoverableNodes,
-      maxConcurrentRequest: 50,
+      maxConcurrentRequest: 100,
       lastRequestTimeoutMs: 30_000,
     })
 

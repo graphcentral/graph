@@ -12,10 +12,10 @@ export const Example: FC<{}> = enhance<{}>(() => {
     ;(async () => {
       if (!canvasElement.current) return
       const testData = await fetch(
-        // `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-100000-links-118749.json`
+        `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-100000-links-118749.json`
         // `https://raw.githubusercontent.com/9oelM/datastore/main/3000ish.json`
         // `https://raw.githubusercontent.com/9oelM/datastore/main/notion-help-docs.json`
-        `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-5100-links-6249.json`
+        // `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-5100-links-6249.json`
       ).then((resp) => resp.json())
 
       const knowledgeGraph = new KnowledgeGraph({
@@ -31,8 +31,8 @@ export const Example: FC<{}> = enhance<{}>(() => {
             },
           },
           optimization: {
-            useParticleContainer: false,
-            useShadowContainer: false,
+            useParticleContainer: true,
+            useShadowContainer: true,
             showEdgesOnCloseZoomOnly: true,
             useMouseHoverEffect: true,
             maxTargetFPS: 60,
