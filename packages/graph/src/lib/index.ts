@@ -176,24 +176,20 @@ export class KnowledgeGraph<
         })
       }),
     ])
-    try {
-      NodeLabelHelper.installMaybeCustomFont(this.options?.graph?.customFont)
-      this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
-        this.viewport,
-        // by now it must have coordinates
-        this.nodes as WithCoords<N>[],
-        this.links as LinkWithCoords[],
-        this.db
-      )
-      await new Promise((resolve) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.conditionalNodeLabelsRenderer!.onInitComplete(resolve)
-      })
-      this.isLoaded = true
-      this.eventTarget.dispatchEvent(new Event(GraphEvents.LOAD_GRAPH_COMPLETE))
-    } catch (e) {
-      console.log(e)
-    }
+    NodeLabelHelper.installMaybeCustomFont(this.options?.graph?.customFont)
+    this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
+      this.viewport,
+      // by now it must have coordinates
+      this.nodes as WithCoords<N>[],
+      this.links as LinkWithCoords[],
+      this.db
+    )
+    await new Promise((resolve) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.conditionalNodeLabelsRenderer!.onInitComplete(resolve)
+    })
+    this.isLoaded = true
+    this.eventTarget.dispatchEvent(new Event(GraphEvents.LOAD_GRAPH_COMPLETE))
   }
 
   private updateLinks({ links }: { links: L[] }) {
@@ -349,24 +345,8 @@ export class KnowledgeGraph<
     let isFirstTimeUpdatingNodes = true
     this.graphWorker.onmessage = (msg) => {
       switch (msg.data.type) {
-        case WorkerMessageType.UPDATE_NODE_CHILDREN: {
-          this.nodes = msg.data.nodes
-          this.links = msg.data.links
-
-          this.updateNodes({
-            circleTextureByParentId,
-            particleContainerCircles,
-            normalContainerCircles,
-            isFirstTimeUpdatingNodes: true,
-            nodes: this.nodes,
-          })
-          this.addChildrenToCircleContainers({
-            particleContainerCircles,
-            normalContainerCircles,
-          })
-          this.updateLinks({
-            links: this.links,
-          })
+        case WorkerMessageType.FINISH_GRAPH: {
+          console.log(this.nodes)
           this.interaction.updateNodesAndLinks({
             nodes: this.nodes,
             links: this.links,
@@ -376,6 +356,23 @@ export class KnowledgeGraph<
           )
           break
         }
+        case WorkerMessageType.UPDATE_NODE_CHILDREN: {
+          this.updateNodes({
+            circleTextureByParentId,
+            particleContainerCircles,
+            normalContainerCircles,
+            isFirstTimeUpdatingNodes: true,
+            nodes: msg.data.nodes,
+          })
+          this.addChildrenToCircleContainers({
+            particleContainerCircles,
+            normalContainerCircles,
+          })
+          this.updateLinks({
+            links: msg.data.links,
+          })
+          break
+        }
         case WorkerMessageType.UPDATE_NODES: {
           this.updateNodes({
             circleTextureByParentId,
@@ -383,9 +380,6 @@ export class KnowledgeGraph<
             normalContainerCircles,
             isFirstTimeUpdatingNodes,
             nodes: msg.data.nodes,
-          })
-          this.interaction.updateNodesAndLinks({
-            links: msg.data.nodes,
           })
           if (isFirstTimeUpdatingNodes) {
             this.addChildrenToCircleContainers({
@@ -400,12 +394,6 @@ export class KnowledgeGraph<
           this.updateLinks({
             links: msg.data.links,
           })
-          this.interaction.updateNodesAndLinks({
-            links: msg.data.links,
-          })
-          this.eventTarget.dispatchEvent(
-            new Event(GraphEvents.FORCE_LAYOUT_COMPLETE)
-          )
           break
         }
       }

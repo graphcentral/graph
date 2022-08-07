@@ -2,7 +2,7 @@ import { Viewport } from "pixi-viewport"
 import * as PIXI from "pixi.js"
 import { Container, ParticleContainer } from "pixi.js"
 import { scaleByCC } from "./common-graph-util"
-import { GraphGraphics } from "./graph-enums"
+import { GraphGraphics, GraphZIndex } from "./graph-enums"
 import {
   Node,
   Unpacked,
@@ -162,6 +162,7 @@ export class GraphInteraction<
       .forEach((each) => {
         each.forEach(({ node: nodeIndex }) => {
           const targetNode = this.nodes[nodeIndex]
+          console.log(targetNode)
           const highlightingCircle = new PIXI.Sprite(circleTexture)
           if (
             !targetNode ||
@@ -172,16 +173,24 @@ export class GraphInteraction<
           }
           highlightingCircle.x = targetNode.x
           highlightingCircle.y = targetNode.y
+          highlightingCircle.zIndex = GraphZIndex.HIGHLIGHTING_CIRCLE
           if (targetNode.cc) {
             const scaleAmount = scaleByCC(targetNode.cc)
             highlightingCircle.scale.set(scaleAmount * 1.4, scaleAmount * 1.4)
+          } else {
+            const originalScaleWithoutCCAmplfier = highlightingCircle.scale.x
+            highlightingCircle.scale.set(
+              originalScaleWithoutCCAmplfier * 1.4,
+              originalScaleWithoutCCAmplfier * 1.4
+            )
           }
           highlightingCircle.y -= highlightingCircle.height / 2
           highlightingCircle.x -= highlightingCircle.width / 2
           highlightingCircles.push(highlightingCircle)
         })
       })
-    this.linkedNodesContainer.addChild(...highlightingCircles)
+    if (highlightingCircles.length > 0)
+      this.linkedNodesContainer.addChild(...highlightingCircles)
   }
 
   public addEventListenersToCircle(

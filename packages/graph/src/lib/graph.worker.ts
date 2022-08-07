@@ -40,6 +40,9 @@ self.onmessage = (msg) => {
         nodes,
         type: WorkerMessageType.UPDATE_NODE_CHILDREN,
       })
+      self.postMessage({
+        type: WorkerMessageType.FINISH_GRAPH,
+      })
       break
     }
     case WorkerMessageType.START_GRAPH: {
@@ -66,15 +69,23 @@ self.onmessage = (msg) => {
         if (i === LAST_ITERATION - 1) {
           updateNodeChildren(links, nodes)
           self.postMessage({
+            nodes: nodes,
+            type: WorkerMessageType.UPDATE_NODES,
+          })
+          self.postMessage({
             // links are modified by d3-force and will contain x and y coordinates in source and target
             links,
             type: WorkerMessageType.UPDATE_LINKS,
           })
+          self.postMessage({
+            type: WorkerMessageType.FINISH_GRAPH,
+          })
+        } else {
+          self.postMessage({
+            nodes: simulation.nodes(),
+            type: WorkerMessageType.UPDATE_NODES,
+          })
         }
-        self.postMessage({
-          nodes: simulation.nodes(),
-          type: WorkerMessageType.UPDATE_NODES,
-        })
       }
       const t1 = performance.now()
       console.log(`simulation ended. took: ${t1 - t0}ms`)

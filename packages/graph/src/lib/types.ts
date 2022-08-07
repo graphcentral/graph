@@ -131,6 +131,9 @@ export type KnowledgeGraphOptions<
      * if the titles of the nodes are NOT english (for example, Chinese, Japanese or Korean, and so on..)
      */
     customFont?: {
+      /**
+       * example: https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap
+       */
       url: string
       config?: Parameters<typeof PIXI.BitmapFont.from>[1]
       option?: Parameters<typeof PIXI.BitmapFont.from>[2]

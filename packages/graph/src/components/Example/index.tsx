@@ -31,8 +31,8 @@ export const Example: FC<{}> = enhance<{}>(() => {
             },
           },
           optimization: {
-            useParticleContainer: true,
-            useShadowContainer: true,
+            useParticleContainer: false,
+            useShadowContainer: false,
             showEdgesOnCloseZoomOnly: true,
             useMouseHoverEffect: true,
             maxTargetFPS: 60,
@@ -41,7 +41,9 @@ export const Example: FC<{}> = enhance<{}>(() => {
             runForceLayout: true,
             customFont: {
               url: `https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap`,
-              config: {},
+              config: {
+                fill: 0xffffff,
+              },
             },
           },
         },
