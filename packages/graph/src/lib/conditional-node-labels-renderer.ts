@@ -3,6 +3,7 @@ import { MovedEventType, Viewport } from "pixi-viewport"
 import { Container, ParticleContainer } from "pixi.js"
 import debounce from "lodash.debounce"
 import {
+  CustomFontConfigs,
   LinkWithCoords,
   Node,
   NotSmallestNextVisibilityInput,
@@ -11,7 +12,7 @@ import {
   WithPartialCoords,
 } from "./types"
 import { GraphEvents, GraphScales, RENDER_ALL } from "./graph-enums"
-import { NodeLabel } from "./node-label"
+import { NodeLabel, NodeLabelHelper } from "./node-label"
 import { KnowledgeGraphDb } from "./db"
 import Dexie, { PromiseExtended } from "dexie"
 import to from "await-to-js"
@@ -53,6 +54,7 @@ export class ConditionalNodeLabelsRenderer {
   private visibleLabelsMap: Record<Node[`id`], NodeLabel<Node>> = {}
   private eventTarget = new EventTarget()
   private initComplete = false
+  private customFontConfigs?: CustomFontConfigs
 
   constructor(
     viewport: Viewport,
@@ -61,13 +63,15 @@ export class ConditionalNodeLabelsRenderer {
     /**
      * Optional db instantiated from outside of the class
      */
-    db?: KnowledgeGraphDb
+    db?: KnowledgeGraphDb,
+    customFontConfigs?: CustomFontConfigs
   ) {
     this.viewport = viewport
     this.nodeLabelsContainer.interactive = false
     this.nodeLabelsContainer.interactiveChildren = false
     this.viewport.addChild(this.nodeLabelsContainer)
     this.db = db ?? new KnowledgeGraphDb()
+    this.customFontConfigs = customFontConfigs
     this.initDb(nodes, links)
     this.initMovedEndListener()
   }
@@ -441,6 +445,10 @@ export class ConditionalNodeLabelsRenderer {
    * @param nodes - nodes with titles
    */
   private createBitmapTextsAsNodeLabels(nodes: WithPartialCoords<Node>[]) {
+    NodeLabelHelper.installMaybeCustomFont(
+      this.customFontConfigs?.customFont,
+      this.customFontConfigs?.customFontOptions
+    )
     const labels: NodeLabel<Node>[] = []
 
     for (const node of nodes) {

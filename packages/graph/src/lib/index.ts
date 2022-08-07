@@ -10,6 +10,7 @@ import {
   Node,
   LinkWithCoords,
   KnowledgeGraphOptions,
+  CustomFontConfigs,
 } from "./types"
 import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
@@ -18,6 +19,8 @@ import { Container, ParticleContainer } from "pixi.js"
 import debounce from "lodash.debounce"
 import { KnowledgeGraphDb } from "./db"
 import { GraphInteraction } from "./graph-interaction"
+import FontFaceObserver from "fontfaceobserver"
+import { WebfontLoaderPlugin } from "pixi-webfont-loader"
 
 export class KnowledgeGraph<
   N extends WithPartialCoords<Node>,
@@ -64,6 +67,15 @@ export class KnowledgeGraph<
     canvasElement: HTMLCanvasElement
     options?: KnowledgeGraphOptions<N, L>
   }) {
+    if (options.graph?.customFontConfigs?.fontUrl) {
+      PIXI.Loader.registerPlugin(WebfontLoaderPlugin)
+      PIXI.Loader.shared
+        .add({
+          name: `custom font`,
+          url: options.graph?.customFontConfigs?.fontUrl,
+        })
+        .load()
+    }
     PIXI.Ticker.shared.maxFPS = this.options?.optimization?.maxTargetFPS ?? 60
     this.nodes = nodes
     this.links = links
@@ -72,7 +84,6 @@ export class KnowledgeGraph<
       resizeTo: window,
       view: canvasElement,
       antialias: true,
-      // autoDensity: true,
     })
     this.options = options
 
@@ -145,15 +156,27 @@ export class KnowledgeGraph<
   }
 
   private async setupConditionalNodeLabelsRenderer() {
-    await new Promise((resolve) => {
-      this.eventTarget.addEventListener(
-        GraphEvents.FORCE_LAYOUT_COMPLETE,
-        () => {
-          resolve(GraphEvents.FORCE_LAYOUT_COMPLETE)
-        },
-        { once: true }
-      )
-    })
+    await Promise.all([
+      new Promise((resolve) => {
+        this.eventTarget.addEventListener(
+          GraphEvents.FORCE_LAYOUT_COMPLETE,
+          () => {
+            resolve(GraphEvents.FORCE_LAYOUT_COMPLETE)
+          },
+          { once: true }
+        )
+      }),
+      new Promise((resolve) => {
+        if (!this.options?.graph?.customFontConfigs?.fontUrl) {
+          console.log(PIXI.Loader.shared.resources)
+          resolve(``)
+        }
+        PIXI.Loader.shared.onComplete.once(() => {
+          console.log(PIXI.Loader.shared.resources)
+          resolve(PIXI.Loader.shared.resources)
+        })
+      }),
+    ])
     this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
       this.viewport,
       // by now it must have coordinates

@@ -48,16 +48,21 @@ export class NotionGraph {
   /**
    * @see NotionGraph['constructor']
    */
-  private maxDiscoverableNodes: number
+  private maxDiscoverableNodes: number | null
   /**
    * @see NotionGraph['constructor']
    */
   private maxDiscoverableNodesInOtherSpaces: number
+  /**
+   * @see NotionGraph['constructor']
+   */
+  private maxConcurrentRequest: number
 
   constructor({
     unofficialNotionAPI,
     maxDiscoverableNodes = 500,
     maxDiscoverableNodesInOtherSpaces = 250,
+    maxConcurrentRequest = 35,
   }: {
     /**
      * Just plug in the unofficial notion api client
@@ -106,6 +111,12 @@ export class NotionGraph {
      * @default 250 nodes
      */
     maxDiscoverableNodesInOtherSpaces?: number
+    /**
+     * # network requests to be sent the same time.
+     * if too big it might end up causing some delay
+     * @default 35
+     */
+    maxConcurrentRequest?: number
   }) {
     if (
       maxDiscoverableNodes !== null &&
@@ -115,9 +126,9 @@ export class NotionGraph {
         Errors.NKG_0006(maxDiscoverableNodes, maxDiscoverableNodesInOtherSpaces)
       )
     }
-
     this.unofficialNotionAPI = unofficialNotionAPI
     this.maxDiscoverableNodes = maxDiscoverableNodes
+    this.maxConcurrentRequest = maxConcurrentRequest
     this.maxDiscoverableNodesInOtherSpaces = maxDiscoverableNodesInOtherSpaces
   }
 

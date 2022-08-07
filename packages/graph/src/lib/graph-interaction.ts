@@ -46,7 +46,7 @@ export class GraphInteraction<
   }
   private colors: Required<InteractionColors> = {
     selected: 0xfe8888,
-    children: 0xffffff,
+    children: 0xfe8888,
   }
 
   constructor({
@@ -58,7 +58,7 @@ export class GraphInteraction<
     links,
     colors = {
       selected: 0xfe8888,
-      children: 0xffffff,
+      children: 0xfe8888,
     },
   }: {
     options: KnowledgeGraphOptions<N, L>
