@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js"
 import { IBitmapTextStyle } from "pixi.js"
 import { scaleByCC } from "./common-graph-util"
-import { WithCoords } from "./types"
+import { CustomFontConfig, WithCoords } from "./types"
 
 /**
  *  not included as a private function because
@@ -35,23 +35,32 @@ export class NodeLabelHelper {
    * @param customFontOptions custom font configurations
    * @returns BitmapFont
    */
-  public static installMaybeCustomFont(
+  public static installCustomFont(
     customFont?: PIXI.TextStyle | Partial<PIXI.ITextStyle>,
     customFontOptions?: PIXI.IBitmapFontOptions
   ) {
-    if (customFont) {
-      return PIXI.BitmapFont.from(
-        this.CUSTOM_FONT_NAME,
-        customFont,
-        customFontOptions
-      )
+    return PIXI.BitmapFont.from(
+      this.CUSTOM_FONT_NAME,
+      customFont,
+      customFontOptions
+    )
+  }
+
+  public static installDefaultFont() {
+    return PIXI.BitmapFont.from(
+      this.CUSTOM_FONT_NAME,
+      ...this.plainBitmapFontConfigs
+    )
+  }
+
+  public static installMaybeCustomFont(customFontConfig?: CustomFontConfig) {
+    if (customFontConfig) {
+      this.installCustomFont(customFontConfig.config, customFontConfig.option)
     } else {
-      return PIXI.BitmapFont.from(
-        this.CUSTOM_FONT_NAME,
-        ...this.plainBitmapFontConfigs
-      )
+      this.installDefaultFont()
     }
   }
+
   public static getMaybeShortenedTitle(text: string): string {
     return text.length > this.MAX_NODE_TITLE_LENGTH
       ? `${text.substring(0, this.MAX_NODE_TITLE_LENGTH)}...`

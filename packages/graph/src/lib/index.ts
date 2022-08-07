@@ -176,23 +176,24 @@ export class KnowledgeGraph<
         })
       }),
     ])
-    NodeLabelHelper.installMaybeCustomFont(
-      this.options?.graph?.customFont?.config,
-      this.options?.graph?.customFont?.option
-    )
-    this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
-      this.viewport,
-      // by now it must have coordinates
-      this.nodes as WithCoords<N>[],
-      this.links as LinkWithCoords[],
-      this.db
-    )
-    await new Promise((resolve) => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.conditionalNodeLabelsRenderer!.onInitComplete(resolve)
-    })
-    this.isLoaded = true
-    this.eventTarget.dispatchEvent(new Event(GraphEvents.LOAD_GRAPH_COMPLETE))
+    try {
+      NodeLabelHelper.installMaybeCustomFont(this.options?.graph?.customFont)
+      this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
+        this.viewport,
+        // by now it must have coordinates
+        this.nodes as WithCoords<N>[],
+        this.links as LinkWithCoords[],
+        this.db
+      )
+      await new Promise((resolve) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.conditionalNodeLabelsRenderer!.onInitComplete(resolve)
+      })
+      this.isLoaded = true
+      this.eventTarget.dispatchEvent(new Event(GraphEvents.LOAD_GRAPH_COMPLETE))
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   private updateLinks({ links }: { links: L[] }) {

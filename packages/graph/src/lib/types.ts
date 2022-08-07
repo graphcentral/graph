@@ -132,8 +132,8 @@ export type KnowledgeGraphOptions<
      */
     customFont?: {
       url: string
-      config: Parameters<typeof PIXI.BitmapFont.from>[1]
-      option: Parameters<typeof PIXI.BitmapFont.from>[2]
+      config?: Parameters<typeof PIXI.BitmapFont.from>[1]
+      option?: Parameters<typeof PIXI.BitmapFont.from>[2]
     }
   }
 }
