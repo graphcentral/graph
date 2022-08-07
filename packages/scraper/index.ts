@@ -1,15 +1,10 @@
-import * as dotenv from "dotenv"
-import path from "path"
 import { NotionGraph } from "./lib/get-graph-from-root-block"
 import { NotionAPI } from "notion-client"
-import { dirname } from "path"
-import { fileURLToPath } from "url"
 import { toEnhanced } from "./lib/global-util"
 import fs from "fs"
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
-dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
+/**
+ * example of how to use `@graphcentral/notion-scraper`
+ */
 ;(async () => {
   const unofficialNotionAPI = new NotionAPI()
   const notionGraph = new NotionGraph({

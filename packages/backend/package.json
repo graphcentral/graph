@@ -1,5 +1,5 @@
 {
-  "name": "@notion-knowledge-graph/server",
+  "name": "@graphcentral/server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

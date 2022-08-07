@@ -1,5 +1,5 @@
 {
-  "name": "@notion-knowledge-graph/logic",
+  "name": "@graphcentral/scraper",
   "version": "1.0.0",
   "description": "",
   "main": "lib/lib.ts",
