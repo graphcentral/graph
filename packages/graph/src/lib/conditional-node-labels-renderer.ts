@@ -7,13 +7,14 @@ import {
   KnowledgeGraphOptions,
   LinkWithCoords,
   Node,
+  NodeLabel,
   NotSmallestNextVisibilityInput,
   SmallestNextVisibilityInput,
   WithCoords,
   WithPartialCoords,
 } from "./types"
 import { GraphEvents, GraphScales, RENDER_ALL } from "./graph-enums"
-import { NodeLabel, NodeLabelHelper } from "./node-label"
+import { BitmapNodeLabel, NodeLabelHelper, VectorNodeLabel } from "./node-label"
 import { KnowledgeGraphDb } from "./db"
 import Dexie, { PromiseExtended } from "dexie"
 import to from "await-to-js"
@@ -189,11 +190,11 @@ export class ConditionalNodeLabelsRenderer {
       }): {
     nowVisibleNodeIds: Node[`id`][]
     nowAppearingNodeIds: Node[`id`][]
-    nowDisappearingNodes: NodeLabel<Node<string>>[]
+    nowDisappearingNodes: NodeLabel<Node>[]
   } {
     const nowVisibleNodeIds: Node[`id`][] = []
     const nowAppearingNodeIds: Node[`id`][] = []
-    const nowDisappearingNodes: NodeLabel<Node<string>>[] = []
+    const nowDisappearingNodes: NodeLabel<Node>[] = []
 
     if (smallest.renderAll) {
       // set0 is the second smallest array
@@ -450,11 +451,15 @@ export class ConditionalNodeLabelsRenderer {
     const labels: NodeLabel<Node>[] = []
 
     for (const node of nodes) {
-      if (!node.title || node.x === undefined || node.y === undefined) continue
-      const text = new NodeLabel<Node>(
+      if (
+        node.title === undefined ||
+        node.x === undefined ||
+        node.y === undefined
+      )
+        continue
+      const text = NodeLabelHelper.createNodeLabel(
         node.title,
-        node as WithCoords<Node>,
-        node.cc ?? 0
+        node as WithCoords<Node>
       )
       text.x = node.x
       text.y = node.y

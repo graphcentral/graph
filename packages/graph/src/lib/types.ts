@@ -1,4 +1,5 @@
 import * as PIXI from "pixi.js"
+import { BitmapNodeLabel, VectorNodeLabel } from "./node-label"
 
 /**
  * A type used to represent a single Notion 'block'
@@ -129,17 +130,31 @@ export type KnowledgeGraphOptions<
      * pixi.js only supports showing basic alphanumeric characters
      * for BitmapFont. You will need to supply your own font
      * if the titles of the nodes are NOT english (for example, Chinese, Japanese or Korean, and so on..)
+     *
+     * For detailed options, see https://pixijs.download/dev/docs/PIXI.BitmapFont.html
      */
     customFont?: {
       /**
        * example: https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap
        */
       url: string
+      /**
+       * Options for the font, such as `fontFamily` or `fill`. You need to insert `fontFamily` as the name of the font.
+       * For example, if the `url` is `https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap`,
+       * `fontFamily` must be `"Mouse Memoirs"`.
+       *
+       * By default, the font's `fill` will be rendered in black and `fontFamily` will be set as none (falls back to the default font) if `fontFamily` and `fill` are not supplied,
+       * even if `url` is present.
+       */
       config?: Parameters<typeof PIXI.BitmapFont.from>[1]
       option?: Parameters<typeof PIXI.BitmapFont.from>[2]
     }
   }
 }
+
+export type NodeLabel<N extends Node = Node> =
+  | BitmapNodeLabel<Node>
+  | VectorNodeLabel<Node>
 
 export type CustomFontConfig = NonNullable<
   KnowledgeGraphOptions[`graph`]

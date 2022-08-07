@@ -40,9 +40,10 @@ export const Example: FC<{}> = enhance<{}>(() => {
           graph: {
             runForceLayout: true,
             customFont: {
-              url: `https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap`,
+              url: `https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap`,
               config: {
                 fill: 0xffffff,
+                fontFamily: `Do Hyeon`,
               },
             },
           },
