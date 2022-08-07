@@ -447,10 +447,6 @@ export class ConditionalNodeLabelsRenderer {
    * @param nodes - nodes with titles
    */
   private createBitmapTextsAsNodeLabels(nodes: WithPartialCoords<Node>[]) {
-    NodeLabelHelper.installMaybeCustomFont(
-      this.customFont?.config,
-      this.customFont?.option
-    )
     const labels: NodeLabel<Node>[] = []
 
     for (const node of nodes) {

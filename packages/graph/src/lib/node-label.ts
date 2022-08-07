@@ -27,7 +27,6 @@ export class NodeLabelHelper {
       ],
     },
   ]
-  public static isFontInstalled = false
   public static MAX_NODE_TITLE_LENGTH = 35
   public static CUSTOM_FONT_NAME: Readonly<string> = `NKG_FONT`
   /**
@@ -40,7 +39,6 @@ export class NodeLabelHelper {
     customFont?: PIXI.TextStyle | Partial<PIXI.ITextStyle>,
     customFontOptions?: PIXI.IBitmapFontOptions
   ) {
-    if (this.isFontInstalled) return
     if (customFont) {
       return PIXI.BitmapFont.from(
         this.CUSTOM_FONT_NAME,

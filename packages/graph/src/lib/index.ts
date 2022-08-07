@@ -20,7 +20,7 @@ import { KnowledgeGraphDb } from "./db"
 import { GraphInteraction } from "./graph-interaction"
 import FontFaceObserver from "fontfaceobserver"
 import { WebfontLoaderPlugin } from "pixi-webfont-loader"
-
+import { NodeLabelHelper } from "./node-label"
 export class KnowledgeGraph<
   N extends WithPartialCoords<Node>,
   L extends LinkWithPartialCoords
@@ -176,6 +176,10 @@ export class KnowledgeGraph<
         })
       }),
     ])
+    NodeLabelHelper.installMaybeCustomFont(
+      this.options?.graph?.customFont?.config,
+      this.options?.graph?.customFont?.option
+    )
     this.conditionalNodeLabelsRenderer = new ConditionalNodeLabelsRenderer(
       this.viewport,
       // by now it must have coordinates
