@@ -1,3 +1,5 @@
+import * as PIXI from "pixi.js"
+
 /**
  * A type used to represent a single Notion 'block'
  * or 'node' as we'd like to call it in this graph-related project
@@ -123,6 +125,16 @@ export type KnowledgeGraphOptions<
      * initializes, set this as true
      */
     runForceLayout?: boolean
+    /**
+     * pixi.js only supports showing basic alphanumeric characters
+     * for BitmapFont. You will need to supply your own font
+     * if the titles of the nodes are NOT english (for example, Chinese, Japanese or Korean, and so on..)
+     */
+    customFont?: {
+      url: string
+      config: Parameters<typeof PIXI.BitmapFont.from>[1]
+      option: Parameters<typeof PIXI.BitmapFont.from>[2]
+    }
   }
 }
 

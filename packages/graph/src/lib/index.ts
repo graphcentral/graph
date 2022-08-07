@@ -10,12 +10,11 @@ import {
   Node,
   LinkWithCoords,
   KnowledgeGraphOptions,
-  Unpacked,
 } from "./types"
 import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
 import { Cull } from "@pixi-essentials/cull"
-import { Container, ParticleContainer, Rectangle } from "pixi.js"
+import { Container, ParticleContainer } from "pixi.js"
 import debounce from "lodash.debounce"
 import { KnowledgeGraphDb } from "./db"
 import { GraphInteraction } from "./graph-interaction"
@@ -192,11 +191,6 @@ export class KnowledgeGraph<
     }
     if (lines.length > 0) {
       this.lineGraphicsContainer.addChild(...lines)
-      setTimeout(() => {
-        // this.lineGraphicsContainer.cacheAsBitmap = true
-        // console.log(this.lineGraphicsContainer)
-        // this.lineGraphicsContainer.cacheAsBitmap = true
-      }, 5000)
     }
   }
 

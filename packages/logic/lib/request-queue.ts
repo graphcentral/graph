@@ -67,6 +67,14 @@ export class RequestQueue<Res, Err> {
     let totalRequestCount = 0
     let totalSuccessfulRequestCount = 0
     const run = () => {
+      // wait until external requests finish
+      if (
+        this.externalSuccessfulRequestCount !== 0 &&
+        totalSuccessfulRequestCount !== 0 &&
+        this.externalSuccessfulRequestCount < totalSuccessfulRequestCount
+      ) {
+        return
+      }
       console.log(
         `# current requests: ${this.currentRequestCount} / # items in the queue: ${this.queue.length}`
       )
@@ -80,7 +88,6 @@ export class RequestQueue<Res, Err> {
         })
       )
       if (
-        this.externalSuccessfulRequestCount <= totalSuccessfulRequestCount &&
         this.externalSuccessfulRequestCount >= this.maxRequestCount &&
         totalSuccessfulRequestCount >= this.maxRequestCount
       ) {
@@ -133,7 +140,7 @@ export class RequestQueue<Res, Err> {
       }
     }
     run()
-    this.intervalId = setInterval(run, 50)
+    this.intervalId = setInterval(run, 10)
   }
 
   private async sendRequest(): Promise<null | Res | Err> {

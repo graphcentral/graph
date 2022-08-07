@@ -14,8 +14,8 @@ dotenv.config({ path: path.resolve(__dirname, `..`, `..`, `.env`) })
   const unofficialNotionAPI = new NotionAPI()
   const notionGraph = new NotionGraph({
     unofficialNotionAPI,
-    maxDiscoverableNodes: 20_000,
-    maxDiscoverableNodesInOtherSpaces: 0,
+    maxDiscoverableNodes: 2000,
+    maxDiscoverableNodesInOtherSpaces: 2000,
   })
   const startTime = Date.now()
   const t = await notionGraph.buildGraphFromRootNode(
