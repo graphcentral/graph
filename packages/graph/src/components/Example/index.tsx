@@ -31,8 +31,8 @@ export const Example: FC<{}> = enhance<{}>(() => {
             },
           },
           optimization: {
-            useParticleContainer: false,
-            useShadowContainer: false,
+            useParticleContainer: true,
+            useShadowContainer: true,
             showEdgesOnCloseZoomOnly: true,
             useMouseHoverEffect: true,
             maxTargetFPS: 60,
