@@ -39,6 +39,9 @@ export const Example: FC<{}> = enhance<{}>(() => {
           },
           graph: {
             runForceLayout: false,
+            // customFont: {
+            //   url:
+            // }
           },
         },
       })

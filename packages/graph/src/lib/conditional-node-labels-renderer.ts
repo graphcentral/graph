@@ -3,7 +3,8 @@ import { MovedEventType, Viewport } from "pixi-viewport"
 import { Container, ParticleContainer } from "pixi.js"
 import debounce from "lodash.debounce"
 import {
-  CustomFontConfigs,
+  CustomFontConfig,
+  KnowledgeGraphOptions,
   LinkWithCoords,
   Node,
   NotSmallestNextVisibilityInput,
@@ -17,6 +18,7 @@ import { KnowledgeGraphDb } from "./db"
 import Dexie, { PromiseExtended } from "dexie"
 import to from "await-to-js"
 import { scaleToMinChildrenCount } from "./common-graph-util"
+import { KnowledgeGraph } from "src/lib"
 
 /**
  * Node labels renderer with Hierarchical Level of Detail (HLoD) and culling (only rendering what is currently seen by the camera)
@@ -54,7 +56,7 @@ export class ConditionalNodeLabelsRenderer {
   private visibleLabelsMap: Record<Node[`id`], NodeLabel<Node>> = {}
   private eventTarget = new EventTarget()
   private initComplete = false
-  private customFontConfigs?: CustomFontConfigs
+  private customFont: CustomFontConfig
 
   constructor(
     viewport: Viewport,
@@ -64,14 +66,14 @@ export class ConditionalNodeLabelsRenderer {
      * Optional db instantiated from outside of the class
      */
     db?: KnowledgeGraphDb,
-    customFontConfigs?: CustomFontConfigs
+    customFont?: CustomFontConfig
   ) {
     this.viewport = viewport
     this.nodeLabelsContainer.interactive = false
     this.nodeLabelsContainer.interactiveChildren = false
     this.viewport.addChild(this.nodeLabelsContainer)
     this.db = db ?? new KnowledgeGraphDb()
-    this.customFontConfigs = customFontConfigs
+    this.customFont = customFont
     this.initDb(nodes, links)
     this.initMovedEndListener()
   }
@@ -446,8 +448,8 @@ export class ConditionalNodeLabelsRenderer {
    */
   private createBitmapTextsAsNodeLabels(nodes: WithPartialCoords<Node>[]) {
     NodeLabelHelper.installMaybeCustomFont(
-      this.customFontConfigs?.customFont,
-      this.customFontConfigs?.customFontOptions
+      this.customFont?.config,
+      this.customFont?.option
     )
     const labels: NodeLabel<Node>[] = []
 

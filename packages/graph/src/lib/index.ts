@@ -10,7 +10,6 @@ import {
   Node,
   LinkWithCoords,
   KnowledgeGraphOptions,
-  CustomFontConfigs,
 } from "./types"
 import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
@@ -67,12 +66,12 @@ export class KnowledgeGraph<
     canvasElement: HTMLCanvasElement
     options?: KnowledgeGraphOptions<N, L>
   }) {
-    if (options.graph?.customFontConfigs?.fontUrl) {
+    if (options.graph?.customFont) {
       PIXI.Loader.registerPlugin(WebfontLoaderPlugin)
       PIXI.Loader.shared
         .add({
           name: `custom font`,
-          url: options.graph?.customFontConfigs?.fontUrl,
+          url: options.graph?.customFont.url,
         })
         .load()
     }
@@ -167,7 +166,7 @@ export class KnowledgeGraph<
         )
       }),
       new Promise((resolve) => {
-        if (!this.options?.graph?.customFontConfigs?.fontUrl) {
+        if (!this.options?.graph?.customFont?.url) {
           console.log(PIXI.Loader.shared.resources)
           resolve(``)
         }

@@ -78,8 +78,8 @@ export type NextVisibilityInput =
   | NotSmallestNextVisibilityInput
 
 export type KnowledgeGraphOptions<
-  N extends WithPartialCoords<Node>,
-  L extends LinkWithPartialCoords
+  N extends WithPartialCoords<Node> = WithPartialCoords<Node>,
+  L extends LinkWithPartialCoords = LinkWithPartialCoords
 > = {
   events?: {
     onClick?: (parentNode: N) => void
@@ -137,5 +137,9 @@ export type KnowledgeGraphOptions<
     }
   }
 }
+
+export type CustomFontConfig = NonNullable<
+  KnowledgeGraphOptions[`graph`]
+>[`customFont`]
 
 export type Unpacked<T> = T extends (infer U)[] ? U : T
