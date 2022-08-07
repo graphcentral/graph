@@ -4,7 +4,7 @@ import { NotionKnowledgeGraphFallback } from "src/components/NotionKnowledge3DGr
 import { enhance, tcAsync } from "../../utilities/essentials"
 import testData from "../../../../test-data/test4.json"
 import SpriteText from "three-spritetext"
-import a from "@graphcentral/logic"
+import a from "@graphcentral/notion-scraper"
 
 console.log(a)
 // eslint-disable-next-line @typescript-eslint/ban-types

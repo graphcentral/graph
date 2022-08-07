@@ -17,8 +17,8 @@
     "lint:fix": "eslint . --fix",
     "graph:dev": "npm run dev -w packages/graph",
     "fe:dev": "npm run dev -w packages/frontend",
-    "scraper:dev": "npm run dev -w packages/scraper",
-    "scraper:compile": "npm run compile -w packages/scraper",
+    "scraper:dev": "npm run dev -w packages/notion-scraper",
+    "scraper:compile": "npm run compile -w packages/notion-scraper",
     "test-data:gen": "npm run gen -w packages/test-data"
   },
   "devDependencies": {
