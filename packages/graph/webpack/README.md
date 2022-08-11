@@ -1,0 +1,1 @@
+Because of limited support of WebWorker in Webpack 5, the version was downgraded to @^4. legacy-v5 contains v5 configs.

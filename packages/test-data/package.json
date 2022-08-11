@@ -1,0 +1,29 @@
+{
+  "name": "test-data",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "gen": "node --loader ts-node/esm test-data-gen.mts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/graphcentral/graph.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/graphcentral/graph/issues"
+  },
+  "homepage": "https://github.com/graphcentral/graph#readme",
+  "description": "### `this.unofficialNotionAPI.getPage()` - Returns the list of the page itself and recurisve parents. - The order of the list reflects the parent-child relationship: for example,",
+  "dependencies": {
+    "arg": "^5.0.2",
+    "d3-force": "^3.0.0",
+    "d3-force-reuse": "^1.0.1",
+    "random-words": "^1.2.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.1"
+  }
+}

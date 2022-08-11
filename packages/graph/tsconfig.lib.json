@@ -1,0 +1,39 @@
+{
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
+  "compilerOptions": {
+    "target": "es6",                                
+    "module": "es2022",                           
+    "lib": ["DOM", "ESNext", "WebWorker"],                     
+    "jsx": "react",                           
+    "sourceMap": true,                        
+    "downlevelIteration": true,               
+    "strict": true,                           
+    "noImplicitAny": true,                    
+    "strictNullChecks": true,                 
+    "strictFunctionTypes": true,                
+    "strictBindCallApply": true,                
+    "strictPropertyInitialization": true,       
+    "noImplicitThis": true,                     
+    "alwaysStrict": true,                       
+    "noImplicitReturns": true,                  
+    "noFallthroughCasesInSwitch": true,         
+    "noUncheckedIndexedAccess": true,      
+    "noPropertyAccessFromIndexSignature": true, 
+    "moduleResolution": "node",                 
+    "baseUrl": "./",                            
+    "paths": {
+      "src/*": [
+        "./src/*"
+      ]
+    },
+    "allowSyntheticDefaultImports": true,     
+    "esModuleInterop": true,                  
+    "skipLibCheck": true,                     
+    "forceConsistentCasingInFileNames": true, 
+    "resolveJsonModule": true
+  }
+}
