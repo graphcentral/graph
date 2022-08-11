@@ -1,4 +1,8 @@
-# `@graphcentral/graph` and other utilities
+# `@graphcentral/graph`
+
+```bash
+npm i --save @graphcentral/graph
+```
 
 ![logo](./logo.png)
 

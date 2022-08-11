@@ -1,4 +1,8 @@
-# `@graphcentral/graph` and other utilities
+# `@graphcentral/graph`
+
+```bash
+npm i --save @graphcentral/graph
+```
 
 ![logo](./logo.png)
 
@@ -6,14 +10,14 @@
 
 👉 https://graphcentral.github.io/graph
 
-## Notion utilities
+## Visualizing Notion pages 
 
-You can visualize Notion pages on force layout graph. Check out [@graphcentral/notion](https://github.com/graphcentral/notion).
+You can visualize Notion pages on force layout graph using this library and `@graphcentral/notion` together.. Check out [@graphcentral/notion](https://github.com/graphcentral/notion).
 
 ## What you can get
 
 Example of a knowledge graph of Notion Help docs:
-![example0.png](./example0.png)
+![example0.png](../../example0.png)
 
 ## How to
 
