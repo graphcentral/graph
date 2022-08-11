@@ -9,9 +9,7 @@
     "test": "jest --config ./jest/jest.config.ts",
     "dev": "node --max-old-space-size=8192 ../../node_modules/.bin/webpack-dev-server --config ./webpack/webpack.config.dev.ts --mode development",
     "prod": "webpack --config ./webpack/webpack.config.prod.ts --mode production",
-    "storybook": "start-storybook -p 6006",
-    "deploy": "gh-pages -d dist",
-    "build-storybook": "build-storybook"
+    "deploy": "rm -rf dist && npm run prod && gh-pages -d dist"
   },
   "devDependencies": {
     "@babel/core": "7.16.7",

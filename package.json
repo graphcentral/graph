@@ -18,9 +18,9 @@
     "graph:build:dev": "npm run build:dev -w=packages/graph",
     "graph:build:prod": "npm run build:prod -w=packages/graph",
     "graph:package": "npm run package -w=packages/graph",
-    "test:dev": "npm run dev -w packages/test",
-    "test:prod": "npm run prod -w packages/test",
-    "test:deploy": "npm run deploy -w packages/test",
+    "example:dev": "npm run dev -w packages/example",
+    "example:prod": "npm run prod -w packages/example",
+    "example:deploy": "npm run deploy -w packages/example",
     "scraper:dev": "npm run dev -w packages/notion-scraper",
     "scraper:compile": "npm run compile -w packages/notion-scraper",
     "test-data:gen": "npm run gen -w packages/test-data"
