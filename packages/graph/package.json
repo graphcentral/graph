@@ -1,6 +1,6 @@
 {
   "name": "@graphcentral/graph",
-  "version": "0.1.0-rc.1",
+  "version": "0.1.0-rc.2",
   "main": "dist/main.js",
   "types": "declarations/index.d.ts",
   "repository": {

@@ -17,7 +17,7 @@ You can visualize Notion pages on force layout graph using this library and `@gr
 ## What you can get
 
 Example of a knowledge graph of Notion Help docs:
-![example0.png](../../example0.png)
+![example0.png](./example0.png)
 
 ## How to
 
