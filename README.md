@@ -6,6 +6,10 @@
 
 👉 https://graphcentral.github.io/graph
 
+## Notion utilities
+
+You can visualize Notion pages on force layout graph. Check out [@graphcentral/notion](https://github.com/graphcentral/notion).
+
 ## What you can get
 
 Example of a knowledge graph of Notion Help docs:
@@ -56,4 +60,4 @@ const knowledgeGraph = new KnowledgeGraph({
 knowledgeGraph.createNetworkGraph()
 ```
 
-For more complicated example, visit `packages/test` for a sample code using `@graphcentral/graph`. More docs, and interactive demo to come (contributions are most welcome).
+For more complicated example using `@graphcentral/graph`, visit `packages/example`. More docs, and interactive demo to come (contributions are most welcome).
