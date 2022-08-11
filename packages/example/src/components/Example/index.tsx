@@ -248,7 +248,7 @@ export const Example: FC<{}> = enhance<{}>(() => {
         style={{
           position: `absolute`,
           top: 0,
-          right: `20px`,
+          right: `150px`,
           width: `180px`,
         }}
       >

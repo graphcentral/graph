@@ -1,24 +1,23 @@
 {
   "name": "@graphcentral/graph",
-  "version": "1.0.0",
+  "version": "0.1.0-rc.0",
   "main": "dist/main.js",
   "types": "declarations/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/graphcentral/graph.git"
   },
+  "files": ["dist", "declarations"],
   "author": "9oelM <hj923@hotmail.com>",
   "license": "MIT",
   "private": false,
   "scripts": {
     "test": "jest --config ./jest/jest.config.ts",
-    "dev": "node ../../node_modules/.bin/webpack-dev-server --config ./webpack/webpack.config.dev.ts --mode development --progress",
+    "dev": "webpack-dev-server --config ./webpack/webpack.config.dev.ts --mode development --progress",
     "build:dev": "webpack --watch --config ./webpack/webpack.config.lib.dev.ts --mode development --progress",
     "build:prod": "webpack --config ./webpack/webpack.config.lib.prod.ts --mode production --progress",
     "build:defs": "tsc --declaration --outDir ./declarations --emitDeclarationOnly --project tsconfig.d.ts.json",
-    "package": "npm run build:prod && npm run build:defs",
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "package": "rm -rf declarations && rm -rf dist && npm run build:prod && npm run build:defs"
   },
   "devDependencies": {
     "@babel/core": "7.16.7",
@@ -88,5 +87,5 @@
     "url": "https://github.com/graphcentral/graph/issues"
   },
   "homepage": "https://github.com/graphcentral/graph#readme",
-  "description": ""
+  "description": "Performant graph visualization on the web with WebGL + Webworkers"
 }

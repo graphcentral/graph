@@ -7,10 +7,6 @@ function genLibConfig(isDevelopment: boolean): webpack.Configuration {
     entry: {
       main: `./src/index.ts`,
     },
-    stats: {
-      children: true,
-      optimizationBailout: true,
-    },
     optimization: {
       usedExports: true,
     },
@@ -59,7 +55,7 @@ function genLibConfig(isDevelopment: boolean): webpack.Configuration {
       new webpack.ProvidePlugin({
         process: `process/browser`,
       }),
-      ...(!isDevelopment
+      ...(isDevelopment
         ? [new BundleAnalyzerPlugin.BundleAnalyzerPlugin()]
         : []),
     ],

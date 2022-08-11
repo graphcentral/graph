@@ -2,7 +2,6 @@
   "name": "@graphcentral/root",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://github.com/graphcentral/graph.git",
   "author": "9oelM <hj923@hotmail.com>",
   "license": "MIT",
   "private": false,

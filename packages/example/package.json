@@ -1,11 +1,7 @@
 {
-  "name": "@graphcentral/test",
+  "name": "@graphcentral/example",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/graphcentral/graph.git"
-  },
   "author": "9oelM <hj923@hotmail.com>",
   "license": "MIT",
   "private": false,
@@ -67,10 +63,5 @@
     "axios": "^0.24.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
-  },
-  "bugs": {
-    "url": "https://github.com/graphcentral/graph/issues"
-  },
-  "homepage": "https://github.com/graphcentral/graph#readme",
-  "description": ""
+  }
 }
