@@ -212,6 +212,9 @@ export const Example: FC<{}> = enhance<{}>(() => {
     <main
       style={{
         display: `flex`,
+        background: `#101010`,
+        width: `100%`,
+        height: `100%`,
       }}
     >
       <canvas ref={canvasElement} />
