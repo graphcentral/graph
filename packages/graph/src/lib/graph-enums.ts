@@ -56,7 +56,7 @@ export enum GraphGraphics {
  *  decreases as user zooms out
  */
 export enum GraphScales {
-  CAN_SEE_BIG_NODES_WELL = 0.0940836883806951,
+  CAN_SEE_BIG_NODES_WELL = 0.0440836883806951,
   CANNOT_SEE_ANYTHING_WELL = 0.00449999848460085,
 }
 
