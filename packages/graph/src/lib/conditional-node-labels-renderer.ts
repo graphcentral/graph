@@ -13,6 +13,7 @@ import {
   SmallestNextVisibilityInput,
   WithCoords,
   WithPartialCoords,
+  ZoomLevels,
 } from "./types"
 import { GraphEvents, RENDER_ALL } from "./graph-enums"
 import { NodeLabelHelper } from "./node-label"
@@ -64,7 +65,7 @@ export class ConditionalNodeLabelsRenderer<
   // used for events outside this class
   private graphEventEmitter: GraphEventEmitter<N, L>
   private initComplete = false
-  private customFont: CustomFontConfig
+  private zoomLevels?: ZoomLevels
 
   constructor(
     viewport: Viewport,
@@ -75,7 +76,10 @@ export class ConditionalNodeLabelsRenderer<
      * Optional db instantiated from outside of the class
      */
     db?: KnowledgeGraphDb,
-    customFont?: CustomFontConfig
+    /**
+     * Custom zoom levels for conditionally rendering labels at different zoom levels
+     */
+    zoomLevels?: ZoomLevels
   ) {
     this.viewport = viewport
     this.graphEventEmitter = graphEventEmitter
@@ -83,9 +87,9 @@ export class ConditionalNodeLabelsRenderer<
     this.nodeLabelsContainer.interactiveChildren = false
     this.viewport.addChild(this.nodeLabelsContainer)
     this.db = db ?? new KnowledgeGraphDb()
-    this.customFont = customFont
     this.initDb(nodes, links)
     this.initMovedEndListener()
+    this.zoomLevels = zoomLevels
   }
 
   public onError(cb: VoidFunction) {
@@ -241,7 +245,8 @@ export class ConditionalNodeLabelsRenderer<
   private async deleteDisappearingLabels(visibleNodesSet: Set<Node[`id`]>) {
     const nowDisappearingNodes = []
     const renderLabelsWithCCAboveOrEqual = scaleToMinChildrenCount(
-      this.viewport.scale.x
+      this.viewport.scale.x,
+      this.zoomLevels
     )
     for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {
       const cc = label.getNodeData().cc ?? 0
@@ -263,7 +268,8 @@ export class ConditionalNodeLabelsRenderer<
    */
   private calculateNextLabelVisibility(visibleNodesSet: Set<string>) {
     const renderLabelsWithCCAboveOrEqual = scaleToMinChildrenCount(
-      this.viewport.scale.x
+      this.viewport.scale.x,
+      this.zoomLevels
     )
     const hitArea = this.viewport.hitArea
     if (!hitArea) return null
@@ -336,7 +342,8 @@ export class ConditionalNodeLabelsRenderer<
   private async deleteLabelsOnDragging() {
     const nowDisappearingNodes = []
     const renderLabelsWithCCAboveOrEqual = scaleToMinChildrenCount(
-      this.viewport.scale.x
+      this.viewport.scale.x,
+      this.zoomLevels
     )
     const nowDisappearingNodeIds = []
     for (const [nodeId, label] of Object.entries(this.visibleLabelsMap)) {

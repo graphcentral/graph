@@ -146,6 +146,10 @@ export type KnowledgeGraphOptions<
       config?: Parameters<typeof PIXI.BitmapFont.from>[1]
       option?: Parameters<typeof PIXI.BitmapFont.from>[2]
     }
+    /**
+     * Custom zoom levels used for the conditional rendering of labels at different zoom levels
+     */
+    zoomLevels?: ZoomLevels
   }
 }
 
@@ -158,3 +162,18 @@ export type CustomFontConfig = NonNullable<
 >[`customFont`]
 
 export type Unpacked<T> = T extends (infer U)[] ? U : T
+
+/**
+ * Zoom levels for conditional rendering of labels on a graph.
+ * By default, these values are hard coded. Refer to GraphScales.
+ * ```
+ * small = 0.0440836883806951,
+ * medium = 0.013,
+ * large = 0.00949999848460085,
+ * ```
+ */
+export interface ZoomLevels {
+  small: number
+  medium: number
+  large: number
+}

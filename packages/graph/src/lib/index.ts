@@ -9,6 +9,7 @@ import {
   Node,
   LinkWithCoords,
   KnowledgeGraphOptions,
+  ZoomLevels,
 } from "./types"
 import { scaleByCC, scaleToMinChildrenCount } from "./common-graph-util"
 import { ConditionalNodeLabelsRenderer } from "./conditional-node-labels-renderer"
@@ -62,6 +63,7 @@ export class KnowledgeGraph<
     LinkWithCoords<L>
   >()
   public isLoaded: Readonly<boolean> = false
+  private zoomLevels?: ZoomLevels
 
   constructor({
     nodes,
@@ -193,7 +195,8 @@ export class KnowledgeGraph<
       this.nodes as WithCoords<N>[],
       this.links as LinkWithCoords[],
       this.graphEventEmitter,
-      this.db
+      this.db,
+      this.zoomLevels
     )
     await new Promise((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

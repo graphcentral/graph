@@ -1,6 +1,6 @@
 import { Rectangle } from "pixi.js"
 import { GraphScales } from "./graph-enums"
-import { WithCoords, Node } from "./types"
+import { WithCoords, Node, ZoomLevels } from "./types"
 
 export function isNodeInsideBonds(
   node: WithCoords<Node>,
@@ -42,7 +42,18 @@ export function scaleByCC(cc: number): number {
  * large children count (`cc`).
  * @param scale decreases as user zooms out
  */
-export function scaleToMinChildrenCount(scale: number): number {
+export function scaleToMinChildrenCount(
+  scale: number,
+  {
+    small = GraphScales.MAX_ZOOM,
+    medium = GraphScales.MID_ZOOM,
+    large = GraphScales.MIN_ZOOM,
+  }: ZoomLevels = {
+    small: GraphScales.MAX_ZOOM,
+    medium: GraphScales.MID_ZOOM,
+    large: GraphScales.MIN_ZOOM,
+  }
+): number {
   // the order of the case statements matters.
   switch (true) {
     // invalid case
@@ -50,13 +61,16 @@ export function scaleToMinChildrenCount(scale: number): number {
       return -1
     }
     // don't show any texts
-    case scale < GraphScales.CANNOT_SEE_ANYTHING_WELL:
+    case scale < small:
       return Infinity
-    case scale < GraphScales.CAN_SEE_BIG_NODES_WELL: {
-      // show text from nodes having cc above 20
+    case scale < medium:
+      // show text from cc = 10 and above
       return 20
+    case scale < large: {
+      // show text from nodes having cc above 20
+      return 10
     }
-    case scale > GraphScales.CAN_SEE_BIG_NODES_WELL: {
+    case scale >= large: {
       // show text from nodes having cc above 0
       return 0
     }
