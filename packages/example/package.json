@@ -57,7 +57,7 @@
     "worker-loader": "^3.0.8"
   },
   "dependencies": {
-    "@graphcentral/graph": "0.1.0-rc.3",
+    "@graphcentral/graph": "^0.1.0-rc.4",
     "axios": "^0.24.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
