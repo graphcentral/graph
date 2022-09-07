@@ -8,7 +8,13 @@ npm i --save @graphcentral/graph
 
 ## Demo
 
-👉 https://graphcentral.github.io/graph
+👉 "5K nodes + 5K links": https://graphcentral.github.io/graph?graph_data=5000
+
+👉 "50K nodes + 50K links": https://graphcentral.github.io/graph?graph_data=big
+
+👉 "100K nodes + 100K links" (apprent degradation in performance expected): https://graphcentral.github.io/graph?graph_data=huge
+
+👉 "Notion official help docs" (runs force layout algorithm on the browser): https://graphcentral.github.io/graph?graph_data=notion_docs
 
 ## Visualizing Notion pages 
 

@@ -9,6 +9,7 @@ import { FC } from "react"
 import { enhance, tcAsync } from "../../utilities/essentials"
 import { ExampleFallback } from "./fallback"
 import { Node, Link, KnowledgeGraph, WithCoords } from "@graphcentral/graph"
+import { getQueryParams } from "../../utilities/query-params"
 
 enum Errors {
   IMPORT_FAILED = `IMPORT_FAILED`,
@@ -99,6 +100,7 @@ const NotionNodeListItem: FC<{
 export const Example: FC<{}> = enhance<{}>(() => {
   const canvasElement = useRef<null | HTMLCanvasElement>(null)
   const [errors, setErrors] = useState<Errors[]>()
+
   const [loadStatuses, setLoadStatuses] = useState<
     Record<keyof typeof LoadStatus, boolean>
   >({
@@ -129,12 +131,44 @@ export const Example: FC<{}> = enhance<{}>(() => {
       }))
 
       const { KnowledgeGraph } = imported
-      const sampleDataResp = await fetch(
-        // `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-100000-links-118749.json`
-        // `https://raw.githubusercontent.com/9oelM/datastore/main/3000ish.json`
-        `https://raw.githubusercontent.com/9oelM/datastore/main/notion-help-docs.json`
-        // `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-5100-links-6249.json`
-      )
+      const graphInfo: {
+        graphDataUrl: string
+        runForceLayout?: boolean
+        useParticleContainer?: boolean
+        useShadowContainer?: boolean
+      } = (() => {
+        const queryParams = getQueryParams()
+        const test = queryParams[`graph_data`]
+        switch (test) {
+          case `huge`: {
+            return {
+              useParticleContainer: true,
+              useShadowContainer: true,
+              graphDataUrl: `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-100000-links-118749.json`,
+            }
+          }
+          case `big`: {
+            return {
+              useParticleContainer: true,
+              useShadowContainer: true,
+              graphDataUrl: `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-50000-links-49999.json`,
+            }
+          }
+          case `5000`: {
+            return {
+              graphDataUrl: `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-nodes-5100-links-6249.json`,
+            }
+          }
+          case `notion_docs`:
+          default:
+            return {
+              runForceLayout: true,
+              graphDataUrl: `https://raw.githubusercontent.com/9oelM/datastore/main/notion-help-docs.json`,
+            }
+        }
+      })()
+      const sampleDataResp = await fetch(graphInfo.graphDataUrl)
+      // `https://raw.githubusercontent.com/9oelM/datastore/main/3000ish.json`
       const [sampleDataJsonErr, sampleDataJson] = await tcAsync<{
         nodes: Node[]
         links: Link[]
@@ -160,14 +194,14 @@ export const Example: FC<{}> = enhance<{}>(() => {
         canvasElement: canvasElement.current,
         options: {
           optimization: {
-            useParticleContainer: false,
-            useShadowContainer: false,
+            useParticleContainer: Boolean(graphInfo.useParticleContainer),
+            useShadowContainer: Boolean(graphInfo.useShadowContainer),
             showEdgesOnCloseZoomOnly: true,
             useMouseHoverEffect: true,
             maxTargetFPS: 60,
           },
           graph: {
-            runForceLayout: true,
+            runForceLayout: Boolean(graphInfo.runForceLayout),
             customFont: {
               url: `https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap`,
               config: {

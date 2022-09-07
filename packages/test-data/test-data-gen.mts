@@ -72,8 +72,6 @@ async function  main() {
     })
   }
 
-  console.log(parentNodes.length)
-  
   for (const i of [...Array(CHILDREN_NODES_NUM).keys()]) {
     const index = i + PARENT_NODES_NUM
     const parentId = Math.round(Math.random() * (PARENT_NODES_NUM - 1))
