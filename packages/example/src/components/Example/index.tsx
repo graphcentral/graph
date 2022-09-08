@@ -112,6 +112,7 @@ export const Example: FC<{}> = enhance<{}>(() => {
   })
   const [clickedAndLinkedNodes, setClickedAndLinkedNodes] = useState<{
     node: WithCoords<Node>
+
     linkedNodes: WithCoords<Node>[]
   }>()
   const knowledgeGraphRef = useRef<KnowledgeGraph<Node, Link> | null>(null)
@@ -162,8 +163,8 @@ export const Example: FC<{}> = enhance<{}>(() => {
           case `notion_docs`:
           default:
             return {
-              runForceLayout: true,
-              graphDataUrl: `https://raw.githubusercontent.com/9oelM/datastore/main/notion-help-docs.json`,
+              runForceLayout: false,
+              graphDataUrl: `https://raw.githubusercontent.com/9oelM/datastore/main/prelayout-true-notion-help-docs.json`,
             }
         }
       })()

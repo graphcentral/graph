@@ -23,7 +23,8 @@
     "example:deploy": "npm run deploy -w packages/example",
     "scraper:dev": "npm run dev -w packages/notion-scraper",
     "scraper:compile": "npm run compile -w packages/notion-scraper",
-    "test-data:gen": "npm run gen -w packages/test-data"
+    "test-data:gen": "npm run gen -w packages/test-data",
+    "test-data:gen:existing": "npm run gen:existing -w packages/test-data"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "5.9.1",

@@ -435,6 +435,8 @@ export class ConditionalNodeLabelsRenderer<
       }
     )
     this.eventTarget.dispatchEvent(new Event(GraphEvents.FINISH_DB))
+    // to show the labels after DB init is complete
+    this.onMovedEnd()
   }
 
   /**
