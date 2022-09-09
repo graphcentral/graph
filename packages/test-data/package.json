@@ -4,7 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "gen": "node --loader ts-node/esm test-data-gen.mts"
+    "gen": "node --loader ts-node/esm test-data-gen.mts",
+    "gen:existing": "node --loader ts-node/esm force-graph-on-existing-data.mts"
   },
   "repository": {
     "type": "git",
