@@ -243,6 +243,8 @@ export const Example: FC<{}> = enhance<{}>(() => {
     })()
   }, [])
 
+  const isFetchingData = !loadStatuses.FETCH_DATA || !loadStatuses.IMPORT_LIB
+
   return (
     <main
       style={{
@@ -252,6 +254,67 @@ export const Example: FC<{}> = enhance<{}>(() => {
         height: `100%`,
       }}
     >
+      {isFetchingData ? (
+        <div
+          style={{
+            position: `relative`,
+          }}
+        >
+          <div
+            style={{
+              position: `absolute`,
+              width: `100vw`,
+              height: `100vh`,
+              justifyContent: `center`,
+              alignItems: `center`,
+              left: 0,
+              top: 0,
+              display: `flex`,
+              pointerEvents: `none`,
+            }}
+          >
+            <p
+              style={{
+                fontSize: `2rem`,
+                color: `#ffffffb0`,
+              }}
+            >
+              Fetching data... please wait
+            </p>
+          </div>
+        </div>
+      ) : null}
+      <div
+        style={{
+          position: `relative`,
+        }}
+      >
+        <div
+          style={{
+            position: `absolute`,
+            width: `100vw`,
+            height: `100vh`,
+            justifyContent: `center`,
+            alignItems: `end`,
+            left: 0,
+            top: 0,
+            display: `flex`,
+            pointerEvents: `none`,
+          }}
+        >
+          <p
+            style={{
+              fontSize: `1rem`,
+              color: `#ffffffb0`,
+              textAlign: `center`,
+              marginBottom: `0.5rem`,
+            }}
+          >
+            Drag/scroll to navigate and click to inspect nodes.
+            <br /> Works best on desktop for now
+          </p>
+        </div>
+      </div>
       <canvas ref={canvasElement} />
       {clickedAndLinkedNodes ? (
         <section
